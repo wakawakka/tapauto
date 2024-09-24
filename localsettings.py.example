@@ -1,0 +1,4 @@
+akks = {
+    "akk1": ("apiID", "hash"),
+}
+current_akk = 'akk1'
