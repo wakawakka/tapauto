@@ -3,3 +3,6 @@
 localsettings.py
 __pycache__
 venv
+*.json
+*.js
+*.zip

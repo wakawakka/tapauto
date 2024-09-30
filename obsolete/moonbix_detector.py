@@ -217,3 +217,40 @@ if __name__ == "__main__":
 
 # # Display the results
 # show_results(img_cv, asteroid_positions, stick_line)
+
+
+# mb.sleep()
+# cookie_reject_button = mb.find_element(
+#     By.XPATH, '//button[contains(text(), "Reject Additional Cookies")]', False
+# )
+# mb.scroll_and_click(cookie_reject_button)
+# mb.sleep()
+# play_button = mb.find_element(By.XPATH, '//div[contains(text(), "Play Game")]')
+# mb.scroll_and_click(play_button)
+
+# mb.sleep()
+# canvas = mb.find_element(By.XPATH, "//div/div/div/canvas")
+# # mb.scroll_and_click(canvas)
+
+# d = moonbix_detector.Detector()
+# frame_i = 0
+
+# while True:
+#     png = canvas.screenshot_as_png
+#     hash = md5(png).hexdigest()
+#     png_io = io.BytesIO(png)
+#     png_io.seek(0)
+
+#     # keep_old_asteroids - economy of calculations of asteroids positions
+#     # is_shot = d.is_shot(png_io, keep_old_asteroids=False)
+#     if frame_i % 5 == 0:
+#         is_shot = d.is_shot(png_io, keep_old_asteroids=False)
+#     else:
+#         is_shot = d.is_shot(png_io, keep_old_asteroids=True)
+#     if is_shot:
+#         canvas.click()
+#     # time.sleep(0.1)
+#     frame_i += 1
+
+
+# pass
