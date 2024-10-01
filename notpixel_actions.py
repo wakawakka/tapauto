@@ -150,15 +150,15 @@ class PixelActions:
             if res:
                 balance -= recharge_speed_upgrade_price
 
-        if balance > energy_limit_upgrade_price:
-            res = self.upgrade_boost("energyLimit")
-            if res:
-                balance -= energy_limit_upgrade_price
-
         if balance > paint_reward_upgrade_price:
             res = self.upgrade_boost("paintReward")
             if res:
                 balance -= paint_reward_upgrade_price
+
+        if balance > energy_limit_upgrade_price:
+            res = self.upgrade_boost("energyLimit")
+            if res:
+                balance -= energy_limit_upgrade_price
 
     @retry(tries=3, delay=10)
     def get_acc_status(self):
@@ -172,9 +172,9 @@ class PixelActions:
         if r.status_code == 200:
             data = r.json()
             charges = data.get("charges")
-            full_charges_restore_ts = int(
-                time.time() + data.get("maxCharges") * data.get("reChargeSpeed") / 1000
-            )
+            recharge_speed = data.get("reChargeSpeed", 0) / 1000  # in sec
+            max_charges = data.get("maxCharges", 0)
+
             balance = data.get("userBalance")
             claimed = data.get("claimed")
             if claimed == 0:
@@ -186,7 +186,8 @@ class PixelActions:
             time.sleep(random.randint(5, 8))
             return {
                 "charges": charges,
-                "charges_restore": full_charges_restore_ts,
+                "charge_restore_speed": recharge_speed,
+                "max_charges": max_charges,
                 "balance": balance,
             }
         else:
@@ -224,7 +225,7 @@ class PixelActions:
         painted = []
         for x, y, task_pix_color in pixels_to_paint:
             if self.energy < 1:
-                return {"out_of_energy": True, "painted": painted}
+                return painted
             ret = None
             try:
                 ret = self.paint_pixel(x, y, task_pix_color)
@@ -235,18 +236,27 @@ class PixelActions:
             except:
                 print(f"Falied to draw pix {x}:{y}. Ret: {ret}")
 
-        return {"out_of_energy": False, "painted": painted}
+        return painted
 
     def run(self, pixels_to_paint):
         self.gui_app_start()
         self.gui_click_initial_buttons()
         acc_state = self.get_acc_status()
         charges = acc_state.get("charges", 0)
-        charges_restore_ts = acc_state.get("charges_restore", 0)
         if charges > 0:
             self.energy = charges
-        paint_result = self.paint(pixels_to_paint)
-        return {"paint_result": paint_result, "charges_restore_ts": charges_restore_ts}
+        recharge_speed = acc_state.get("charge_restore_speed", 0)
+        max_charges = acc_state.get("max_charges", 0)
+
+        painted = self.paint(pixels_to_paint)
+        charges_restore_ts = int(
+            time.time() + recharge_speed * (max_charges - self.energy)
+        )
+        return {
+            "painted": painted,
+            "charges": self.energy,
+            "charges_full_restore_in": charges_restore_ts,
+        }
 
 
 # for i in range(1, 6):
