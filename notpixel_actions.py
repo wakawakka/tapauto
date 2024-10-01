@@ -15,6 +15,7 @@ from retry import retry
 import localsettings
 import telegram_utils
 import secure_browser
+from notpixel_tools import *
 
 
 class PixelActions:
@@ -87,66 +88,6 @@ class PixelActions:
             return r.json()
         else:
             print(r.text)
-
-    def rgb_to_hex(self, pix):
-        r, g, b = pix
-        r, g, b = int(r), int(g), int(b)
-        # return hex((r << 16) + (g << 8) + b).replace('0x','#').upper()
-        n = (r << 16) + (g << 8) + b
-        return f"#{n:06X}"
-
-    def get_image_state(self):
-        image_url = "https://image.notpx.app/api/v2/image"
-        r = requests.get(image_url)
-        if r.status_code == 200:
-            img_io = io.BytesIO(r.content)
-            img_io.seek(0)
-        else:
-            print(
-                f"Fail to get image state (get request). Status: {r.status_code}, Error: {r.text}"
-            )
-            return False
-        img = Image.open(img_io)
-        np_img = np.array(img)
-        color_data = []
-        for line in np_img:
-            color_data.append([self.rgb_to_hex(pix) for pix in line])
-
-        return color_data
-
-    def draw(self):
-        image_data = self.get_image_state()
-        init_x, init_y = self.task["init_position"]
-        art = self.task["art"]
-        balance = 0
-        drawed = []
-        pixels_to_draw = []
-
-        for y_pad, line in enumerate(art):
-            for x_pad, task_pix_color in enumerate(line):
-                task_pix_color = task_pix_color.upper()
-                if not task_pix_color:
-                    continue
-                x, y = init_x + x_pad, init_y + y_pad
-                if task_pix_color == image_data[y][x]:
-                    print(f"Same same {x}:{y}")
-                else:
-                    print(f"Need paint {x}:{y}")
-                    pixels_to_draw.append((x, y, task_pix_color))
-
-        # random.shuffle(pixels_to_draw)
-
-        # for x, y, task_pix_color in pixels_to_draw:
-        #     try:
-        #         ret = self.paint_pixel(x, y, task_pix_color)
-        #         ret_balance = ret.get("balance")
-        #         if ret_balance:
-        #             balance = ret_balance
-        #             drawed.append((x, y))
-        #     except:
-        #         print(f"Falied to draw pix {x}:{y}")
-
-        return balance
 
 
 # for i in range(1, 6):
