@@ -1,0 +1,9 @@
+aiogram
+selenium
+telethon
+undetected_chromedriver
+requests
+numpy
+retry
+pillow
+looseversion
