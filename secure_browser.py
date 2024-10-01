@@ -26,7 +26,14 @@ webGL = [
 
 
 class Browser:
-    def __init__(self):
+    def __init__(
+        self,
+        proxy: bool = False,
+        proxy_host: str = "",
+        proxy_port: int = 0,
+        proxy_user: str = "",
+        proxy_password: str = "",
+    ):
         options = ChromeOptions()
         options.add_argument(f"--user-agent={user_agent}")
         options.add_argument("--disable-features=UserAgentClientHint")
