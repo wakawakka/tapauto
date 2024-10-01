@@ -1,5 +1,7 @@
 import time
+import os
 import random
+import zipfile
 
 import undetected_chromedriver as uc
 from selenium.webdriver.common.action_chains import ActionChains
@@ -38,6 +40,77 @@ class Browser:
         options.add_argument(f"--user-agent={user_agent}")
         options.add_argument("--disable-features=UserAgentClientHint")
         options.add_argument("--lang=en")
+
+        PROXY_FOLDER_ROOT = os.path.join(os.getcwd(), 'extensions')
+        PROXY_FOLDER = os.path.join(PROXY_FOLDER_ROOT, 'proxy_folder_all_purpose')
+        manifest_json = """
+        {
+            "version": "1.0.0",
+            "manifest_version": 2,
+            "name": "Chrome Proxy",
+            "permissions": [
+                "proxy",
+                "tabs",
+                "unlimitedStorage",
+                "storage",
+                "<all_urls>",
+                "webRequest",
+                "webRequestBlocking"
+            ],
+            "background": {
+                "scripts": ["background.js"]
+            },
+            "minimum_chrome_version":"22.0.0"
+        }
+        """
+
+        background_js = """
+        var config = {
+                mode: "fixed_servers",
+                rules: {
+                singleProxy: {
+                    scheme: "http",
+                    host: "%s",
+                    port: parseInt(%s)
+                },
+                bypassList: ["localhost"]
+                }
+            };
+
+        chrome.proxy.settings.set({value: config, scope: "regular"}, function() {});
+
+        function callbackFn(details) {
+            return {
+                authCredentials: {
+                    username: "%s",
+                    password: "%s"
+                }
+            };
+        }
+
+        chrome.webRequest.onAuthRequired.addListener(
+                    callbackFn,
+                    {urls: ["<all_urls>"]},
+                    ['blocking']
+        );
+        """ % (PROXY_HOST, PROXY_PORT, PROXY_USER, PROXY_PASS)
+
+        if not os.path.exists(PROXY_FOLDER):
+            os.makedirs(PROXY_FOLDER)
+
+        with open(f"{PROXY_FOLDER}/manifest.json", "w") as f:
+            f.write(manifest_json)
+        with open(f"{PROXY_FOLDER}/background.js", "w") as f:
+            f.write(background_js)
+        
+        pluginfile = f'{PROXY_FOLDER}/proxy_auth_plugin.zip'
+
+        with zipfile.ZipFile(pluginfile, 'w') as zp:
+            zp.writestr("manifest.json", manifest_json)
+            zp.writestr("background.js", background_js)
+
+        #options.add_argument(f"--load-extension={os.path.join(PROXY_FOLDER_ROOT, 'extensions', 'webrtc')},{PROXY_FOLDER}")
+        options.add_argument(f"--load-extension={PROXY_FOLDER}")
         self.browser = uc.Chrome(
             headless=False,
             options=options,
