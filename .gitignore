@@ -6,3 +6,4 @@ venv
 *.json
 *.js
 *.zip
+tg_profiles

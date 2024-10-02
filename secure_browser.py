@@ -8,6 +8,8 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver import ChromeOptions
 
+import secure_browser_js as sbjs 
+
 # user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
 # user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko)"
 user_agent = "Mozilla/5.0 (Linux; Android 13; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.61 Mobile Safari/537.36"
@@ -35,147 +37,43 @@ class Browser:
         proxy_port: int = 0,
         proxy_user: str = "",
         proxy_password: str = "",
+        profile = "",
+        save_browser_profile = False
     ):
         options = ChromeOptions()
         options.add_argument(f"--user-agent={user_agent}")
         options.add_argument("--disable-features=UserAgentClientHint")
         options.add_argument("--lang=en")
 
-        PROXY_FOLDER_ROOT = os.path.join(os.getcwd(), 'extensions')
-        PROXY_FOLDER = os.path.join(PROXY_FOLDER_ROOT, 'proxy_folder_all_purpose')
-        manifest_json = """
-        {
-            "version": "1.0.0",
-            "manifest_version": 2,
-            "name": "Chrome Proxy",
-            "permissions": [
-                "proxy",
-                "tabs",
-                "unlimitedStorage",
-                "storage",
-                "<all_urls>",
-                "webRequest",
-                "webRequestBlocking"
-            ],
-            "background": {
-                "scripts": ["background.js"]
-            },
-            "minimum_chrome_version":"22.0.0"
-        }
-        """
+        if proxy:
+            PROXY_FOLDER_ROOT = os.path.join(os.getcwd(), profile, 'extensions')
+            PROXY_FOLDER = os.path.join(PROXY_FOLDER_ROOT, 'proxy_chrome')        
 
-        background_js = """
-        var config = {
-                mode: "fixed_servers",
-                rules: {
-                singleProxy: {
-                    scheme: "http",
-                    host: "%s",
-                    port: parseInt(%s)
-                },
-                bypassList: ["localhost"]
-                }
-            };
+            if not os.path.exists(PROXY_FOLDER):
+                os.makedirs(PROXY_FOLDER)
 
-        chrome.proxy.settings.set({value: config, scope: "regular"}, function() {});
+            with open(f"{PROXY_FOLDER}/manifest.json", "w") as f:
+                f.write(sbjs.chrome_proxy_manifest_json)
+            with open(f"{PROXY_FOLDER}/background.js", "w") as f:
+                f.write(sbjs.generate_chrome_proxy_background_js(proxy_host, proxy_port, proxy_user, proxy_password))
+            pluginfile = f'{PROXY_FOLDER}/proxy_auth_plugin.zip'
 
-        function callbackFn(details) {
-            return {
-                authCredentials: {
-                    username: "%s",
-                    password: "%s"
-                }
-            };
-        }
+            with zipfile.ZipFile(pluginfile, 'w') as zp:
+                zp.writestr("manifest.json", manifest_json)
+                zp.writestr("background.js", background_js)
 
-        chrome.webRequest.onAuthRequired.addListener(
-                    callbackFn,
-                    {urls: ["<all_urls>"]},
-                    ['blocking']
-        );
-        """ % (PROXY_HOST, PROXY_PORT, PROXY_USER, PROXY_PASS)
+            #options.add_argument(f"--load-extension={os.path.join(PROXY_FOLDER_ROOT, 'extensions', 'webrtc')},{PROXY_FOLDER}")
+            options.add_argument(f"--load-extension={PROXY_FOLDER}")
+            self.browser = uc.Chrome(
+                headless=False,
+                options=options,
+            )
 
-        if not os.path.exists(PROXY_FOLDER):
-            os.makedirs(PROXY_FOLDER)
-
-        with open(f"{PROXY_FOLDER}/manifest.json", "w") as f:
-            f.write(manifest_json)
-        with open(f"{PROXY_FOLDER}/background.js", "w") as f:
-            f.write(background_js)
-        
-        pluginfile = f'{PROXY_FOLDER}/proxy_auth_plugin.zip'
-
-        with zipfile.ZipFile(pluginfile, 'w') as zp:
-            zp.writestr("manifest.json", manifest_json)
-            zp.writestr("background.js", background_js)
-
-        #options.add_argument(f"--load-extension={os.path.join(PROXY_FOLDER_ROOT, 'extensions', 'webrtc')},{PROXY_FOLDER}")
-        options.add_argument(f"--load-extension={PROXY_FOLDER}")
-        self.browser = uc.Chrome(
-            headless=False,
-            options=options,
-        )
         self.browser.set_window_size(700, 900)
-
         self.browser.execute_cdp_cmd(
             "Page.addScriptToEvaluateOnNewDocument",
             {
-                "source": """
-        (function() {
-            const webGLRenderer = '"""
-                + webGL[0]
-                + """';
-            const webGLVendor = '"""
-                + webGL[1]
-                + """';
-            const webGLVersion = '"""
-                + webGL[2]
-                + """';
-            const webGLShadingLanguageVersion = '"""
-                + webGL[3]
-                + """';
-
-            // Store the original method
-            const originalGetParameter = WebGLRenderingContext.prototype.getParameter;
-
-            // Override the method for WebGL1
-            WebGLRenderingContext.prototype.getParameter = function(parameter) {
-                if (parameter === 37445) { // UNMASKED_RENDERER_WEBGL
-                    return webGLRenderer;
-                } 
-                if (parameter === 37446) { // UNMASKED_VENDOR_WEBGL
-                    return webGLVendor;
-                }
-                if (parameter === 7938) { // GL_VERSION
-                    return webGLVersion;
-                }
-                if (parameter === 35724) { // GL_SHADING_LANGUAGE_VERSION
-                    return webGLShadingLanguageVersion;
-                }
-                return originalGetParameter.call(this, parameter);
-            };
-
-            // Override the method for WebGL2 if applicable
-            if (typeof WebGL2RenderingContext !== 'undefined') {
-                const originalGetParameterWebGL2 = WebGL2RenderingContext.prototype.getParameter;
-                WebGL2RenderingContext.prototype.getParameter = function(parameter) {
-                    if (parameter === 37445) {
-                        return webGLRenderer;
-                    }
-                    if (parameter === 37446) {
-                        return webGLVendor;
-                    }
-                    if (parameter === 7938) { // GL_VERSION
-                        return webGLVersion;
-                    }
-                    if (parameter === 35724) { // GL_SHADING_LANGUAGE_VERSION
-                        return webGLShadingLanguageVersion;
-                    }
-                    return originalGetParameterWebGL2.call(this, parameter);
-                };
-            }
-        })();
-        """
+                "source": sbjs.generate_webgl_poof_js
             },
         )
         self.browser.execute_cdp_cmd("Network.enable", {})
@@ -198,130 +96,7 @@ class Browser:
         self.browser.execute_cdp_cmd(
             "Page.addScriptToEvaluateOnNewDocument",
             {
-                "source": """
-            // Disable navigator.userAgentData (Client Hints)
-            Object.defineProperty(navigator, 'userAgentData', {
-                get: function() {
-                    return undefined; // Disable by returning undefined
-                }
-            });
-
-            // Modify navigator properties
-            Object.defineProperty(navigator, 'vendor', {
-                get: function() {
-                    return '"""
-                + navigator_vendor
-                + """'; // Change to desired vendor
-                }
-            });
-
-            Object.defineProperty(navigator, 'userAgent', {
-                get: function() {
-                    return '"""
-                + user_agent
-                + """'; // Set your custom userAgent
-                }
-            });
-
-            Object.defineProperty(navigator, 'appVersion', {
-                get: function() {
-                    return '"""
-                + app_version
-                + """'; // Set your custom appVersion
-                }
-            });
-
-            Object.defineProperty(navigator, 'product', {
-                get: function() {
-                    return '"""
-                + navigator_product
-                + """'; // Set custom product
-                }
-            });
-
-            Object.defineProperty(navigator, 'productSub', {
-                get: function() {
-                    return '"""
-                + navigator_productSub
-                + """'; // Set custom productSub
-                }
-            });
-
-            Object.defineProperty(navigator, 'appName', {
-                get: function() {
-                    return '"""
-                + navigator_appName
-                + """'; // Set custom appName
-                }
-            });
-
-            Object.defineProperty(navigator, 'appCodeName', {
-                get: function() {
-                    return '"""
-                + navigator_appCodeName
-                + """'; // Set custom appCodeName
-                }
-            });
-        """
-            },
-        )
-        self.browser.execute_cdp_cmd(
-            "Page.addScriptToEvaluateOnNewDocument",
-            {
-                "source": """
-            Object.defineProperty(navigator, 'languages', {
-                get: function() { return ['en', 'en-US']; }
-            });
-            Object.defineProperty(navigator, 'maxTouchPoints', {
-                get: function() { return 1; }
-            });"""
-                + """// Disable Battery Status API
-            Object.defineProperty(navigator, 'getBattery', {
-                get: function() {
-                    return undefined; // Disable Battery API by returning undefined
-                }
-            });"""
-                * 0
-                + """// Disable Network Information API
-            Object.defineProperty(navigator, 'connection', {
-                get: function() {
-                    return undefined; // Disable Network Information API by returning undefined
-                }
-            });
-
-            // Disable Web Bluetooth API
-            Object.defineProperty(navigator, 'bluetooth', {
-                get: function() {
-                    return undefined; // Disable Web Bluetooth API by returning undefined
-                }
-            });
-
-            // If you want to modify specific properties within these APIs, you can do so like this:
-            // For Battery API (returning specific values)
-            navigator.getBattery = function() {
-                return Promise.resolve({
-                    charging: false,
-                    chargingTime: Infinity,
-                    dischargingTime: Infinity,
-                    level: 1  // Always full
-                });
-            };
-
-            // For Network Information API (returning custom values)
-            navigator.connection = {
-                effectiveType: 'unknown',
-                downlink: 0,
-                rtt: 0,
-                saveData: true
-            };
-
-            // For Web Bluetooth API (returning custom values)
-            navigator.bluetooth = {
-                getAvailability: function() {
-                    return Promise.resolve(false);  // Bluetooth not available
-                }
-            };
-        """
+                "source": sbjs.generate_navigator_replaces(navigator_vendor, user_agent, app_version, navigator_product, navigator_productSub, navigator_appName, navigator_appCodeName)
             },
         )
 
