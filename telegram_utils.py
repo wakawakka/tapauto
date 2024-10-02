@@ -17,12 +17,21 @@ class Telega:
         api_hash: str,
         phone: str | None = None,
         session_id: str | None = None,
+        proxy: dict = None,
     ):
+        #         proxy = {
+        #     'proxy_type': 'socks5', # (mandatory) protocol to use (see above)
+        #     'addr': '1.1.1.1',      # (mandatory) proxy IP address
+        #     'port': 5555,           # (mandatory) proxy port number
+        #     'username': 'foo',      # (optional) username if the proxy requires auth
+        #     'password': 'bar',      # (optional) password if the proxy requires auth
+        #     'rdns': True            # (optional) whether to use remote or local resolve, default remote
+        # }
         self.phone = phone
         self.session_file = os.path.join(
             settings.session_file_dir, f"{session_id}.session"
         )
-        self.client = TelegramClient(self.session_file, api_id, api_hash, proxy=None)
+        self.client = TelegramClient(self.session_file, api_id, api_hash, proxy=proxy)
         self.login()
         pass
 
