@@ -21,59 +21,70 @@ navigator_productSub = "20030107"
 navigator_appName = "Netscape"
 navigator_appCodeName = "Mozilla"
 
-webGL = [
+webGL = (
     "Android Emulator OpenGL ES Translator (Apple M1 Pro)",
     "Google (Apple)",
     "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
     "WebGL GLSL ES 3.00 (OpenGL ES GLSL ES 3.0 Chromium)",
-]
+)
 
 
 class Browser:
     def __init__(
         self,
-        proxy: bool = False,
         proxy_host: str = "",
         proxy_port: int = 0,
         proxy_user: str = "",
         proxy_password: str = "",
-        profile = "",
-        save_browser_profile = False
+        extension_path = "proxy_common",
+        chrome_profile = "",
+        headless=False
     ):
         options = ChromeOptions()
         options.add_argument(f"--user-agent={user_agent}")
         options.add_argument("--disable-features=UserAgentClientHint")
         options.add_argument("--lang=en")
 
-        if proxy:
-            PROXY_FOLDER_ROOT = os.path.join(os.getcwd(), profile, 'extensions')
-            PROXY_FOLDER = os.path.join(PROXY_FOLDER_ROOT, 'proxy_chrome')        
-
+        if proxy_host:
+            PROXY_FOLDER = os.path.join(os.getcwd(), "extensions",  extension_path)
             if not os.path.exists(PROXY_FOLDER):
                 os.makedirs(PROXY_FOLDER)
+
+            manifest_json = sbjs.chrome_proxy_manifest_json
+            background_js = sbjs.generate_chrome_proxy_background_js(proxy_host, proxy_port, proxy_user, proxy_password)
 
             with open(f"{PROXY_FOLDER}/manifest.json", "w") as f:
                 f.write(sbjs.chrome_proxy_manifest_json)
             with open(f"{PROXY_FOLDER}/background.js", "w") as f:
                 f.write(sbjs.generate_chrome_proxy_background_js(proxy_host, proxy_port, proxy_user, proxy_password))
-            pluginfile = f'{PROXY_FOLDER}/proxy_auth_plugin.zip'
 
+            pluginfile = f'{PROXY_FOLDER}/proxy_auth_plugin.zip'
             with zipfile.ZipFile(pluginfile, 'w') as zp:
                 zp.writestr("manifest.json", manifest_json)
                 zp.writestr("background.js", background_js)
 
-            #options.add_argument(f"--load-extension={os.path.join(PROXY_FOLDER_ROOT, 'extensions', 'webrtc')},{PROXY_FOLDER}")
             options.add_argument(f"--load-extension={PROXY_FOLDER}")
-            self.browser = uc.Chrome(
-                headless=False,
-                options=options,
-            )
+
+        if chrome_profile:
+            CHROME_PROFILE = os.path.join(os.getcwd(), "profiles", chrome_profile)
+            if not os.path.exists(CHROME_PROFILE):
+                os.makedirs(CHROME_PROFILE)
+            options.add_argument(f"--user-data-dir={CHROME_PROFILE}")
+
+        if headless:
+            options.add_argument(f"--headless=new")
+
+        self.browser = uc.Chrome(
+            options=options,
+            #version_main=126,
+            #driver_executable_path="/usr/local/bin/chromedriver-linux64/chromedriver",
+        )
 
         self.browser.set_window_size(700, 900)
         self.browser.execute_cdp_cmd(
             "Page.addScriptToEvaluateOnNewDocument",
             {
-                "source": sbjs.generate_webgl_poof_js
+                "source": sbjs.generate_webgl_poof_js(webGL)
             },
         )
         self.browser.execute_cdp_cmd("Network.enable", {})
@@ -99,6 +110,7 @@ class Browser:
                 "source": sbjs.generate_navigator_replaces(navigator_vendor, user_agent, app_version, navigator_product, navigator_productSub, navigator_appName, navigator_appCodeName)
             },
         )
+        print('Browser initialized!')
 
     def sleep(self):
         time.sleep(random.uniform(0.5, 2))
@@ -135,3 +147,5 @@ class Browser:
                     return search_obj
             except:
                 time.sleep(0.2)
+
+

@@ -14,7 +14,7 @@ from retry import retry
 
 import localsettings
 import settings
-import telegram_utils_new
+import telegram_utils
 import secure_browser
 import notpixel_tools
 
@@ -23,7 +23,6 @@ class PixelActions:
     def __init__(
         self,
         web_app_entry_url,
-        proxy=False,
         proxy_host="",
         proxy_port=0,
         proxy_user="",
@@ -33,14 +32,13 @@ class PixelActions:
         self.energy = 0
         self.auth_token = self.get_autorization_header(web_app_entry_url)
         self.requests_proxy = None
-        if proxy:
+        if proxy_host:
             self.requests_proxy = {
                 "http": f"socks5://{proxy_user}:{proxy_password}@{proxy_host}:{proxy_port}",
                 "https": f"socks5://{proxy_user}:{proxy_password}@{proxy_host}:{proxy_port}",
             }
 
         self.sb = secure_browser.Browser(
-            proxy=proxy,
             proxy_host=proxy_host,
             proxy_port=proxy_port,
             proxy_user=proxy_user,
@@ -258,34 +256,3 @@ class PixelActions:
             "charges_full_restore_in": charges_restore_ts,
         }
 
-
-# for i in range(1, 6):
-#     paint_pixel(i, 80, "#FFC0CB", auth_token=auth_token)
-# # mb.browser.get("https://browserleaks.com/javascript")
-# pass
-
-
-if __name__ == "__main__":
-    from tasks import tasks
-
-    bot_username = "notpx_bot"
-    app_url = "https://app.notpx.app"
-
-    webapp_login_url = telegram_utils_new.get_bot_webapp_url(bot_username, app_url)
-    pa = PixelActions(
-        webapp_login_url,
-        proxy=False,
-        proxy_host="",
-        proxy_port=8000,
-        proxy_user="",
-        proxy_password="",
-    )
-    task = (
-        (80, 80, (255, 141, 161)),
-        (80, 81, (255, 141, 161)),
-        (81, 80, (255, 141, 161)),
-        (81, 81, (255, 141, 161)),
-    )
-    job_result = pa.run(task)
-    print(job_result)
-    # balance = pa.draw()
