@@ -1,6 +1,7 @@
 import os
 import json
 import socks
+import code
 
 from telethon import TelegramClient
 from telethon.sessions import StringSession
@@ -32,7 +33,7 @@ class Telega:
         self.session_file = os.path.join(
             settings.session_file_dir, f"{session_id}.session"
         )
-        self.client = TelegramClient(self.session_file, api_id, api_hash, proxy=None)
+        self.client = TelegramClient(self.session_file, api_id, api_hash, proxy=proxy)
         self.login()
         pass
 
@@ -92,6 +93,7 @@ class Telega:
         res = self.client.loop.run_until_complete(
             self.__a_get_bot_webapp(bot_username, platform, url, param)
         )
+        code.interact(local=locals())
         return res
 
 
@@ -100,17 +102,17 @@ if __name__ == "__main__":
     choosen_akk = localsettings.current_akk
     api_id = akks[choosen_akk][0]
     api_hash = akks[choosen_akk][1]
-    session_id = "+639468092706"
+    session_id = "ZhokirZhokirych"
     # 07196708-zone-custom-region-ZA-sessid-AxU8Dq0u-sessTime-120:6pGOVG0G@f.proxys5.net:6200
     proxy = {
              'proxy_type': socks.SOCKS5, # (mandatory) protocol to use (see above)
              'addr': 'f.proxys5.net',      # (mandatory) proxy IP address
              'port': 6200,           # (mandatory) proxy port number
-             'username': '07196708-zone-custom-region-RU-city-moscow-sessid-5oUpR5gf-sessTime-120',      # (optional) username if the proxy requires auth
+             'username': '07196708-zone-custom-region-KW-sessid-lhshTjz2-sessTime-120',      # (optional) username if the proxy requires auth
              'password': '6pGOVG0G',      # (optional) password if the proxy requires auth
              'rdns': True            # (optional) whether to use remote or local resolve, default remote
         }
-    tg = Telega(api_id=api_id, api_hash=api_hash, session_id=session_id, phone='639468092706', proxy=proxy)
+    tg = Telega(api_id=api_id, api_hash=api_hash, session_id=session_id, phone='66980282450', proxy=proxy)
     # tg.start_bot("notpx_bot")
     # tg.get_bot_webapp(
     #     bot_username="Binance_Moonbix_bot",

@@ -7,3 +7,4 @@ venv
 *.js
 *.zip
 tg_profiles
+telegram_data
