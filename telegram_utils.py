@@ -1,52 +1,146 @@
 import os
+import sys
 import json
-import socks
+import uuid
+import asyncio
 import code
 
-from telethon import TelegramClient
+from opentele.td import TDesktop
+from opentele.tl import TelegramClient as TC_opentele
+from opentele.api import API, UseCurrentSession, CreateNewSession
+
+from telethon import TelegramClient as TC_telethon
 from telethon.sessions import StringSession
 from telethon import functions, types
+import socks
 
 import localsettings
 import settings
+
+
+def create_proxychains_conf(path, proxy_host, proxy_port, proxy_user, proxy_password):
+    pattern = (
+        "strict_chain\n"
+        "proxy_dns\n"
+        "remote_dns_subnet 224\n"
+        "localnet 127.0.0.0/255.0.0.0\n"
+        "delete_fake_ip_after_child_exits 1\n"
+        "default_target PROXY\n"
+        "use_fake_ip_when_hostname_not_matched 1\n"
+        "map_resolved_ip_to_host 0\n"
+        "search_for_host_by_resolved_ip 0\n"
+        "resolve_locally_if_match_hosts 1\n"
+        "gen_fake_ip_using_hashed_hostname 0\n"
+        "first_tunnel_uses_ipv4 1\n"
+        "first_tunnel_uses_ipv6 0\n"
+        "log_level 400\n"
+        "[ProxyList]\n"
+        f"socks5 {proxy_host} {proxy_port} {proxy_user} {proxy_password}\n"
+    )
+    written = 0
+    with open(path, "w") as f:
+        written = f.write(pattern)
+    return written > 0
 
 
 class Telega:
 
     def __init__(
         self,
-        api_id: str,
-        api_hash: str,
-        phone = None,
-        session_id = None,
-        proxy: dict = None,
+        session_id,
+        proxy: bool,
+        proxy_host: str,
+        proxy_port: int,
+        proxy_user: str,
+        proxy_password: str,
+        telegram_cache_dir,
     ):
-        # proxy = {
-        #     'proxy_type': 'socks5', # (mandatory) protocol to use (see above)
-        #     'addr': '1.1.1.1',      # (mandatory) proxy IP address
-        #     'port': 5555,           # (mandatory) proxy port number
-        #     'username': 'foo',      # (optional) username if the proxy requires auth
-        #     'password': 'bar',      # (optional) password if the proxy requires auth
-        #     'rdns': True            # (optional) whether to use remote or local resolve, default remote
-        # }
-        self.phone = phone
-        self.session_file = os.path.join(
-            settings.session_file_dir, f"{session_id}.session"
-        )
-        self.client = TelegramClient(self.session_file, api_id, api_hash, proxy=proxy)
-        self.login()
-        pass
+        self.cache_dir = telegram_cache_dir
+        self.session_dir = os.path.join(self.cache_dir, self.session_id)
+        self.session_file = os.path.join(self.session_dir, f"{session_id}.session")
+        os.makedirs(self.session_dir, exist_ok=True)
 
-    async def __a_login(self):
+        self.telethon_proxy = None
+        if proxy:
+            self.telethon_proxy = {
+                "proxy_type": "socks5",
+                "addr": proxy_host,
+                "port": proxy_port,
+                "username": proxy_user,
+                "password": proxy_password,
+                "rdns": True,
+            }
+
+        self.session_id = session_id
+
+        self.client = None
+        self.loop = asyncio.get_event_loop()
+        # if not session_id:
+        #     self.session_id = str(uuid.uuid4())
+
+    # ONLY WINDOWS MODE
+
+    def init_client_tdata(
+        self, tdata_path, platform="desktop", hardware_id="228", password=None
+    ):
+        self.loop.run_until_complete(
+            self.__a_init_client_tdata(tdata_path, platform, hardware_id, password)
+        )
+
+    async def __a_init_client_tdata(
+        self,
+        tdata_path,
+        platform,
+        hardware_id,  # used for fake "UserAgent" must be constant like a proxy
+        password,
+    ):
+        if self.client:
+            raise Exception("Client already created.")
+
+        match platform:
+            case "desktop":
+                preapi = API.TelegramDesktop
+            case "ios":
+                preapi = API.TelegramIOS
+            case "macos":
+                preapi = API.TelegramMacOS
+            case "android":
+                preapi = API.TelegramAndroid
+            case _:
+                raise Exception('Platform variants: "desktop, ios, macos, android"')
+
+        api = preapi.Generate(unique_id=hardware_id)
+        tdesk = TDesktop(tdata_path)
+        assert tdesk.isLoaded()
+        self.client = await TC_opentele.FromTDesktop(
+            tdesk,
+            session=self.session_file,
+            flag=UseCurrentSession,
+            api=api,
+            password=password,
+            proxy=self.telethon_proxy,
+        )
+        await self.client.connect()
+
+    def init_client_api(self, api_id, api_hash):
+        self.loop.run_until_complete(self.__a_init_client_api(api_id, api_hash))
+
+    async def __a_init_client_api(self, api_id, api_hash, phone=None):
+        if self.client:
+            raise Exception("Client already created.")
+        self.client = TC_telethon(
+            self.session_file, api_id, api_hash, proxy=self.telethon_proxy
+        )
         await self.client.connect()
         auth_success = (
             await self.client.is_user_authorized()
         )  # try to auth via initial session file
         if not auth_success:
             # try to auth via telegram desktop
-            print(f"First run. Sending code request to Telegram Account {self.phone}")
-            # user_phone = input("Enter your phone: ")
-            await self.client.sign_in(self.phone)
+            if not phone:
+                user_phone = input("Enter your phone: ")
+            print(f"First run. Sending code request to Telegram Account {user_phone}")
+            await self.client.sign_in(user_phone)
             self_user = None
             while self_user is None:
                 code = input("Enter the code you just received: ")
@@ -56,7 +150,17 @@ class Telega:
         print(f"Logged in as {me.phone} ({me.id})")
         return auth_success
 
+    def check_client_auth(self):
+        if self.client:
+            auth = self.loop.run_in_executor(self.client.is_user_authorized())
+            if not auth:
+                raise Exception(f"Session {self.session_id} not authorized")
+
+    def start_bot(self, bot_username, param="start"):
+        self.client.loop.run_until_complete(self.__a_start_bot(bot_username, param))
+
     async def __a_start_bot(self, bot_username, param):
+        self.check_client_auth()
         bot = await self.client.get_entity(bot_username)
         result = await self.client(
             functions.messages.StartBotRequest(
@@ -67,7 +171,16 @@ class Telega:
         )
         result_data = json.loads(result.to_json())
 
+    def get_bot_webapp(
+        self, bot_username: str, platform: str, url: str, param: str | None = None
+    ):
+        res = self.client.loop.run_until_complete(
+            self.__a_get_bot_webapp(bot_username, platform, url, param)
+        )
+        return res
+
     async def __a_get_bot_webapp(self, bot_username, platform, url, param):
+        self.check_client_auth()
         bot = await self.client.get_entity(bot_username)
         result = await self.client(
             functions.messages.RequestWebViewRequest(
@@ -81,38 +194,32 @@ class Telega:
         )
         return result.url
 
-    def login(self):
-        self.client.loop.run_until_complete(self.__a_login())
-
-    def start_bot(self, bot_username, param="start"):
-        self.client.loop.run_until_complete(self.__a_start_bot(bot_username, param))
-
-    def get_bot_webapp(
-        self, bot_username: str, platform: str, url: str, param = None
-    ):
-        res = self.client.loop.run_until_complete(
-            self.__a_get_bot_webapp(bot_username, platform, url, param)
-        )
-        code.interact(local=locals())
-        return res
-
 
 if __name__ == "__main__":
     akks = localsettings.akks
     choosen_akk = localsettings.current_akk
-    api_id = akks[choosen_akk][0]
-    api_hash = akks[choosen_akk][1]
-    session_id = "ZhokirZhokirych"
+    api_id = "21724"
+    api_hash = "3e0cb5efcd52300aec5994fdfc5bdc16"
+    session_id = "228"
     # 07196708-zone-custom-region-ZA-sessid-AxU8Dq0u-sessTime-120:6pGOVG0G@f.proxys5.net:6200
-    proxy = {
-             'proxy_type': socks.SOCKS5, # (mandatory) protocol to use (see above)
-             'addr': 'f.proxys5.net',      # (mandatory) proxy IP address
-             'port': 6200,           # (mandatory) proxy port number
-             'username': '07196708-zone-custom-region-KW-sessid-lhshTjz2-sessTime-120',      # (optional) username if the proxy requires auth
-             'password': '6pGOVG0G',      # (optional) password if the proxy requires auth
-             'rdns': True            # (optional) whether to use remote or local resolve, default remote
-        }
-    tg = Telega(api_id=api_id, api_hash=api_hash, session_id=session_id, phone='66980282450', proxy=proxy)
+
+    proxy = True
+    proxy_host = "f.proxys5.net"
+    proxy_port = 6200
+    proxy_user = (
+        "07196708-zone-custom-region-CA-city-toronto-sessid-lAVEyUMz-sessTime-120"
+    )
+    proxy_password = "6pGOVG0G"
+
+    tg = Telega(
+        session_id="228",
+        telegram_cache_dir=settings.telegram_cache,
+        proxy=proxy,
+        proxy_host=proxy_host,
+        proxy_port=proxy_port,
+        proxy_user=proxy_user,
+        proxy_password=proxy_password,
+    )
     # tg.start_bot("notpx_bot")
     # tg.get_bot_webapp(
     #     bot_username="Binance_Moonbix_bot",
@@ -126,3 +233,4 @@ if __name__ == "__main__":
             platform="android",
         )
     )
+
