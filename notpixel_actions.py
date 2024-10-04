@@ -14,7 +14,7 @@ from retry import retry
 
 import localsettings
 import settings
-import telegram_utils
+import telegram_utils_new
 import secure_browser
 import notpixel_tools
 
@@ -271,7 +271,7 @@ if __name__ == "__main__":
     bot_username = "notpx_bot"
     app_url = "https://app.notpx.app"
 
-    webapp_login_url = telegram_utils.get_bot_webapp_url(bot_username, app_url)
+    webapp_login_url = telegram_utils_new.get_bot_webapp_url(bot_username, app_url)
     pa = PixelActions(
         webapp_login_url,
         proxy=False,
