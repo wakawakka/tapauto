@@ -8,7 +8,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver import ChromeOptions
 
-import secure_browser_js as sbjs 
+import secure_browser_js as sbjs
 
 # user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
 # user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko)"
@@ -21,12 +21,12 @@ navigator_productSub = "20030107"
 navigator_appName = "Netscape"
 navigator_appCodeName = "Mozilla"
 
-webGL = [
-    "Android Emulator OpenGL ES Translator (Apple M1 Pro)",
-    "Google (Apple)",
-    "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
-    "WebGL GLSL ES 3.00 (OpenGL ES GLSL ES 3.0 Chromium)",
-]
+webGL = {
+    "webGLRenderer": "Android Emulator OpenGL ES Translator (Apple M1 Pro)",
+    "webGLVendor": "Google (Apple)",
+    "webGLVersion": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "webGLShadingLanguageVersion": "WebGL GLSL ES 3.00 (OpenGL ES GLSL ES 3.0 Chromium)",
+}
 
 
 class Browser:
@@ -37,8 +37,8 @@ class Browser:
         proxy_port: int = 0,
         proxy_user: str = "",
         proxy_password: str = "",
-        profile = "",
-        save_browser_profile = False
+        profile="",
+        save_browser_profile=False,
     ):
         options = ChromeOptions()
         options.add_argument(f"--user-agent={user_agent}")
@@ -46,8 +46,8 @@ class Browser:
         options.add_argument("--lang=en")
 
         if proxy:
-            PROXY_FOLDER_ROOT = os.path.join(os.getcwd(), profile, 'extensions')
-            PROXY_FOLDER = os.path.join(PROXY_FOLDER_ROOT, 'proxy_chrome')        
+            PROXY_FOLDER_ROOT = os.path.join(os.getcwd(), profile, "extensions")
+            PROXY_FOLDER = os.path.join(PROXY_FOLDER_ROOT, "proxy_chrome")
 
             if not os.path.exists(PROXY_FOLDER):
                 os.makedirs(PROXY_FOLDER)
@@ -55,26 +55,39 @@ class Browser:
             with open(f"{PROXY_FOLDER}/manifest.json", "w") as f:
                 f.write(sbjs.chrome_proxy_manifest_json)
             with open(f"{PROXY_FOLDER}/background.js", "w") as f:
-                f.write(sbjs.generate_chrome_proxy_background_js(proxy_host, proxy_port, proxy_user, proxy_password))
-            pluginfile = f'{PROXY_FOLDER}/proxy_auth_plugin.zip'
+                f.write(
+                    sbjs.generate_chrome_proxy_background_js(
+                        proxy_host, proxy_port, proxy_user, proxy_password
+                    )
+                )
+            pluginfile = f"{PROXY_FOLDER}/proxy_auth_plugin.zip"
 
-            with zipfile.ZipFile(pluginfile, 'w') as zp:
+            with zipfile.ZipFile(pluginfile, "w") as zp:
                 zp.writestr("manifest.json", manifest_json)
                 zp.writestr("background.js", background_js)
 
-            #options.add_argument(f"--load-extension={os.path.join(PROXY_FOLDER_ROOT, 'extensions', 'webrtc')},{PROXY_FOLDER}")
+            # options.add_argument(f"--load-extension={os.path.join(PROXY_FOLDER_ROOT, 'extensions', 'webrtc')},{PROXY_FOLDER}")
             options.add_argument(f"--load-extension={PROXY_FOLDER}")
-            self.browser = uc.Chrome(
-                headless=False,
-                options=options,
-            )
+        self.browser = uc.Chrome(
+            headless=False,
+            options=options,
+        )
 
         self.browser.set_window_size(700, 900)
+
+        # set_device_metrics_override = {
+        #     "width": 400,
+        #     "height": 700,
+        #     "deviceScaleFactor": 20,
+        #     "mobile": True,
+        # }
+        # self.browser.execute_cdp_cmd(
+        #     "Emulation.setDeviceMetricsOverride", set_device_metrics_override
+        # )
+
         self.browser.execute_cdp_cmd(
             "Page.addScriptToEvaluateOnNewDocument",
-            {
-                "source": sbjs.generate_webgl_poof_js
-            },
+            {"source": sbjs.generate_webgl_poof_js(webGL)},
         )
         self.browser.execute_cdp_cmd("Network.enable", {})
         self.browser.execute_cdp_cmd(
@@ -82,21 +95,38 @@ class Browser:
             {
                 "userAgent": user_agent,  # Set your custom User-Agent
                 "acceptLanguage": "en-GB,en;q=0.9",  # You can also override Accept-Language
-                "platform": "Linux aarch64",  # Optional platform
-                # "userAgentMetadata": {  # Set `userAgentMetadata` to avoid sending `Sec-CH-UA` hints
-                #     "brands": [],  # Remove Sec-CH-UA by providing empty brands
-                #     "platform": [],  # Remove Sec-CH-UA-Platform
-                #     "platformVersion": "",  # Empty version
-                #     "architecture": "",  # Remove Sec-CH-UA-Arch
-                #     "model": "",  # Remove model (if necessary)
-                #     "mobile": False,  # Whether it's a mobile device
-                # },
+                "platform": "Linux aarch64",  # Correct platform for Android
+                "userAgentMetadata": {
+                    "brands": [
+                        {"brand": "Not-A;Brand", "version": "99"},
+                        {"brand": "Chromium", "version": "115"},
+                        {"brand": "Google Chrome", "version": "115"},
+                    ],  # Mimic Sec-CH-UA with valid brand versions
+                    "fullVersionList": [
+                        {"brand": "Not-A;Brand", "version": "99.0.0.0"},
+                        {"brand": "Chromium", "version": "115.0.0.0"},
+                        {"brand": "Google Chrome", "version": "115.0.0.0"},
+                    ],
+                    "platform": "Android",  # Correct platform for Android
+                    "platformVersion": "10.0",  # Provide an actual platform version for Android
+                    "architecture": "arm64",  # Typical Android architecture
+                    "model": "Pixel 5",  # Set a model if needed
+                    "mobile": True,  # True for mobile devices
+                },
             },
         )
         self.browser.execute_cdp_cmd(
             "Page.addScriptToEvaluateOnNewDocument",
             {
-                "source": sbjs.generate_navigator_replaces(navigator_vendor, user_agent, app_version, navigator_product, navigator_productSub, navigator_appName, navigator_appCodeName)
+                "source": sbjs.generate_navigator_replaces(
+                    navigator_vendor,
+                    user_agent,
+                    app_version,
+                    navigator_product,
+                    navigator_productSub,
+                    navigator_appName,
+                    navigator_appCodeName,
+                )
             },
         )
 

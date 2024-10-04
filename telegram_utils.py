@@ -56,7 +56,7 @@ class Telega:
         telegram_cache_dir,
     ):
         self.cache_dir = telegram_cache_dir
-        self.session_dir = os.path.join(self.cache_dir, self.session_id)
+        self.session_dir = os.path.join(self.cache_dir, session_id)
         self.session_file = os.path.join(self.session_dir, f"{session_id}.session")
         os.makedirs(self.session_dir, exist_ok=True)
 
@@ -122,21 +122,28 @@ class Telega:
         )
         await self.client.connect()
 
-    def init_client_api(self, api_id, api_hash):
-        self.loop.run_until_complete(self.__a_init_client_api(api_id, api_hash))
+    def init_client_api(self, api_id, api_hash, phone=None):
+        self.loop.run_until_complete(self.__a_init_client_api(api_id, api_hash, phone))
 
-    async def __a_init_client_api(self, api_id, api_hash, phone=None):
+    async def __a_init_client_api(self, api_id, api_hash, phone):
         if self.client:
             raise Exception("Client already created.")
+        if isinstance(api_id, str):
+            api_id = int(api_id)
         self.client = TC_telethon(
-            self.session_file, api_id, api_hash, proxy=self.telethon_proxy
+            session=self.session_file,
+            api_id=api_id,
+            api_hash=api_hash,
+            proxy=self.telethon_proxy,
         )
+        TC_telethon()
         await self.client.connect()
         auth_success = (
             await self.client.is_user_authorized()
         )  # try to auth via initial session file
         if not auth_success:
             # try to auth via telegram desktop
+            user_phone = phone
             if not phone:
                 user_phone = input("Enter your phone: ")
             print(f"First run. Sending code request to Telegram Account {user_phone}")
@@ -150,9 +157,9 @@ class Telega:
         print(f"Logged in as {me.phone} ({me.id})")
         return auth_success
 
-    def check_client_auth(self):
+    async def check_client_auth(self):
         if self.client:
-            auth = self.loop.run_in_executor(self.client.is_user_authorized())
+            auth = await self.client.is_user_authorized()
             if not auth:
                 raise Exception(f"Session {self.session_id} not authorized")
 
@@ -160,7 +167,7 @@ class Telega:
         self.client.loop.run_until_complete(self.__a_start_bot(bot_username, param))
 
     async def __a_start_bot(self, bot_username, param):
-        self.check_client_auth()
+        await self.check_client_auth()
         bot = await self.client.get_entity(bot_username)
         result = await self.client(
             functions.messages.StartBotRequest(
@@ -180,7 +187,7 @@ class Telega:
         return res
 
     async def __a_get_bot_webapp(self, bot_username, platform, url, param):
-        self.check_client_auth()
+        await self.check_client_auth()
         bot = await self.client.get_entity(bot_username)
         result = await self.client(
             functions.messages.RequestWebViewRequest(
@@ -193,44 +200,3 @@ class Telega:
             )
         )
         return result.url
-
-
-if __name__ == "__main__":
-    akks = localsettings.akks
-    choosen_akk = localsettings.current_akk
-    api_id = "21724"
-    api_hash = "3e0cb5efcd52300aec5994fdfc5bdc16"
-    session_id = "228"
-    # 07196708-zone-custom-region-ZA-sessid-AxU8Dq0u-sessTime-120:6pGOVG0G@f.proxys5.net:6200
-
-    proxy = True
-    proxy_host = "f.proxys5.net"
-    proxy_port = 6200
-    proxy_user = (
-        "07196708-zone-custom-region-CA-city-toronto-sessid-lAVEyUMz-sessTime-120"
-    )
-    proxy_password = "6pGOVG0G"
-
-    tg = Telega(
-        session_id="228",
-        telegram_cache_dir=settings.telegram_cache,
-        proxy=proxy,
-        proxy_host=proxy_host,
-        proxy_port=proxy_port,
-        proxy_user=proxy_user,
-        proxy_password=proxy_password,
-    )
-    # tg.start_bot("notpx_bot")
-    # tg.get_bot_webapp(
-    #     bot_username="Binance_Moonbix_bot",
-    #     url="https://www.binance.com/en/game/tg/moon-bix",
-    #     platform="android",
-    # )
-    print(
-        tg.get_bot_webapp(
-            bot_username="notpixel",
-            url="https://notpx.app",
-            platform="android",
-        )
-    )
-
