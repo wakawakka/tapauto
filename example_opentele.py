@@ -23,8 +23,8 @@ import notpixel_actions
 if __name__ == '__main__':
     # ALL we should set about user (probably import from settings)
     root=r'C:\Users\gburgerfuck\Desktop\TELEGRAMZ'
-    number='15874097035'
-    proxy_user="07196708-zone-custom-region-CA-city-toronto-sessid-7khbQpp3-sessTime-120"
+    number='8801747034955'
+    proxy_user="07196708-zone-custom-region-BD-sessid-jGLhrrfL-sessTime-120"
 
 
 
@@ -41,7 +41,7 @@ if __name__ == '__main__':
         proxy_password=proxy_password,
     )
     print(2)
-    tdata_path = r"C:\Users\gburgerfuck\Downloads\15874097035\tdata"#os.path.join(root, f"tportable-{number}", "Telegram", "tdata")
+    tdata_path = r"C:\Users\gburgerfuck\Downloads\8801747034955\tdata"#os.path.join(root, f"tportable-{number}", "Telegram", "tdata")
     tg.init_client_tdata(tdata_path, platform="desktop", hardware_id="228", password=None)
     print(3)
     app_url = tg.get_bot_webapp(
