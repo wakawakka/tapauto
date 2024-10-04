@@ -21,7 +21,7 @@ class Telega:
         session_id = None,
         proxy: dict = None,
     ):
-        #         proxy = {
+        # proxy = {
         #     'proxy_type': 'socks5', # (mandatory) protocol to use (see above)
         #     'addr': '1.1.1.1',      # (mandatory) proxy IP address
         #     'port': 5555,           # (mandatory) proxy port number
