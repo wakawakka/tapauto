@@ -55,8 +55,7 @@ class Telega:
         proxy_password: str,
     ):
         self.cache_dir = telegram_cache_dir
-        self.session_id = session_id
-        self.session_dir = os.path.join(self.cache_dir, self.session_id)
+        self.session_dir = os.path.join(self.cache_dir, session_id)
         self.session_file = os.path.join(self.session_dir, f"{session_id}.session")
         os.makedirs(self.session_dir, exist_ok=True)
 
@@ -122,21 +121,28 @@ class Telega:
         )
         await self.client.connect()
 
-    def init_client_api(self, api_id, api_hash):
-        self.loop.run_until_complete(self.__a_init_client_api(api_id, api_hash))
+    def init_client_api(self, api_id, api_hash, phone=None):
+        self.loop.run_until_complete(self.__a_init_client_api(api_id, api_hash, phone))
 
-    async def __a_init_client_api(self, api_id, api_hash, phone=None):
+    async def __a_init_client_api(self, api_id, api_hash, phone):
         if self.client:
             raise Exception("Client already created.")
+        if isinstance(api_id, str):
+            api_id = int(api_id)
         self.client = TC_telethon(
-            self.session_file, api_id, api_hash, proxy=self.telethon_proxy
+            session=self.session_file,
+            api_id=api_id,
+            api_hash=api_hash,
+            proxy=self.telethon_proxy,
         )
+        TC_telethon()
         await self.client.connect()
         auth_success = (
             await self.client.is_user_authorized()
         )  # try to auth via initial session file
         if not auth_success:
             # try to auth via telegram desktop
+            user_phone = phone
             if not phone:
                 user_phone = input("Enter your phone: ")
             print(f"First run. Sending code request to Telegram Account {user_phone}")

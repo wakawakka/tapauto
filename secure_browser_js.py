@@ -1,5 +1,4 @@
-chrome_proxy_manifest_json =\
-"""
+chrome_proxy_manifest_json = """
 {
     "version": "1.0.0",
     "manifest_version": 2,
@@ -20,9 +19,11 @@ chrome_proxy_manifest_json =\
 }
 """
 
-def generate_chrome_proxy_background_js(proxy_host, proxy_port, proxy_user, proxy_password):
-    background_js = \
-"""
+
+def generate_chrome_proxy_background_js(
+    proxy_host, proxy_port, proxy_user, proxy_password
+):
+    background_js = """
 var config = {
         mode: "fixed_servers",
         rules: {
@@ -51,13 +52,22 @@ chrome.webRequest.onAuthRequired.addListener(
             {urls: ["<all_urls>"]},
             ['blocking']
 );
-""" % (proxy_host, proxy_port, proxy_user, proxy_password)
+""" % (
+        proxy_host,
+        proxy_port,
+        proxy_user,
+        proxy_password,
+    )
     return background_js
 
 
 def generate_webgl_poof_js(webGL):
-    js = \
-"""
+    render = webGL["webGLRenderer"]
+    vendor = webGL["webGLVendor"]
+    version = webGL["webGLVersion"]
+    shading = webGL["webGLShadingLanguageVersion"]
+
+    js = """
 (function() {
     const webGLRenderer = '%s';
     const webGLVendor = '%s';
@@ -104,13 +114,25 @@ def generate_webgl_poof_js(webGL):
         };
     }
 })();
-""" % webGL
-
+""" % (
+        render,
+        vendor,
+        version,
+        shading,
+    )
     return js
 
-def generate_navigator_replaces(navigator_vendor, user_agent, app_version, navigator_product, navigator_productSub, navigator_appName, navigator_appCodeName):
-    nav_js =\
-"""
+
+def generate_navigator_replaces(
+    navigator_vendor,
+    user_agent,
+    app_version,
+    navigator_product,
+    navigator_productSub,
+    navigator_appName,
+    navigator_appCodeName,
+):
+    nav_js = """
 // Disable navigator.userAgentData (Client Hints)
 Object.defineProperty(navigator, 'userAgentData', {
     get: function() {
@@ -160,5 +182,13 @@ Object.defineProperty(navigator, 'appCodeName', {
         return '%s'; // Set custom appCodeName
     }
 });
-""" % (navigator_vendor, user_agent, app_version, navigator_product, navigator_productSub, navigator_appName, navigator_appCodeName)
+""" % (
+        navigator_vendor,
+        user_agent,
+        app_version,
+        navigator_product,
+        navigator_productSub,
+        navigator_appName,
+        navigator_appCodeName,
+    )
     return nav_js
