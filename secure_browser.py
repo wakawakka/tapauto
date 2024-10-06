@@ -36,9 +36,9 @@ class Browser:
         proxy_port: int = 0,
         proxy_user: str = "",
         proxy_password: str = "",
-        extension_path = "proxy_common",
-        chrome_profile = "",
-        headless=False
+        extension_path="proxy_common",
+        chrome_profile="",
+        headless=False,
     ):
         options = ChromeOptions()
         options.add_argument(f"--user-agent={user_agent}")
@@ -46,20 +46,26 @@ class Browser:
         options.add_argument("--lang=en")
 
         if proxy_host:
-            PROXY_FOLDER = os.path.join(os.getcwd(), "extensions",  extension_path)
+            PROXY_FOLDER = os.path.join(os.getcwd(), "extensions", extension_path)
             if not os.path.exists(PROXY_FOLDER):
                 os.makedirs(PROXY_FOLDER)
 
             manifest_json = sbjs.chrome_proxy_manifest_json
-            background_js = sbjs.generate_chrome_proxy_background_js(proxy_host, proxy_port, proxy_user, proxy_password)
+            background_js = sbjs.generate_chrome_proxy_background_js(
+                proxy_host, proxy_port, proxy_user, proxy_password
+            )
 
             with open(f"{PROXY_FOLDER}/manifest.json", "w") as f:
                 f.write(sbjs.chrome_proxy_manifest_json)
             with open(f"{PROXY_FOLDER}/background.js", "w") as f:
-                f.write(sbjs.generate_chrome_proxy_background_js(proxy_host, proxy_port, proxy_user, proxy_password))
+                f.write(
+                    sbjs.generate_chrome_proxy_background_js(
+                        proxy_host, proxy_port, proxy_user, proxy_password
+                    )
+                )
 
-            pluginfile = f'{PROXY_FOLDER}/proxy_auth_plugin.zip'
-            with zipfile.ZipFile(pluginfile, 'w') as zp:
+            pluginfile = f"{PROXY_FOLDER}/proxy_auth_plugin.zip"
+            with zipfile.ZipFile(pluginfile, "w") as zp:
                 zp.writestr("manifest.json", manifest_json)
                 zp.writestr("background.js", background_js)
 
@@ -76,8 +82,8 @@ class Browser:
 
         self.browser = uc.Chrome(
             options=options,
-            #version_main=126,
-            #driver_executable_path="/usr/local/bin/chromedriver-linux64/chromedriver",
+            # version_main=126,
+            # driver_executable_path="/usr/local/bin/chromedriver-linux64/chromedriver",
         )
 
         self.browser.set_window_size(700, 900)
@@ -91,12 +97,23 @@ class Browser:
         # self.browser.execute_cdp_cmd(
         #     "Emulation.setDeviceMetricsOverride", set_device_metrics_override
         # )
+        mobile_emulation_settings = {
+            "width": 375,  # Mobile width
+            "height": 812,  # Mobile height
+            "deviceScaleFactor": 3,  # DPI scale for high-res devices
+            "mobile": True,  # Emulate mobile device
+        }
 
+        # Execute the Chrome DevTools Protocol command to switch to mobile mode
+        self.browser.execute_cdp_cmd(
+            "Emulation.setDeviceMetricsOverride", mobile_emulation_settings
+        )
+        self.browser.execute_cdp_cmd(
+            "Emulation.setTouchEmulationEnabled", {"enabled": True}
+        )
         self.browser.execute_cdp_cmd(
             "Page.addScriptToEvaluateOnNewDocument",
-            {
-                "source": sbjs.generate_webgl_poof_js(webGL)
-            },
+            {"source": sbjs.generate_webgl_poof_js(webGL)},
         )
         self.browser.execute_cdp_cmd("Network.enable", {})
         self.browser.execute_cdp_cmd(
@@ -138,7 +155,7 @@ class Browser:
                 )
             },
         )
-        print('Browser initialized!')
+        print("Browser initialized!")
 
     def sleep(self):
         time.sleep(random.uniform(0.5, 2))
@@ -175,5 +192,3 @@ class Browser:
                     return search_obj
             except:
                 time.sleep(0.2)
-
-
