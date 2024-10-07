@@ -2,11 +2,12 @@ import time
 import os
 import random
 import zipfile
+import base64
 
 import undetected_chromedriver as uc
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
-from selenium.webdriver import ChromeOptions
+from selenium.webdriver import ChromeOptions, Firefox, FirefoxOptions, FirefoxProfile
 
 import secure_browser_js as sbjs
 
@@ -30,6 +31,93 @@ webGL = {
 
 
 class Browser:
+    def sleep(self):
+        time.sleep(random.uniform(0.5, 2))
+
+    def small_sleep(self):
+        time.sleep(random.uniform(0.1, 0.2))
+
+    def scroll_and_click(self, element):
+        action = ActionChains(self.browser, duration=500)
+        action.scroll_to_element(element)
+        action.move_to_element_with_offset(
+            element, random.randint(-2, 2), random.randint(-2, 2)
+        )
+        action.click()
+        action.perform()
+
+    def input_text(self, element, text):
+        self.scroll_and_click(element)
+        for key in text:
+            element.send_keys(key)
+            self.small_sleep()
+        self.sleep()
+
+    def find_element(self, By_what, By_value, many=False, delay=10):
+        t = time.time()
+        if many:
+            find_fn = self.browser.find_elements
+        else:
+            find_fn = self.browser.find_element
+        while time.time() < t + delay:
+            try:
+                search_obj = find_fn(By_what, By_value)
+                if search_obj:
+                    return search_obj
+            except:
+                time.sleep(0.2)
+
+
+class SecFirefoxBrowser(Browser):
+    def __init__(
+        self,
+        proxy_host: str = "",
+        proxy_port: int = 0,
+        proxy_user: str = "",
+        proxy_password: str = "",
+        extension_path="proxy_common_ff",
+        headless=False,
+    ):
+        # obmazka developing now
+        options = FirefoxOptions()
+
+        if proxy_host:
+            plugin_path = self.__init_proxy(
+                extension_path, proxy_host, proxy_port, proxy_user, proxy_password
+            )
+
+        self.browser = Firefox(options=options)
+        if plugin_path:
+            self.browser.install_addon(plugin_path, temporary=True)
+
+    def __init_proxy(
+        self, extension_path, proxy_host, proxy_port, proxy_user, proxy_password
+    ):
+        PROXY_FOLDER = os.path.join(os.getcwd(), "extensions", extension_path)
+        if not os.path.exists(PROXY_FOLDER):
+            os.makedirs(PROXY_FOLDER)
+
+        manifest_json = sbjs.firefox_proxy_manifest_json
+        background_js = sbjs.generate_firefox_proxy_background_js(
+            proxy_host, proxy_port, proxy_user, proxy_password
+        )
+
+        with open(f"{PROXY_FOLDER}/manifest.json", "w") as f:
+            f.write(manifest_json)
+        with open(f"{PROXY_FOLDER}/background.js", "w") as f:
+            f.write(background_js)
+
+        plugin_path = os.path.abspath(
+            os.path.join(PROXY_FOLDER, "proxy_auth_plugin.xpi")
+        )
+        with zipfile.ZipFile(plugin_path, "w") as zp:
+            zp.writestr("manifest.json", manifest_json)
+            zp.writestr("background.js", background_js)
+
+        return plugin_path
+
+
+class SecChromeBrowser(Browser):
     def __init__(
         self,
         proxy_host: str = "",
@@ -156,39 +244,3 @@ class Browser:
             },
         )
         print("Browser initialized!")
-
-    def sleep(self):
-        time.sleep(random.uniform(0.5, 2))
-
-    def small_sleep(self):
-        time.sleep(random.uniform(0.1, 0.2))
-
-    def scroll_and_click(self, element):
-        action = ActionChains(self.browser, duration=500)
-        action.scroll_to_element(element)
-        action.move_to_element_with_offset(
-            element, random.randint(-2, 2), random.randint(-2, 2)
-        )
-        action.click()
-        action.perform()
-
-    def input_text(self, element, text):
-        self.scroll_and_click(element)
-        for key in text:
-            element.send_keys(key)
-            self.small_sleep()
-        self.sleep()
-
-    def find_element(self, By_what, By_value, many=False, delay=10):
-        t = time.time()
-        if many:
-            find_fn = self.browser.find_elements
-        else:
-            find_fn = self.browser.find_element
-        while time.time() < t + delay:
-            try:
-                search_obj = find_fn(By_what, By_value)
-                if search_obj:
-                    return search_obj
-            except:
-                time.sleep(0.2)

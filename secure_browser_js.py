@@ -19,6 +19,33 @@ chrome_proxy_manifest_json = """
 }
 """
 
+firefox_proxy_manifest_json = """
+{
+  "name": "My Firefox Proxy",
+  "version": "1.0.0b",
+  "manifest_version": 2,
+  "permissions": [
+    "browsingData",
+    "proxy",
+    "storage",
+    "tabs",
+    "webRequest",
+    "webRequestBlocking",
+    "downloads",
+    "notifications",
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "myproxy@example.org"
+    }
+  }
+}
+"""
+
 
 def generate_chrome_proxy_background_js(
     proxy_host, proxy_port, proxy_user, proxy_password
@@ -52,6 +79,64 @@ chrome.webRequest.onAuthRequired.addListener(
             {urls: ["<all_urls>"]},
             ['blocking']
 );
+""" % (
+        proxy_host,
+        proxy_port,
+        proxy_user,
+        proxy_password,
+    )
+    return background_js
+
+
+def generate_firefox_proxy_background_js(
+    proxy_host, proxy_port, proxy_user, proxy_password
+):
+    background_js = """
+// Proxy credentials
+const PROXY_HOST = "%s";
+const PROXY_PORT = "%s";
+const PROXY_USERNAME = "%s";
+const PROXY_PASSWORD = "%s";
+
+var config = {
+    mode: "fixed_servers",
+    rules: {
+      singleProxy: {
+        scheme: "http",
+        host: PROXY_HOST,
+        port: PROXY_PORT
+      },
+      bypassList: []
+    }
+ };
+
+
+function proxyRequest(request_data) {
+    return {
+        type: "http",
+        host: PROXY_HOST, 
+        port: PROXY_PORT
+    };
+}
+
+browser.proxy.settings.set({value: config, scope: "regular"}, function() {;});
+
+function callbackFn(details) {
+return {
+    authCredentials: {
+        username: PROXY_USERNAME,
+        password: PROXY_PASSWORD
+    }
+};
+}
+
+browser.webRequest.onAuthRequired.addListener(
+        callbackFn,
+        {urls: ["<all_urls>"]},
+        ['blocking']
+);
+
+browser.proxy.onRequest.addListener(proxyRequest, {urls: ["<all_urls>"]});
 """ % (
         proxy_host,
         proxy_port,

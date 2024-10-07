@@ -27,6 +27,7 @@ class PixelActions:
         proxy_port=0,
         proxy_user="",
         proxy_password="",
+        proxy_extention_path="",
     ):
         self.web_app_entry_url = web_app_entry_url
         self.energy = 0
@@ -38,11 +39,12 @@ class PixelActions:
                 "https": f"socks5://{proxy_user}:{proxy_password}@{proxy_host}:{proxy_port}",
             }
 
-        self.sb = secure_browser.Browser(
+        self.sb = secure_browser.SecFirefoxBrowser(
             proxy_host=proxy_host,
             proxy_port=proxy_port,
             proxy_user=proxy_user,
             proxy_password=proxy_password,
+            extension_path=proxy_extention_path,
         )
 
     def gui_app_start(self):
@@ -255,4 +257,3 @@ class PixelActions:
             "charges": self.energy,
             "charges_full_restore_in": charges_restore_ts,
         }
-
