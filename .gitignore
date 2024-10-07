@@ -3,8 +3,8 @@
 localsettings.py
 __pycache__
 venv
-*.json
-*.js
 *.zip
 tg_profiles
 telegram_data
+data/
+extensions/

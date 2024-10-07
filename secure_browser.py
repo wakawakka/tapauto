@@ -85,6 +85,8 @@ class SecFirefoxBrowser(Browser):
             plugin_path = self.__init_proxy(
                 extension_path, proxy_host, proxy_port, proxy_user, proxy_password
             )
+        if headless:
+            options.add_argument(f"--headless=new")
 
         self.browser = Firefox(options=options)
         if plugin_path:

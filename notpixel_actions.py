@@ -9,7 +9,10 @@ from urllib.parse import unquote
 import requests
 from PIL import Image
 import numpy as np
+import pandas as pd
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from retry import retry
 
 import localsettings
@@ -28,6 +31,8 @@ class PixelActions:
         proxy_user="",
         proxy_password="",
         proxy_extention_path="",
+        worker_type="firefox",
+        headless=False
     ):
         self.web_app_entry_url = web_app_entry_url
         self.energy = 0
@@ -38,17 +43,32 @@ class PixelActions:
                 "http": f"socks5://{proxy_user}:{proxy_password}@{proxy_host}:{proxy_port}",
                 "https": f"socks5://{proxy_user}:{proxy_password}@{proxy_host}:{proxy_port}",
             }
+        args = {
+            'proxy_host': proxy_host,
+            'proxy_port': proxy_port,
+            'proxy_user': proxy_user,
+            'proxy_password': proxy_password,
+            'headless': headless
+        }
+        if proxy_extention_path:
+            args['extention_path'] = proxy_extention_path
 
-        self.sb = secure_browser.SecFirefoxBrowser(
-            proxy_host=proxy_host,
-            proxy_port=proxy_port,
-            proxy_user=proxy_user,
-            proxy_password=proxy_password,
-            extension_path=proxy_extention_path,
-        )
+        if worker_type == "firefox":
+            self.sb = secure_browser.SecFirefoxBrowser(**args)
+        elif woerker_type == 'chrome':
+            self.sb = secure_browser.SecChromeBrowser(**args)
 
-    def gui_app_start(self):
-        self.sb.browser.get(self.web_app_entry_url)
+    def gui_app_start(self, retries=None, timeout=5):
+        if retries:
+            for i in range(retries):
+                self.sb.browser.get(self.web_app_entry_url)
+                try:
+                    WebDriverWait(self.sb.browser, timeout).until(EC.element_to_be_clickable((By.XPATH, "//div/button")))
+                    break
+                except Exception as e:
+                    print('not found button:', e.message)
+        else:
+            self.sb.browser.get(self.web_app_entry_url)
 
     def gui_click_initial_buttons(self):
         button_texts = ["Okay", "Gooooo"]
@@ -249,11 +269,10 @@ class PixelActions:
         max_charges = acc_state.get("max_charges", 0)
 
         painted = self.paint(pixels_to_paint)
-        charges_restore_ts = int(
-            time.time() + recharge_speed * (max_charges - self.energy)
-        )
+        charge_restore_in_seconds = recharge_speed * (max_charges - self.energy)
+        charge_restore_time = (pd.Timestamp.now() + pd.Timedelta(seconds=charge_restore_in_seconds)).strftime('%Y-%m-%d %H:%M:%S')
         return {
             "painted": painted,
             "charges": self.energy,
-            "charges_full_restore_in": charges_restore_ts,
+            "charges_full_restore_time": charge_restore_time,
         }

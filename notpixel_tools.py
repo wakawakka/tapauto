@@ -11,6 +11,25 @@ def rgb_to_hex(pix):
     n = (r << 16) + (g << 8) + b
     return f"#{n:06X}"
 
+def parse_proxy_url(proxy_url):
+    import re
+    from urllib.parse import urlparse
+
+    parsed_url = urlparse(proxy_url)
+    
+    # Extracting proxy host and port
+    proxy_host = parsed_url.hostname
+    proxy_port = parsed_url.port
+    
+    # Extracting proxy username and password from userinfo
+    if parsed_url.username and parsed_url.password:
+        proxy_user = parsed_url.username
+        proxy_pass = parsed_url.password
+    else:
+        proxy_user = None
+        proxy_pass = None
+    
+    return proxy_host, proxy_port, proxy_user, proxy_pass
 
 def get_image_state(proxies=None):
     image_url = "https://image.notpx.app/api/v2/image"

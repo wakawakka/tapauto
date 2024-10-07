@@ -51,25 +51,27 @@ if __name__ == '__main__':
         )
     print(app_url)
 
+    huy_v_rot_styles = "&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
 
     print(4)
     pa = notpixel_actions.PixelActions(
-        app_url,
+        app_url + huy_v_rot_styles,
         proxy_host=proxy_host,
         proxy_port=6200,
         proxy_user=proxy_user,
         proxy_password=proxy_password,
+        headless=True
     )
     print(5)
     task = (
-        (80, 80, (255, 141, 161)),
-        (80, 81, (255, 141, 161)),
-        (81, 80, (255, 141, 161)),
-        (81, 81, (255, 141, 161)),
+        #(80, 80, (255, 141, 161)),
+        (184, 181, (255, 141, 161)),
+        #(81, 80, (255, 141, 161)),
+        #(81, 81, (255, 141, 161)),
     )
-    pa.gui_app_start()
-    code.interact(local=locals())
+    time.sleep(3)
     job_result = pa.run(task)
     print(6)
     print(job_result)
+    code.interact(local=locals())
     # balance = pa.draw()
