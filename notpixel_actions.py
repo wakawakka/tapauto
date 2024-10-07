@@ -20,6 +20,7 @@ import settings
 import telegram_utils
 import secure_browser
 import notpixel_tools
+import useragents
 
 
 class PixelActions:
@@ -31,44 +32,69 @@ class PixelActions:
         proxy_user="",
         proxy_password="",
         proxy_extention_path="",
-        worker_type="firefox",
-        headless=False
+        gui_browser_worker_type=None,  # chrome or firefox, allow NONE to not start the browser
+        headless=False,
     ):
         self.web_app_entry_url = web_app_entry_url
         self.energy = 0
         self.auth_token = self.get_autorization_header(web_app_entry_url)
         self.requests_proxy = None
+        self.user_agent = None
+        self.set_ua()
         if proxy_host:
             self.requests_proxy = {
                 "http": f"socks5://{proxy_user}:{proxy_password}@{proxy_host}:{proxy_port}",
                 "https": f"socks5://{proxy_user}:{proxy_password}@{proxy_host}:{proxy_port}",
             }
-        args = {
-            'proxy_host': proxy_host,
-            'proxy_port': proxy_port,
-            'proxy_user': proxy_user,
-            'proxy_password': proxy_password,
-            'headless': headless
-        }
-        if proxy_extention_path:
-            args['extention_path'] = proxy_extention_path
 
-        if worker_type == "firefox":
-            self.sb = secure_browser.SecFirefoxBrowser(**args)
-        elif woerker_type == 'chrome':
-            self.sb = secure_browser.SecChromeBrowser(**args)
+        self.sb = None
+        if gui_browser_worker_type:
+            args = {
+                "proxy_host": proxy_host,
+                "proxy_port": proxy_port,
+                "proxy_user": proxy_user,
+                "proxy_password": proxy_password,
+                "headless": headless,
+            }
+            if proxy_extention_path:
+                args["extention_path"] = proxy_extention_path
+            if gui_browser_worker_type == "firefox":
+                self.sb = secure_browser.SecFirefoxBrowser(**args)
+            elif gui_browser_worker_type == "chrome":
+                self.sb = secure_browser.SecChromeBrowser(**args)
+
+    def set_ua(self):
+        dec_url = unquote(unquote(self.web_app_entry_url))
+        user_id_match = re.search(r'id":(\d+),', dec_url)
+        if not user_id_match:
+            user_id = random.randint(0, 100)
+        else:
+            user_id = user_id_match.group(1)
+        l = len(useragents.mobile)
+        self.user_agent = useragents.mobile[int(user_id) % l]["ua"]
 
     def gui_app_start(self, retries=None, timeout=5):
         if retries:
             for i in range(retries):
                 self.sb.browser.get(self.web_app_entry_url)
                 try:
-                    WebDriverWait(self.sb.browser, timeout).until(EC.element_to_be_clickable((By.XPATH, "//div/button")))
+                    WebDriverWait(self.sb.browser, timeout).until(
+                        EC.element_to_be_clickable((By.XPATH, "//div/button"))
+                    )
                     break
                 except Exception as e:
-                    print('not found button:', e, str(e))
+                    print("not found button:", e, str(e))
         else:
             self.sb.browser.get(self.web_app_entry_url)
+
+    @retry(tries=3, delay=10)
+    def emulate_app_start(self):
+        headers = {"User-Agent": self.user_agent}
+        r = requests.get(
+            self.web_app_entry_url, proxies=self.requests_proxy, headers=headers
+        )
+        print(f"Req GET entry URL status: {r.status_code}")
+        return r.status_code == 200
 
     def gui_click_initial_buttons(self):
         button_texts = ["Okay", "Gooooo"]
@@ -105,18 +131,18 @@ class PixelActions:
             "Sec-Fetch-Dest": "empty",
             "sec-fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-site",
-            "User-Agent": "Mozilla/5.0 (Linux; Android 13; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.61 Mobile Safari/537.36",
+            "User-Agent": self.user_agent,  # "Mozilla/5.0 (Linux; Android 13; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.61 Mobile Safari/537.36",
             "Referer": "https://app.notpx.app/",
             "Priority": "u=1, i",
             "Origin": "https://app.notpx.app",
-            "Referer": "https://app.notpx.app/",
         }
 
     @retry(tries=3, delay=10)
     def claim(self):
-        browser_url = "https://app.notpx.app/claiming"
-        if self.sb.browser.current_url != browser_url:
-            self.sb.browser.get(browser_url)
+        if self.sb:
+            browser_url = "https://app.notpx.app/claiming"
+            if self.sb.browser.current_url != browser_url:
+                self.sb.browser.get(browser_url)
         url = "https://notpx.app/api/v1/mining/claim"
         headers = self.get_headers_api()
         r = requests.get(url, headers=headers, proxies=self.requests_proxy)
@@ -147,9 +173,10 @@ class PixelActions:
             return False
 
     def install_upgrades(self, balance, boosts):
-        browser_url = "https://app.notpx.app/claiming"
-        if self.sb.browser.current_url != browser_url:
-            self.sb.browser.get(browser_url)
+        if self.sb:
+            browser_url = "https://app.notpx.app/claiming"
+            if self.sb.browser.current_url != browser_url:
+                self.sb.browser.get(browser_url)
         energy_limit_current_level = boosts.get("energyLimit")
         energy_limit_upgrade_price = settings.upgrade_charge_count.get(
             energy_limit_current_level + 1
@@ -182,9 +209,10 @@ class PixelActions:
 
     @retry(tries=3, delay=10)
     def get_acc_status(self):
-        browser_url = "https://app.notpx.app/claiming"
-        if self.sb.browser.current_url != browser_url:
-            self.sb.browser.get(browser_url)
+        if self.sb:
+            browser_url = "https://app.notpx.app/claiming"
+            if self.sb.browser.current_url != browser_url:
+                self.sb.browser.get(browser_url)
         url = "https://notpx.app/api/v1/mining/status"
         headers = self.get_headers_api()
         r = requests.get(url, headers=headers, proxies=self.requests_proxy)
@@ -218,9 +246,10 @@ class PixelActions:
 
     @retry(tries=3, delay=10)
     def paint_pixel(self, x: int, y: int, color: tuple):
-        browser_url = "https://app.notpx.app/"
-        if self.sb.browser.current_url != browser_url:
-            self.sb.browser.get(browser_url)
+        if self.sb:
+            browser_url = "https://app.notpx.app/"
+            if self.sb.browser.current_url != browser_url:
+                self.sb.browser.get(browser_url)
         url = "https://notpx.app/api/v1/repaint/start"
         color_s = notpixel_tools.rgb_to_hex(color)
         # if len(color_s) != 7 or not re.match("#[ABCDEF0123456789]{6}", color_s):
@@ -259,8 +288,11 @@ class PixelActions:
         return painted
 
     def run(self, pixels_to_paint):
-        self.gui_app_start()
-        self.gui_click_initial_buttons()
+        if self.sb:
+            self.gui_app_start()
+            self.gui_click_initial_buttons()
+        else:
+            self.emulate_app_start()
         acc_state = self.get_acc_status()
         charges = acc_state.get("charges", 0)
         if charges > 0:
@@ -270,7 +302,9 @@ class PixelActions:
 
         painted = self.paint(pixels_to_paint)
         charge_restore_in_seconds = recharge_speed * (max_charges - self.energy)
-        charge_restore_time = (pd.Timestamp.now() + pd.Timedelta(seconds=charge_restore_in_seconds)).strftime('%Y-%m-%d %H:%M:%S')
+        charge_restore_time = (
+            pd.Timestamp.now() + pd.Timedelta(seconds=charge_restore_in_seconds)
+        ).strftime("%Y-%m-%d %H:%M:%S")
         return {
             "painted": painted,
             "charges": self.energy,
