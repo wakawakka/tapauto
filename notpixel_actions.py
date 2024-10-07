@@ -66,7 +66,7 @@ class PixelActions:
                     WebDriverWait(self.sb.browser, timeout).until(EC.element_to_be_clickable((By.XPATH, "//div/button")))
                     break
                 except Exception as e:
-                    print('not found button:', e.message)
+                    print('not found button:', e, str(e))
         else:
             self.sb.browser.get(self.web_app_entry_url)
 

@@ -11,6 +11,7 @@
 from PIL import Image
 import code
 import json
+import pandas as pd
 
 from notpixel_actions import PixelActions
 import notpixel_tools
@@ -40,14 +41,19 @@ class Fucktory:
         self.task = notpixel_tools.get_job(self.img, self.location)
     
     def get_workers(self, fname):
+        self.workers_fname = fname
         with open(fname) as f:
             self.workers = json.load(f)
+
+    def dump_workers(self):
+        with open(self.workers_fname, 'w') as f:
+            f.write(json.dumps(self.workers, indent=4))
 
     def split_task_by_workers(self, task):
         pass
     
     def single_run(self, worker, task):
-        proxy_host, proxy_port, proxy_user, proxy_password = notpixel_tools.parse_proxy_url(worker['proxy'])
+        proxy_host, proxy_port, proxy_user, proxy_password = notpixel_tools.parse_proxy_url('https://' + worker['proxy'])
         tg = telegram_utils.Telega(
             session_id=worker['number'],
             telegram_cache_dir=settings.telegram_cache,
@@ -64,40 +70,49 @@ class Fucktory:
                 platform="android",
             )
         huy_v_rot_styles = "&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
-
         pa = notpixel_actions.PixelActions(
             app_url + huy_v_rot_styles,
             proxy_host=proxy_host,
-            proxy_port=6200,
+            proxy_port=proxy_port,
             proxy_user=proxy_user,
             proxy_password=proxy_password,
             headless=True
         )
         job_result = pa.run(task)
+        pa.sb.browser.close()
         return job_result
 
 
 
     def run_sequentially(self):
         for worker_name, worker in self.workers.items():
+            print('NA RABOTU SUKA:', worker)
+            failed = False
             try:
                 result = self.single_run(worker, self.task)
             except Exception as e:
-                print(f'ERROR for {worker}, {e}, {e.message}')
+                print(f'ERROR for {worker}, {e}, {str(e)}')
                 result = {}
                 worker['last_status'] = f'{e}'
+                failed = True
 
             painted = result.get('painted', [])
+            charges = result.get('charges', 0)
+            charges_full_restore_time = result.get('charges_full_restore_time', 'UNKNOWN')
+
+            worker['last_run'] = pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')
+            worker['full_restore_time'] = charges_full_restore_time
+            if not failed:
+                worker['last_status'] = f'painted {len(painted)}, left {charges}'
+            self.workers[worker_name] = worker
+            
+            self.dump_workers()
 
             for i, point in enumerate(painted):
                 assert self.task[i][0] == point[0]
                 assert self.task[i][1] == point[1]
             self.task = self.task[len(painted):]
-
-            worker['last_run']
-            self.workers[worker_name] = worker
-
-            if len(task) == 0:
+            if len(self.task) == 0:
                 print('ALL PAINTED!!!!!!')
                 break
         else:
@@ -106,11 +121,12 @@ class Fucktory:
 
 if __name__ == '__main__':
     picture_path = './notpixel_settings/228.png'
+    slaves_path = 'slaves.json'
     fk = Fucktory(picture_path, (228, 228))
     fk.get_job()
     #code.interact(local=locals())
     # some logic on how much workers needed for task
-    fk.get_workers('slaves.json')
+    fk.get_workers(slaves_path)
     # some logic on parallel/non parallel run of the job
     fk.run_sequentially()
     code.interact(local=locals())

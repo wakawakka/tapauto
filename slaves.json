@@ -2,57 +2,86 @@
     "12264550366": {
         "number": "12264550366",
         "path": "C:\\projects\\tg_accs\\12264550366\\tdata",
-        "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-o47kzll7-sessTime-120:6pGOVG0G@f.proxys5.net:6200"
+        "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-o47kzll7-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
+        "last_run": "2024-10-07 04:18:41",
+        "full_restore_time": "2024-10-07 05:15:37",
+        "last_status": "painted 1, left 0"
     },
     "12264558635": {
         "number": "12264558635",
         "path": "C:\\projects\\tg_accs\\12264558635\\tdata",
-        "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-z0XjjaRn-sessTime-120:6pGOVG0G@f.proxys5.net:6200"
+        "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-z0XjjaRn-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
+        "last_run": "2024-10-07 04:19:40",
+        "full_restore_time": "2024-10-07 05:07:07",
+        "last_status": "painted 0, left 0"
     },
     "13656680948": {
         "number": "13656680948",
         "path": "C:\\projects\\tg_accs\\13656680948\\tdata",
-        "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-REqAsuhG-sessTime-120:6pGOVG0G@f.proxys5.net:6200"
+        "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-REqAsuhG-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
+        "last_status": "The authorization key (session file) was used under two different IP addresses simultaneously, and can no longer be used. Use the same session exclusively, or use different sessions (caused by InvokeWithLayerRequest(InitConnectionRequest(GetConfigRequest)))",
+        "last_run": "2024-10-07 04:19:41",
+        "full_restore_time": "UNKNOWN"
     },
     "13656680958": {
         "number": "13656680958",
         "path": "C:\\projects\\tg_accs\\13656680958\\tdata",
-        "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-g9VDI30f-sessTime-120:6pGOVG0G@f.proxys5.net:6200"
+        "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-g9VDI30f-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
+        "last_status": "TFileNotFound: Could not open key_data [ Called by ReadFile() ]",
+        "last_run": "2024-10-07 04:11:33",
+        "full_restore_time": "UNKNOWN"
     },
     "13656680985": {
         "number": "13656680985",
         "path": "C:\\projects\\tg_accs\\13656680985\\tdata",
-        "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-Ndxv1rBL-sessTime-120:6pGOVG0G@f.proxys5.net:6200"
+        "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-Ndxv1rBL-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
+        "last_status": "TFileNotFound: Could not open key_data [ Called by ReadFile() ]",
+        "last_run": "2024-10-07 04:11:33",
+        "full_restore_time": "UNKNOWN"
     },
     "15874097035": {
         "number": "15874097035",
         "path": "C:\\projects\\tg_accs\\15874097035\\tdata",
-        "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-OC4jAJ4O-sessTime-120:6pGOVG0G@f.proxys5.net:6200"
+        "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-OC4jAJ4O-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
+        "last_run": "2024-10-07 04:13:12",
+        "full_restore_time": "2024-10-07 05:03:09",
+        "last_status": "painted 5, left 0"
     },
     "18077006341": {
         "number": "18077006341",
         "path": "C:\\projects\\tg_accs\\18077006341\\tdata",
-        "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-ZWNbB988-sessTime-120:6pGOVG0G@f.proxys5.net:6200"
+        "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-ZWNbB988-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
+        "last_run": "2024-10-07 04:14:47",
+        "full_restore_time": "2024-10-07 05:04:44",
+        "last_status": "painted 5, left 0"
     },
     "639468092706": {
         "number": "639468092706",
         "path": "C:\\projects\\tg_accs\\639468092706\\tdata",
-        "proxy": "07196708-zone-custom-region-PH-sessid-vHSAy0Cw-sessTime-120:6pGOVG0G@f.proxys5.net:6200"
+        "proxy": "07196708-zone-custom-region-PH-sessid-vHSAy0Cw-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
+        "last_status": "'bool' object has no attribute 'get'",
+        "last_run": "2024-10-07 04:15:30",
+        "full_restore_time": "UNKNOWN"
     },
     "8801745658318": {
         "number": "8801745658318",
         "path": "C:\\projects\\tg_accs\\8801745658318\\tdata",
-        "proxy": "07196708-zone-custom-region-BD-sessid-s7ugDyYr-sessTime-120:6pGOVG0G@f.proxys5.net:6200v"
+        "proxy": "07196708-zone-custom-region-BD-sessid-s7ugDyYr-sessTime-120:6pGOVG0G@f.proxys5.net:6200v",
+        "last_status": "Port could not be cast to integer value as '6200v'",
+        "last_run": "2024-10-07 04:15:30",
+        "full_restore_time": "UNKNOWN"
     },
     "8801747034955": {
         "number": "8801747034955",
         "path": "C:\\projects\\tg_accs\\8801747034955\\tdata",
-        "proxy": "07196708-zone-custom-region-BD-sessid-rXmrzJHm-sessTime-120:6pGOVG0G@f.proxys5.net:6200"
+        "proxy": "07196708-zone-custom-region-BD-sessid-rXmrzJHm-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
+        "last_run": "2024-10-07 04:17:11",
+        "full_restore_time": "2024-10-07 04:45:38",
+        "last_status": "painted 3, left 3"
     },
     "8801748878172": {
         "number": "8801748878172",
         "path": "C:\\projects\\tg_accs\\8801748878172\\tdata",
         "proxy": "07196708-zone-custom-region-BD-sessid-6K8CCtyb-sessTime-120:6pGOVG0G@f.proxys5.net:6200"
     }
-
 }

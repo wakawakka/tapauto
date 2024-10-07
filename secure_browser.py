@@ -1,5 +1,6 @@
 import time
 import os
+import code
 import random
 import zipfile
 import base64
@@ -7,7 +8,8 @@ import base64
 import undetected_chromedriver as uc
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
-from selenium.webdriver import ChromeOptions, Firefox, FirefoxOptions, FirefoxProfile
+from selenium.webdriver import ChromeOptions, Firefox, FirefoxProfile
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
 
 import secure_browser_js as sbjs
 
@@ -80,16 +82,16 @@ class SecFirefoxBrowser(Browser):
     ):
         # obmazka developing now
         options = FirefoxOptions()
+        if headless:
+            print('start in headless mode')
+            options.add_argument(f"--headless")
+            #options.headless = True
+        self.browser = Firefox(options=options)
 
         if proxy_host:
             plugin_path = self.__init_proxy(
                 extension_path, proxy_host, proxy_port, proxy_user, proxy_password
             )
-        if headless:
-            options.add_argument(f"--headless=new")
-
-        self.browser = Firefox(options=options)
-        if plugin_path:
             self.browser.install_addon(plugin_path, temporary=True)
 
     def __init_proxy(
@@ -117,6 +119,7 @@ class SecFirefoxBrowser(Browser):
             zp.writestr("background.js", background_js)
 
         return plugin_path
+    
 
 
 class SecChromeBrowser(Browser):
