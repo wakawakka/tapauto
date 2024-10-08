@@ -49,7 +49,7 @@ class PixelActions:
 
         self.web_app_entry_url = web_app_entry_url
         self.proxy_host = proxy_host
-        self.proxy_port = proxy_port
+        self.proxy_port = int(proxy_port)
         self.proxy_user = proxy_user
         self.proxy_password = proxy_password
         self.proxy_extention_path = proxy_extention_path
@@ -124,11 +124,15 @@ class PixelActions:
             async with timeout(http_timeout):
                 async with aiohttp.ClientSession(connector=proxy_connector) as session:
                     async with session.get(url, headers=headers) as r:
-                        await asyncio.sleep(10)
                         success = r.status in good_statuses
                         if not success:
                             self.logger.error(
-                                f"Bad status:\n\tUrl: {self.web_app_entry_url}\n\tProxy: {self.proxy_string}"
+                                (
+                                    "Bad status:\n"
+                                    f"\tUrl: {self.web_app_entry_url}\n"
+                                    f"\tProxy: {self.proxy_string}"
+                                    f"\tStatus: {r.status}"
+                                )
                             )
                             raise BadStatus(
                                 message="Bad HTTP status code",
@@ -136,20 +140,38 @@ class PixelActions:
                                 url=url,
                                 status=r.status,
                             )
-                        return r.status
+                        content = await r.read()
+
+                        return {"status": r.status, "content": content}
         except asyncio.TimeoutError:
             self.logger.error(
                 f"Timeout error:\n\tUrl: {url}\n\tProxy: {self.proxy_string}"
             )
             raise HttpTimeout(message="Timeout error", proxy=self.proxy_string, url=url)
 
+    async def ipinfo(self):
+        self.logger.debug(f"Start GET info URL")
+        headers = {"User-Agent": "curl"}
+        result = await self.__http_get(
+            "https://ipinfo.io/", headers, http_timeout=10, good_statuses=[200]
+        )
+        status = result.get("status")
+        content_len = len(result.get("content"))
+        self.logger.info(
+            f"Finish GET info URL GET, status: {status}, content len: {content_len}"
+        )
+
     async def emulate_app_start(self):
         self.logger.debug(f"Start GET entry URL")
         headers = {"User-Agent": self.user_agent}
-        status = await self.__http_get(
+        result = await self.__http_get(
             self.web_app_entry_url, headers, http_timeout=10, good_statuses=[200]
         )
-        self.logger.debug(f"Finish GET entry URL GET, status: {status}")
+        status = result.get("status")
+        content_len = len(result.get("content"))
+        self.logger.info(
+            f"Finish GET entry URL GET, status: {status}, content len: {content_len}"
+        )
 
     def gui_click_initial_buttons(self):
         button_texts = ["Okay", "Gooooo"]
