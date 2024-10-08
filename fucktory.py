@@ -66,8 +66,9 @@ class Fucktory:
             proxy_password=proxy_password,
         )
         tdata_path = worker["path"]
+        account_password = worker.get('password', None)
         tg.init_client_tdata(
-            tdata_path, platform="desktop", hardware_id="228", password=None
+            tdata_path, platform="desktop", hardware_id="228", password=account_password
         )
         app_url = tg.get_bot_webapp(
             bot_username="notpixel",
@@ -75,6 +76,7 @@ class Fucktory:
             platform="android",
         )
         huy_v_rot_styles = "&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
+        print(app_url + huy_v_rot_styles)
         pa = notpixel_actions.PixelActions(
             app_url + huy_v_rot_styles,
             proxy_host=proxy_host,
@@ -89,17 +91,20 @@ class Fucktory:
             pa.sb.browser.close()
         return job_result
 
-    def run_sequentially(self):
+    def run_sequentially(self, catch=True):
         for worker_name, worker in self.workers.items():
             print("NA RABOTU SUKA:", worker)
             failed = False
-            try:
+            if catch:
+                try:
+                    result = self.single_run(worker, self.task)
+                except Exception as e:
+                    print(f"ERROR for {worker}, {e}, {str(e)}")
+                    result = {}
+                    worker["last_status"] = f"{e}"
+                    failed = True
+            else:
                 result = self.single_run(worker, self.task)
-            except Exception as e:
-                print(f"ERROR for {worker}, {e}, {str(e)}")
-                result = {}
-                worker["last_status"] = f"{e}"
-                failed = True
 
             painted = result.get("painted", [])
             charges = result.get("charges", 0)
@@ -135,5 +140,5 @@ if __name__ == "__main__":
     # some logic on how much workers needed for task
     fk.get_workers(slaves_path)
     # some logic on parallel/non parallel run of the job
-    fk.run_sequentially()
+    fk.run_sequentially(catch=False)
     code.interact(local=locals())

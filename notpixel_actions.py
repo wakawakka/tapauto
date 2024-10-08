@@ -217,32 +217,28 @@ class PixelActions:
         headers = self.get_headers_api()
         r = requests.get(url, headers=headers, proxies=self.requests_proxy)
 
-        if r.status_code == 200:
-            data = r.json()
-            charges = data.get("charges")
-            recharge_speed = data.get("reChargeSpeed", 0) / 1000  # in sec
-            max_charges = data.get("maxCharges", 0)
+        
+        data = r.json()
+        charges = data.get("charges")
+        recharge_speed = data.get("reChargeSpeed", 0) / 1000  # in sec
+        max_charges = data.get("maxCharges", 0)
 
-            balance = data.get("userBalance")
-            claimed = data.get("claimed")
-            if claimed == 0:
-                claimed = self.claim()
-            boosts = data.get("boosts", {})
-            if boosts:
-                self.install_upgrades(balance=balance, boosts=boosts)
+        balance = data.get("userBalance")
+        claimed = data.get("claimed")
+        if claimed == 0:
+            claimed = self.claim()
+        boosts = data.get("boosts", {})
+        if boosts:
+            self.install_upgrades(balance=balance, boosts=boosts)
 
-            time.sleep(random.randint(5, 8))
-            return {
-                "charges": charges,
-                "charge_restore_speed": recharge_speed,
-                "max_charges": max_charges,
-                "balance": balance,
-            }
-        else:
-            print(
-                f"Failed to get account status. Status: {r.status_code}, Error: {r.text}"
-            )
-            return False
+        time.sleep(random.randint(5, 8))
+        return {
+            "charges": charges,
+            "charge_restore_speed": recharge_speed,
+            "max_charges": max_charges,
+            "balance": balance,
+        }
+
 
     @retry(tries=3, delay=10)
     def paint_pixel(self, x: int, y: int, color: tuple):
@@ -293,6 +289,7 @@ class PixelActions:
             self.gui_click_initial_buttons()
         else:
             self.emulate_app_start()
+
         acc_state = self.get_acc_status()
         charges = acc_state.get("charges", 0)
         if charges > 0:

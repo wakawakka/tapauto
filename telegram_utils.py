@@ -95,7 +95,7 @@ class Telega:
     ):
         if self.client:
             raise Exception("Client already created.")
-
+        print(1)
         match platform:
             case "desktop":
                 preapi = API.TelegramDesktop
@@ -107,18 +107,23 @@ class Telega:
                 preapi = API.TelegramAndroid
             case _:
                 raise Exception('Platform variants: "desktop, ios, macos, android"')
-
+        print(2)
         api = preapi.Generate(unique_id=hardware_id)
+        print(3)
         tdesk = TDesktop(tdata_path)
+        print(4)
         assert tdesk.isLoaded()
+        print(5)
+        print('PASSWORD:', password)
         self.client = await TC_opentele.FromTDesktop(
             tdesk,
             session=self.session_file,
-            flag=UseCurrentSession,
+            flag=CreateNewSession,
             api=api,
             password=password,
             proxy=self.telethon_proxy,
         )
+        print(6)
         await self.client.connect()
 
     def init_client_api(self, api_id, api_hash, phone=None):
