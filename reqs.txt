@@ -10,3 +10,7 @@ looseversion
 python-socks
 pysocks
 pandas
+aiohttp
+aiohttp_socks
+async-timeout
+python-socks[asyncio]

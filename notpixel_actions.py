@@ -1,26 +1,32 @@
-from hashlib import md5
-import time
+import logging
 import random
-import io
-import os
 import re
+import time
+from hashlib import md5
 from urllib.parse import unquote
+import asyncio
 
-import requests
-from PIL import Image
-import numpy as np
 import pandas as pd
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from retry import retry
 
-import localsettings
-import settings
-import telegram_utils
-import secure_browser
+# import requests
+import aiohttp
+
+# from aiohttp_retry import RetryClient
+from aiohttp_socks import ProxyType, ProxyConnector, ChainProxyConnector
+
+# from timeout_decorator import timeout
+from async_timeout import timeout
+from PIL import Image
+from retry import retry
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+
 import notpixel_tools
+import secure_browser
+import settings
 import useragents
+from exceptions import *
 
 
 class PixelActions:
@@ -34,36 +40,58 @@ class PixelActions:
         proxy_extention_path="",
         gui_browser_worker_type=None,  # chrome or firefox, allow NONE to not start the browser
         headless=False,
+        logfile_path="log.log",
+        logging_level=logging.DEBUG,
     ):
+        self.logger = notpixel_tools.get_logger(
+            filepath=logfile_path, level=logging_level
+        )
+
         self.web_app_entry_url = web_app_entry_url
+        self.proxy_host = proxy_host
+        self.proxy_port = int(proxy_port)
+        self.proxy_user = proxy_user
+        self.proxy_password = proxy_password
+        self.proxy_extention_path = proxy_extention_path
+
         self.energy = 0
         self.auth_token = self.get_autorization_header(web_app_entry_url)
-        self.requests_proxy = None
-        self.user_agent = None
-        self.set_ua()
-        if proxy_host:
-            self.requests_proxy = {
-                "http": f"socks5://{proxy_user}:{proxy_password}@{proxy_host}:{proxy_port}",
-                "https": f"socks5://{proxy_user}:{proxy_password}@{proxy_host}:{proxy_port}",
-            }
+        self.init_user_agent()
+
+        # self.requests_proxy = None
+        # if proxy_host:
+        #     self.requests_proxy = {
+        #         "http": f"socks5://{proxy_user}:{proxy_password}@{proxy_host}:{proxy_port}",
+        #         "https": f"socks5://{proxy_user}:{proxy_password}@{proxy_host}:{proxy_port}",
+        #     }
+
+        self.proxy_string = (
+            f"socks5://{proxy_user}:{proxy_password}@{proxy_host}:{proxy_port}"
+        )
 
         self.sb = None
         if gui_browser_worker_type:
-            args = {
-                "proxy_host": proxy_host,
-                "proxy_port": proxy_port,
-                "proxy_user": proxy_user,
-                "proxy_password": proxy_password,
-                "headless": headless,
-            }
-            if proxy_extention_path:
-                args["extention_path"] = proxy_extention_path
-            if gui_browser_worker_type == "firefox":
-                self.sb = secure_browser.SecFirefoxBrowser(**args)
-            elif gui_browser_worker_type == "chrome":
-                self.sb = secure_browser.SecChromeBrowser(**args)
+            self.init_gui_browser(gui_browser_worker_type, headless)
 
-    def set_ua(self):
+    def init_http_session(self):
+        pass
+
+    def init_gui_browser(self, gui_browser_worker_type="chrome", headless=False):
+        browser_args = {
+            "proxy_host": self.proxy_host,
+            "proxy_port": self.proxy_port,
+            "proxy_user": self.proxy_user,
+            "proxy_password": self.proxy_password,
+            "headless": headless,
+        }
+        if self.proxy_extention_path:
+            browser_args["extention_path"] = self.proxy_extention_path
+        if gui_browser_worker_type == "firefox":
+            self.sb = secure_browser.SecFirefoxBrowser(**browser_args)
+        elif gui_browser_worker_type == "chrome":
+            self.sb = secure_browser.SecChromeBrowser(**browser_args)
+
+    def init_user_agent(self):
         dec_url = unquote(unquote(self.web_app_entry_url))
         user_id_match = re.search(r'id":(\d+),', dec_url)
         if not user_id_match:
@@ -87,14 +115,63 @@ class PixelActions:
         else:
             self.sb.browser.get(self.web_app_entry_url)
 
-    @retry(tries=3, delay=10)
-    def emulate_app_start(self):
-        headers = {"User-Agent": self.user_agent}
-        r = requests.get(
-            self.web_app_entry_url, proxies=self.requests_proxy, headers=headers
+    async def __http_get(self, url, headers, http_timeout=1, good_statuses=[200]):
+        proxy_connector = None
+        if self.proxy_string:
+            proxy_connector = ProxyConnector.from_url(self.proxy_string)
+
+        try:
+            async with timeout(http_timeout):
+                async with aiohttp.ClientSession(connector=proxy_connector) as session:
+                    async with session.get(url, headers=headers) as r:
+                        success = r.status in good_statuses
+                        if not success:
+                            self.logger.error(
+                                (
+                                    "Bad status:\n"
+                                    f"\tUrl: {self.web_app_entry_url}\n"
+                                    f"\tProxy: {self.proxy_string}"
+                                    f"\tStatus: {r.status}"
+                                )
+                            )
+                            raise BadStatus(
+                                message="Bad HTTP status code",
+                                proxy=self.proxy_string,
+                                url=url,
+                                status=r.status,
+                            )
+                        content = await r.read()
+
+                        return {"status": r.status, "content": content}
+        except asyncio.TimeoutError:
+            self.logger.error(
+                f"Timeout error:\n\tUrl: {url}\n\tProxy: {self.proxy_string}"
+            )
+            raise HttpTimeout(message="Timeout error", proxy=self.proxy_string, url=url)
+
+    async def ipinfo(self):
+        self.logger.debug(f"Start GET info URL")
+        headers = {"User-Agent": "curl"}
+        result = await self.__http_get(
+            "https://ipinfo.io/", headers, http_timeout=10, good_statuses=[200]
         )
-        print(f"Req GET entry URL status: {r.status_code}")
-        return r.status_code == 200
+        status = result.get("status")
+        content_len = len(result.get("content"))
+        self.logger.info(
+            f"Finish GET info URL GET, status: {status}, content len: {content_len}"
+        )
+
+    async def emulate_app_start(self):
+        self.logger.debug(f"Start GET entry URL")
+        headers = {"User-Agent": self.user_agent}
+        result = await self.__http_get(
+            self.web_app_entry_url, headers, http_timeout=10, good_statuses=[200]
+        )
+        status = result.get("status")
+        content_len = len(result.get("content"))
+        self.logger.info(
+            f"Finish GET entry URL GET, status: {status}, content len: {content_len}"
+        )
 
     def gui_click_initial_buttons(self):
         button_texts = ["Okay", "Gooooo"]
@@ -217,7 +294,6 @@ class PixelActions:
         headers = self.get_headers_api()
         r = requests.get(url, headers=headers, proxies=self.requests_proxy)
 
-        
         data = r.json()
         charges = data.get("charges")
         recharge_speed = data.get("reChargeSpeed", 0) / 1000  # in sec
@@ -238,7 +314,6 @@ class PixelActions:
             "max_charges": max_charges,
             "balance": balance,
         }
-
 
     @retry(tries=3, delay=10)
     def paint_pixel(self, x: int, y: int, color: tuple):
@@ -283,17 +358,17 @@ class PixelActions:
 
         return painted
 
-    def run(self, pixels_to_paint):
-        if self.sb:
+    async def run(self, pixels_to_paint):
+        if self.sb:  # NOT ASYNC
             self.gui_app_start()
             self.gui_click_initial_buttons()
         else:
-            self.emulate_app_start()
+            await self.emulate_app_start()
 
+        return
         acc_state = self.get_acc_status()
-        charges = acc_state.get("charges", 0)
-        if charges > 0:
-            self.energy = charges
+
+        self.energy = acc_state.get("charges", 0)
         recharge_speed = acc_state.get("charge_restore_speed", 0)
         max_charges = acc_state.get("max_charges", 0)
 
