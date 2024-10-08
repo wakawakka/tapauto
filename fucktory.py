@@ -12,6 +12,8 @@ from PIL import Image
 import code
 import json
 import pandas as pd
+import asyncio
+import aiofiles
 
 from notpixel_actions import PixelActions
 import notpixel_tools
@@ -28,32 +30,49 @@ class Worker:
 
 
 class Fucktory:
+
     def __init__(self, picture_path, location):
         self.img = Image.open(picture_path).convert("RGB")
         self.pixels = self.img.load()
         assert len(location) == 2  # x, y
         assert type(location[0]) == int
         assert type(location[1]) == int
+        init_x = location[0]
+        init_y = location[1]
         self.location = location
+
+        self.locksmap = {}
+        for x_pad in range(img.size[0]):
+            for y_pad in range(img.size[1]):
+                x, y = init_x + x_pad, init_y + y_pad
+                self.locksmap[(x,y)] = asyncio.Lock()
+                # залокали нахуй по идее не должно быть беды потому что обращения к locksmap никогда не долждны ставить туда новый объект,
+                # а тольео менять состояние локера, что сейф
+        
+        self.file_locker = asyncio.Locker()
+
         print(f"Initialized Fucktory size of {self.img.size}")
         # code.interact(local=locals())
 
-    def get_job(self):
-        self.task = notpixel_tools.get_job(self.img, self.location)
+    async def get_job(self):
+        task = await notpixel_tools.get_job(self.img, self.location)
+        return task
 
-    def get_workers(self, fname):
+    async def get_workers(self, fname):
         self.workers_fname = fname
-        with open(fname) as f:
-            self.workers = json.load(f)
+        async with self.file_locker:
+            async with aiofiles.open(fname) as f:
+                self.workers = json.load(f)
 
-    def dump_workers(self):
-        with open(self.workers_fname, "w") as f:
-            f.write(json.dumps(self.workers, indent=4))
+    async def dump_workers(self):
+        async with self.file_locker:
+            async with aiofiles.open(self.workers_fname, "w") as f:
+                await f.write(json.dumps(self.workers, indent=4))
 
     def split_task_by_workers(self, task):
         pass
 
-    def single_run(self, worker, task):
+    async def single_run(self, worker, task):
         proxy_host, proxy_port, proxy_user, proxy_password = (
             notpixel_tools.parse_proxy_url("https://" + worker["proxy"])
         )

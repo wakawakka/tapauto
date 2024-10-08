@@ -3,33 +3,25 @@
         "number": "12264550366",
         "path": "C:\\projects\\tg_accs\\12264550366\\tdata",
         "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-o47kzll7-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
-        "last_run": "2024-10-08 02:22:23",
-        "full_restore_time": "2024-10-08 03:19:23",
+        "last_run": "2024-10-08 02:34:19",
+        "full_restore_time": "2024-10-08 03:31:19",
         "last_status": "painted 1, left 0"
     },
     "12264558635": {
         "number": "12264558635",
         "path": "C:\\projects\\tg_accs\\12264558635\\tdata",
         "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-z0XjjaRn-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
-        "last_run": "2024-10-08 02:09:09",
-        "full_restore_time": "2024-10-08 03:06:09",
+        "last_run": "2024-10-08 02:34:46",
+        "full_restore_time": "2024-10-08 03:31:46",
         "last_status": "painted 0, left 0"
-    },
-    "13656680985": {
-        "number": "13656680985",
-        "path": "C:\\projects\\tg_accs\\13656680985\\tdata",
-        "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-TLuqqk0K-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
-        "last_status": "TFileNotFound: Could not open key_data [ Called by ReadFile() ]",
-        "last_run": "2024-10-07 04:11:33",
-        "full_restore_time": "UNKNOWN"
     },
     "15874097035": {
         "number": "15874097035",
         "path": "C:\\projects\\tg_accs\\15874097035\\tdata",
         "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-OC4jAJ4O-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
-        "last_run": "2024-10-07 04:13:12",
-        "full_restore_time": "2024-10-07 05:03:09",
-        "last_status": "painted 5, left 0"
+        "last_run": "2024-10-08 02:35:20",
+        "full_restore_time": "2024-10-08 03:32:20",
+        "last_status": "painted 1, left 0"
     },
     "18077006341": {
         "number": "18077006341",

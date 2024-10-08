@@ -1,5 +1,6 @@
 import requests
 import code
+import asyncio
 from PIL import Image
 import io
 
@@ -46,7 +47,7 @@ def get_image_state(proxies=None):
     return img
 
 
-def get_job(img, location):
+async def get_job(img, location):
     img_pixels = img.load()
     init_x = location[0]
     init_y = location[1]
