@@ -11,7 +11,10 @@
 from PIL import Image
 import code
 import json
+import random
 import pandas as pd
+import asyncio
+import aiofiles
 
 from notpixel_actions import PixelActions
 import notpixel_tools
@@ -28,68 +31,132 @@ class Worker:
 
 
 class Fucktory:
+
     def __init__(self, picture_path, location):
         self.img = Image.open(picture_path).convert("RGB")
         self.pixels = self.img.load()
         assert len(location) == 2  # x, y
         assert type(location[0]) == int
         assert type(location[1]) == int
+        init_x = location[0]
+        init_y = location[1]
         self.location = location
+
+        self.locksmap = {}
+        for x_pad in range(img.size[0]):
+            for y_pad in range(img.size[1]):
+                x, y = init_x + x_pad, init_y + y_pad
+                self.locksmap[(x,y)] = asyncio.Lock()
+                # залокали нахуй по идее не должно быть беды потому что обращения к locksmap никогда не долждны ставить туда новый объект,
+                # а тольео менять состояние локера, что сейф
+        
+        self.file_locker = asyncio.Locker()
+        self.workers_locker = asyncio.Locker()
+
         print(f"Initialized Fucktory size of {self.img.size}")
         # code.interact(local=locals())
 
-    def get_job(self):
-        self.task = notpixel_tools.get_job(self.img, self.location)
+    async def get_job(self):
+        task = await notpixel_tools.get_job(self.img, self.location)
+        return task
 
-    def get_workers(self, fname):
+    async def initial_get_workers(self, fname):
         self.workers_fname = fname
-        with open(fname) as f:
-            self.workers = json.load(f)
+        async with self.workers_locker:
+            async with self.file_locker:
+                async with aiofiles.open(fname) as f:
+                    self.workers = json.load(f)
+                    for worker in self.workers:
+                        worker['locker'] = asyncio.Locker()
 
-    def dump_workers(self):
-        with open(self.workers_fname, "w") as f:
-            f.write(json.dumps(self.workers, indent=4))
+    async def dump_workers(self):
+        async with self.workers_locker:
+            async with self.file_locker:
+                async with aiofiles.open(self.workers_fname, "w") as f:
+                    await f.write(json.dumps(self.workers, indent=4))
+    
+    async def get_actual_workers(self):
+        async with self.workers_locker:
+            actual_workers = []
+            for worker_name, worker in self.workers.items():
+                # All rules to take workers write there like worker['full_restore_time'] > now etc.
+                if worker['locker'].locked():
+                    pass
+                actual_workers.append(worker_name)
+        return actual_workers
+    
+    async def estimated_charges(self, worker):
+        return 2
 
-    def split_task_by_workers(self, task):
-        pass
+    async def run_async(self):
+        actual_job = await get_job()
+        print(f'CURRENT BAD POINTS {len(actual_job)}')
+        actual_workers = await get_actual_workers()
+        not_locked_actual_job = []
+        for point_job in actual_job:
+            if not self.locksmap((point_job[0], point_job[1])).locked():
+                not_locked_actual_job.append(point_job)
+        print(f'CURRENT NOT LOCKED BAD POINTS {len(not_locked_actual_job)}')
 
-    def single_run(self, worker, task):
-        proxy_host, proxy_port, proxy_user, proxy_password = (
-            notpixel_tools.parse_proxy_url("https://" + worker["proxy"])
-        )
-        tg = telegram_utils.Telega(
-            session_id=worker["number"],
-            telegram_cache_dir=settings.telegram_cache,
-            proxy_host=proxy_host,
-            proxy_port=proxy_port,
-            proxy_user=proxy_user,
-            proxy_password=proxy_password,
-        )
-        tdata_path = worker["path"]
-        account_password = worker.get('password', None)
-        tg.init_client_tdata(
-            tdata_path, platform="desktop", hardware_id="228", password=account_password
-        )
-        app_url = tg.get_bot_webapp(
-            bot_username="notpixel",
-            url="https://notpx.app",
-            platform="android",
-        )
-        huy_v_rot_styles = "&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
-        print(app_url + huy_v_rot_styles)
-        pa = notpixel_actions.PixelActions(
-            app_url + huy_v_rot_styles,
-            proxy_host=proxy_host,
-            proxy_port=proxy_port,
-            proxy_user=proxy_user,
-            proxy_password=proxy_password,
-            gui_browser_worker_type=False,
-            headless=True,
-        )
-        job_result = pa.run(task)
-        if pa.sb:
-            pa.sb.browser.close()
-        return job_result
+        tasks = []
+        offset = 0
+        for worker_name in actual_workers:
+            charges = estimated_charges(self.workers[worker_name])
+            sub_job = not_locked_actual_job[offset:offset + charges]
+            offset += charges
+            if offset >= len(not_locked_actual_job):
+                print('FILLED ALL TASKS')
+                break
+            task = asyncio.create_task(single_run(self.workers[worker_name], sub_job))
+            tasks.append(task)
+        else:
+            print(f'LEFT SOME TASKS: {len(not_locked_actual_job) - offset}')
+        print(f'PONESLAS NAHUI {len(tasks)}')
+        await asyncio.gather(*tasks)
+        
+
+
+        
+
+
+    async def single_run(self, worker, task):
+        with worker['locker']:
+            proxy_host, proxy_port, proxy_user, proxy_password = (
+                notpixel_tools.parse_proxy_url("https://" + worker["proxy"])
+            )
+            tg = telegram_utils.Telega(
+                session_id=worker["number"],
+                telegram_cache_dir=settings.telegram_cache,
+                proxy_host=proxy_host,
+                proxy_port=proxy_port,
+                proxy_user=proxy_user,
+                proxy_password=proxy_password,
+            )
+            tdata_path = worker["path"]
+            account_password = worker.get('password', None)
+            tg.init_client_tdata(
+                tdata_path, platform="desktop", hardware_id="228", password=account_password
+            )
+            app_url = tg.get_bot_webapp(
+                bot_username="notpixel",
+                url="https://notpx.app",
+                platform="android",
+            )
+            huy_v_rot_styles = "&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
+            print(app_url + huy_v_rot_styles)
+            pa = notpixel_actions.PixelActions(
+                app_url + huy_v_rot_styles,
+                proxy_host=proxy_host,
+                proxy_port=proxy_port,
+                proxy_user=proxy_user,
+                proxy_password=proxy_password,
+                gui_browser_worker_type=False,
+                headless=True,
+            )
+            job_result = pa.run(task)
+            if pa.sb:
+                pa.sb.browser.close()
+            return job_result
 
     def run_sequentially(self, catch=True):
         for worker_name, worker in self.workers.items():
