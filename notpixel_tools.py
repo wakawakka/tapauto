@@ -1,34 +1,56 @@
-import requests
-import code
 import asyncio
-from PIL import Image
 import io
 import logging
-from uuid import uuid4
+
+import aiohttp
+import requests
+from aiohttp_socks import ChainProxyConnector, ProxyConnector, ProxyType
+from async_timeout import timeout
+from PIL import Image
+
+from exceptions import BadStatus, HttpTimeout
+from logutils import get_logger
 
 
-def get_logger(filepath=None, level=logging.INFO) -> logging.Logger:
-    logger_id = uuid4().hex[:4]
-    logger = logging.Logger(logger_id)
-    logger.setLevel(level)
+async def http_request(
+    rtype,  # GET|POST
+    url,
+    headers,
+    proxy=None,
+    data_p=None,
+    json_p=None,
+    http_timeout=1,
+    good_statuses=[200],
+    logger=None,
+):
+    if not logger:
+        logger = get_logger("common.log", logging.DEBUG)
+    proxy_connector = None
+    if proxy:
+        proxy_connector = ProxyConnector.from_url(proxy)
+    try:
+        async with timeout(http_timeout):
+            async with aiohttp.ClientSession(connector=proxy_connector) as session:
+                match rtype:
+                    case "GET":
+                        roperator = session.get
+                    case "POST":
+                        roperator = session.post
+                async with roperator(
+                    url, headers=headers, json=json_p, data=data_p
+                ) as r:
+                    success = r.status in good_statuses
+                    if not success:
+                        raise BadStatus(
+                            proxy=proxy,
+                            url=url,
+                            status=r.status,
+                        )
+                    content = await r.read()
 
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        # "%(asctime)s - %(levelname)s - %(message)s"
-    )
-
-    ch = logging.StreamHandler()
-    ch.setLevel(level)
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
-
-    if filepath:
-        fh = logging.FileHandler(filepath, encoding="utf8")
-        fh.setLevel(logging.DEBUG)
-        fh.setFormatter(formatter)
-        logger.addHandler(fh)
-
-    return logger
+                    return {"status": r.status, "content": content}
+    except asyncio.TimeoutError:
+        raise HttpTimeout(proxy=proxy, url=url)
 
 
 def rgb_to_hex(pix):

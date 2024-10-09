@@ -1,24 +1,13 @@
+import asyncio
+import json
 import logging
 import random
 import re
 import time
 from hashlib import md5
 from urllib.parse import unquote
-import asyncio
-import json
 
 import pandas as pd
-
-# import requests
-import aiohttp
-
-# from aiohttp_retry import RetryClient
-from aiohttp_socks import ProxyType, ProxyConnector, ChainProxyConnector
-
-# from timeout_decorator import timeout
-from async_timeout import timeout
-from PIL import Image
-from retry import retry
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -27,7 +16,6 @@ import notpixel_tools
 import secure_browser
 import settings
 import useragents
-from exceptions import *
 
 
 class PixelActions:
@@ -65,10 +53,11 @@ class PixelActions:
         #         "http": f"socks5://{proxy_user}:{proxy_password}@{proxy_host}:{proxy_port}",
         #         "https": f"socks5://{proxy_user}:{proxy_password}@{proxy_host}:{proxy_port}",
         #     }
-
-        self.proxy_string = (
-            f"socks5://{proxy_user}:{proxy_password}@{proxy_host}:{proxy_port}"
-        )
+        self.proxy_string = None
+        if proxy_host:
+            self.proxy_string = (
+                f"socks5://{proxy_user}:{proxy_password}@{proxy_host}:{proxy_port}"
+            )
 
         self.sb = None
         if gui_browser_worker_type:
@@ -157,61 +146,18 @@ class PixelActions:
     async def sleep_after_request(self, sleep_min=7, sleep_max=10):
         await asyncio.sleep(random.randint(100 * sleep_min, 100 * sleep_max) / 100)
 
-    async def __http_request(
-        self,
-        rtype,  # GET|POST
-        url,
-        headers,
-        data_p=None,
-        json_p=None,
-        http_timeout=1,
-        good_statuses=[200],
-    ):
-        proxy_connector = None
-        if self.proxy_string:
-            proxy_connector = ProxyConnector.from_url(self.proxy_string)
-        try:
-            async with timeout(http_timeout):
-                async with aiohttp.ClientSession(connector=proxy_connector) as session:
-                    match rtype:
-                        case "GET":
-                            roperator = session.get
-                        case "POST":
-                            roperator = session.post
-                    async with roperator(
-                        url, headers=headers, json=json_p, data=data_p
-                    ) as r:
-                        success = r.status in good_statuses
-                        if not success:
-                            self.logger.error(
-                                (
-                                    "Bad status:\n"
-                                    f"\tUrl: {self.web_app_entry_url}\n"
-                                    f"\tProxy: {self.proxy_string}"
-                                    f"\tStatus: {r.status}"
-                                )
-                            )
-                            raise BadStatus(
-                                message="Bad HTTP status code",
-                                proxy=self.proxy_string,
-                                url=url,
-                                status=r.status,
-                            )
-                        content = await r.read()
-
-                        return {"status": r.status, "content": content}
-        except asyncio.TimeoutError:
-            self.logger.error(
-                (f"Timeout error:\n" "\tUrl: {url}\n" "\tProxy: {self.proxy_string}")
-            )
-            raise HttpTimeout(message="Timeout error", proxy=self.proxy_string, url=url)
-
     # for tests
     async def ipinfo(self):
         self.logger.debug(f"Start GET info URL")
         headers = {"User-Agent": "curl"}
-        result = await self.__http_request(
-            "GET", "https://ipinfo.io/", headers, http_timeout=10, good_statuses=[200]
+        result = await notpixel_tools.http_request(
+            "GET",
+            "https://ipinfo.io/",
+            headers,
+            proxy=self.proxy_string,
+            http_timeout=10,
+            good_statuses=[200],
+            logger=self.logger,
         )
         await self.sleep_after_request()
         print(result)
@@ -224,8 +170,14 @@ class PixelActions:
     async def emulate_app_start(self):
         self.logger.debug(f"Start GET entry URL")
         headers = {"User-Agent": self.user_agent}
-        result = await self.__http_request(
-            "GET", self.web_app_entry_url, headers, http_timeout=10, good_statuses=[200]
+        result = await notpixel_tools.http_request(
+            "GET",
+            self.web_app_entry_url,
+            headers,
+            proxy=self.proxy_string,
+            http_timeout=10,
+            good_statuses=[200],
+            logger=self.logger,
         )
         await self.sleep_after_request()
         status = result.get("status")
@@ -242,8 +194,14 @@ class PixelActions:
             if self.sb.browser.current_url != browser_url:
                 self.sb.browser.get(browser_url)
         headers = self.get_headers_api()
-        result = await self.__http_request(
-            "GET", url, headers, http_timeout=10, good_statuses=[200]
+        result = await notpixel_tools.http_request(
+            "GET",
+            url,
+            headers,
+            proxy=self.proxy_string,
+            http_timeout=10,
+            good_statuses=[200],
+            logger=self.logger,
         )
         await self.sleep_after_request()
         status = result.get("status")
@@ -257,8 +215,14 @@ class PixelActions:
         url = f"https://notpx.app/api/v1/mining/boost/check/{key}"
         self.logger.debug(f"Start UPGRADE {key}")
         headers = self.get_headers_api()
-        result = await self.__http_request(
-            "GET", url, headers, http_timeout=10, good_statuses=[200]
+        result = await notpixel_tools.http_request(
+            "GET",
+            url,
+            headers,
+            proxy=self.proxy_string,
+            http_timeout=10,
+            good_statuses=[200],
+            logger=self.logger,
         )
         await self.sleep_after_request()
         status = result.get("status")
@@ -295,8 +259,14 @@ class PixelActions:
         url = "https://notpx.app/api/v1/mining/status"
         self.logger.debug(f"Start GET account status")
         headers = self.get_headers_api()
-        result = await self.__http_request(
-            "GET", url, headers, http_timeout=10, good_statuses=[200]
+        result = await notpixel_tools.http_request(
+            "GET",
+            url,
+            headers,
+            proxy=self.proxy_string,
+            http_timeout=10,
+            good_statuses=[200],
+            logger=self.logger,
         )
         await self.sleep_after_request()
         status = result.get("status")
@@ -336,13 +306,15 @@ class PixelActions:
         self.logger.debug(f"Start PAINT PIXEL {x}:{y}")
         headers = self.get_headers_api()
         pixel_id = y * 1000 + x + 1
-        result = await self.__http_request(
+        result = await notpixel_tools.http_request(
             "POST",
             url,
             headers,
+            json_p={"pixelId": pixel_id, "newColor": color_s},
+            proxy=self.proxy_string,
             http_timeout=10,
             good_statuses=[200],
-            json_p={"pixelId": pixel_id, "newColor": color_s},
+            logger=self.logger,
         )
         await self.sleep_after_request()
         status = result.get("status")
