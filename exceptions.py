@@ -1,6 +1,6 @@
 import logging
 
-from logutils import get_logger
+from utils import get_logger
 
 
 class HttpTimeout(Exception):

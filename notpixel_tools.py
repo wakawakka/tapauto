@@ -9,7 +9,7 @@ from async_timeout import timeout
 from PIL import Image
 
 from exceptions import BadStatus, HttpTimeout
-from logutils import get_logger
+from utils import get_logger
 
 
 async def http_request(
@@ -19,7 +19,7 @@ async def http_request(
     proxy=None,
     data_p=None,
     json_p=None,
-    http_timeout=1,
+    http_timeout=10,
     good_statuses=[200],
     logger=None,
 ):
