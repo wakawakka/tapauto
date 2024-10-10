@@ -42,7 +42,7 @@
     "8801745658318": {
         "number": "8801745658318",
         "path": "C:\\projects\\tg_accs\\8801745658318\\tdata",
-        "proxy": "07196708-zone-custom-region-BD-sessid-s7ugDyYr-sessTime-120:6pGOVG0G@f.proxys5.net:6200v",
+        "proxy": "07196708-zone-custom-region-BD-sessid-s7ugDyYr-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
         "last_status": "Port could not be cast to integer value as '6200v'",
         "last_run": "2024-10-07 04:15:30",
         "full_restore_time": "UNKNOWN"
