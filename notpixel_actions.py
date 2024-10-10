@@ -16,6 +16,7 @@ import notpixel_tools
 import secure_browser
 import settings
 import useragents
+import utils
 
 
 class PixelActions:
@@ -29,12 +30,10 @@ class PixelActions:
         proxy_extention_path="",
         gui_browser_worker_type=None,  # chrome or firefox, allow NONE to not start the browser
         headless=False,
-        logfile_path="log.log",
+        logfile_path="common.log",
         logging_level=logging.DEBUG,
     ):
-        self.logger = notpixel_tools.get_logger(
-            filepath=logfile_path, level=logging_level
-        )
+        self.logger = utils.get_logger(filepath=logfile_path, level=logging_level)
 
         self.web_app_entry_url = web_app_entry_url
         self.proxy_host = proxy_host
@@ -108,7 +107,7 @@ class PixelActions:
                         EC.element_to_be_clickable((By.XPATH, "//div/button"))
                     )
                     break
-                except Exception as e:
+                except BaseException as e:
                     print("not found button:", e, str(e))
         else:
             self.sb.browser.get(self.web_app_entry_url)
