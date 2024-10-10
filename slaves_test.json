@@ -1,11 +1,18 @@
 {
-    "8801748878172": {
-        "number": "8801748878172",
-        "path": "C:\\projects\\tg_accs\\8801748878172\\tdata",
-        "proxy": "07196708-zone-custom-region-BD-sessid-6K8CCtyb-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
-        "password": "190000",
-        "last_run": "2024-10-08 01:56:10",
-        "full_restore_time": "2024-10-08 02:46:10",
-        "last_status": "painted 5, left 0"
+    "12264550366": {
+        "number": "12264550366",
+        "path": "C:\\projects\\tg_accs\\12264550366\\tdata",
+        "proxy": "",
+        "last_run": "2024-10-08 02:34:19",
+        "full_restore_time": "2024-10-08 03:31:19",
+        "last_status": "painted 1, left 0"
+    },
+    "12264558635": {
+        "number": "12264558635",
+        "path": "C:\\projects\\tg_accs\\12264558635\\tdata",
+        "proxy": "",
+        "last_run": "2024-10-08 02:34:46",
+        "full_restore_time": "2024-10-08 03:31:46",
+        "last_status": "painted 0, left 0"
     }
 }

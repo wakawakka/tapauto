@@ -38,7 +38,7 @@ class PixelActions:
 
         self.web_app_entry_url = web_app_entry_url
         self.proxy_host = proxy_host
-        self.proxy_port = int(proxy_port)
+        self.proxy_port = int(proxy_port) if proxy_port is not None else 0
         self.proxy_user = proxy_user
         self.proxy_password = proxy_password
         self.proxy_extention_path = proxy_extention_path
