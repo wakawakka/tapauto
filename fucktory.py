@@ -11,6 +11,7 @@
 from PIL import Image
 import code
 import json
+import time
 import random
 import pandas as pd
 import asyncio
@@ -20,7 +21,6 @@ from notpixel_actions import PixelActions
 import notpixel_tools
 import settings
 import telegram_utils
-import secure_browser
 import notpixel_tools
 import notpixel_actions
 
@@ -89,44 +89,51 @@ class Fucktory:
     async def estimated_charges(self, worker):
         return 2
 
-    async def single_run(self, worker, task):
-        async with worker['locker']:
-            proxy_host, proxy_port, proxy_user, proxy_password = (
-                notpixel_tools.parse_proxy_url("https://" + worker["proxy"])
-            )
-            tg = telegram_utils.Telega(
-                session_id=worker["number"],
-                telegram_cache_dir=settings.telegram_cache,
-                proxy_host=proxy_host,
-                proxy_port=proxy_port,
-                proxy_user=proxy_user,
-                proxy_password=proxy_password,
-            )
-            tdata_path = worker["path"]
-            account_password = worker.get('password', None)
-            await tg.init_client_tdata(
-                tdata_path, platform="desktop", hardware_id="228", password=account_password
-            )
-            app_url = await tg.get_bot_webapp(
-                bot_username="notpixel",
-                url="https://notpx.app",
-                platform="android",
-            )
-            huy_v_rot_styles = "&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
-            print(app_url + huy_v_rot_styles)
-            pa = notpixel_actions.PixelActions(
-                app_url + huy_v_rot_styles,
-                proxy_host=proxy_host,
-                proxy_port=proxy_port,
-                proxy_user=proxy_user,
-                proxy_password=proxy_password,
-                gui_browser_worker_type=False,
-                headless=True,
-            )
-            job_result = await pa.run(task)
-            if pa.sb:
-                pa.sb.browser.close()
-            return job_result
+    async def single_run(self, worker, tasks):
+        for task in tasks:
+            self.locksmap[(task[0], task[1])].lock()
+
+        try:
+            async with worker['locker']:
+                proxy_host, proxy_port, proxy_user, proxy_password = (
+                    notpixel_tools.parse_proxy_url("https://" + worker["proxy"])
+                )
+                tg = telegram_utils.Telega(
+                    session_id=worker["number"],
+                    telegram_cache_dir=settings.telegram_cache,
+                    proxy_host=proxy_host,
+                    proxy_port=proxy_port,
+                    proxy_user=proxy_user,
+                    proxy_password=proxy_password,
+                )
+                tdata_path = worker["path"]
+                account_password = worker.get('password', None)
+                await tg.init_client_tdata(
+                    tdata_path, platform="desktop", hardware_id="228", password=account_password
+                )
+                app_url = await tg.get_bot_webapp(
+                    bot_username="notpixel",
+                    url="https://notpx.app",
+                    platform="android",
+                )
+                huy_v_rot_styles = "&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
+                print(app_url + huy_v_rot_styles)
+                pa = notpixel_actions.PixelActions(
+                    app_url + huy_v_rot_styles,
+                    proxy_host=proxy_host,
+                    proxy_port=proxy_port,
+                    proxy_user=proxy_user,
+                    proxy_password=proxy_password,
+                    gui_browser_worker_type=False,
+                    headless=True,
+                )
+                job_result = await pa.run(tasks)
+                if pa.sb:
+                    pa.sb.browser.close()
+                return job_result
+        finally:
+            for task in tasks:
+                self.locksmap[(task[0], task[1])].acquire()
 
     def run_sequentially(self, catch=True):
         for worker_name, worker in self.workers.items():
@@ -179,7 +186,7 @@ class Fucktory:
 
         tasks = []
         offset = 0
-        for worker_name in actual_workers:
+        for worker_name in random.shuffle(actual_workers):
             charges = await self.estimated_charges(self.workers[worker_name])
             sub_job = not_locked_actual_job[offset:offset + charges]
             offset += charges
@@ -192,6 +199,13 @@ class Fucktory:
             print(f'LEFT PIXELS WITOUT WORKERS: {len(not_locked_actual_job) - offset}')
         print(f'AMOUNT OF STARTED WORKERS: {len(tasks)}')
         await asyncio.gather(*tasks)
+    
+    async def runner_service(self, period=10):
+        loop = asyncio.get_event_loop()
+        loop.run_forever()
+        while True:
+            loop.set_task_factory(self.run_async(catch=True))
+            time.sleep(period)
 
 
 async def main():
@@ -202,7 +216,9 @@ async def main():
     # some logic on how much workers needed for task
     await fk.initial_get_workers(slaves_path)
     # some logic on parallel/non parallel run of the job
-    await fk.run_async(catch=False)
+    await fk.run_async(catch=False) 
+    # await fk.runner_service()
+    code.interact(local=locals())
 
 
 if __name__ == "__main__":
