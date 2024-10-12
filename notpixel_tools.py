@@ -8,7 +8,7 @@ from aiohttp_socks import ChainProxyConnector, ProxyConnector, ProxyType
 from async_timeout import timeout
 from PIL import Image
 
-from exceptions import BadStatus, HttpTimeout
+from exceptions import BadStatus, HttpTimeout, HttpError
 from utils import get_logger
 
 
@@ -51,6 +51,8 @@ async def http_request(
                     return {"status": r.status, "content": content}
     except asyncio.TimeoutError:
         raise HttpTimeout(proxy=proxy, url=url)
+    except BaseException as e:
+        raise HttpError(proxy=proxy, url=url, papa_Exception=e)
 
 
 def rgb_to_hex(pix):

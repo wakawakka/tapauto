@@ -210,7 +210,7 @@ class Fucktory:
 
 async def main():
     picture_path = "./notpixel_settings/228.png"
-    slaves_path = "slaves.json"
+    slaves_path = "slaves_test.json"
     fk = Fucktory(picture_path, (228, 228))
     # code.interact(local=locals())
     # some logic on how much workers needed for task

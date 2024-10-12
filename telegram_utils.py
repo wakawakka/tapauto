@@ -1,11 +1,19 @@
+import logging
 import os
 
-from opentele.td import TDesktop
-from opentele.tl import TelegramClient as TC_opentele
-from opentele.api import API, UseCurrentSession, CreateNewSession
-
+from async_timeout import timeout
 from telethon import TelegramClient as TC_telethon
 from telethon import functions, types
+
+import utils
+from exceptions import TelegramBadConvertProfile, TelegramBadProfile
+from opentele.api import API, CreateNewSession, UseCurrentSession
+from opentele.td import TDesktop
+from opentele.tl import TelegramClient as TC_opentele
+
+PROFILE_LOAD_TIMEOUT = 5
+CONNECT_TIMEOUT = 10
+REQUEST_TIMEOUT = 10
 
 
 class Telega:
@@ -18,7 +26,11 @@ class Telega:
         proxy_port: int,
         proxy_user: str,
         proxy_password: str,
+        logfile_path="common.log",
+        logging_level=logging.DEBUG,
     ):
+        self.logger = utils.get_logger(filepath=logfile_path, level=logging_level)
+
         self.cache_dir = telegram_cache_dir
         self.session_dir = os.path.join(self.cache_dir, session_id)
         self.session_file = os.path.join(self.session_dir, f"{session_id}.session")
@@ -60,31 +72,47 @@ class Telega:
             case _:
                 raise Exception('Platform variants: "desktop, ios, macos, android"')
         api = preapi.Generate(unique_id=hardware_id)
-        tdesk = TDesktop(tdata_path)
-        assert tdesk.isLoaded()
-        print("PASSWORD:", password)
-        self.client = await TC_opentele.FromTDesktop(
-            tdesk,
-            session=self.session_file,
-            flag=CreateNewSession,
-            api=api,
-            password=password,
-            proxy=self.telethon_proxy,
+
+        async with timeout(PROFILE_LOAD_TIMEOUT):
+            try:
+                tdesk = TDesktop(tdata_path)
+                assert tdesk.isLoaded()
+            except BaseException as e:
+                raise TelegramBadProfile(tdata_path, e, self.logger)
+        self.logger.info(f"Telegram profile loaded - path: {tdata_path}")
+
+        async with timeout(CONNECT_TIMEOUT):
+            try:
+                self.client = await TC_opentele.FromTDesktop(
+                    tdesk,
+                    session=self.session_file,
+                    flag=CreateNewSession,
+                    api=api,
+                    password=password,
+                    proxy=self.telethon_proxy,
+                )
+                acc_info = await self.client.get_me()
+                assert acc_info
+            except BaseException as e:
+                raise TelegramBadConvertProfile(tdata_path, e, self.logger)
+        self.logger.info(
+            f"Telegram profile connect success - path: {tdata_path}, "
+            f"id: {acc_info.id}, username: {acc_info.username}, phone: {acc_info.phone}"
         )
-        await self.client.connect()
 
     async def init_client_api(self, api_id, api_hash, phone=None):
         if self.client:
             raise Exception("Client already created.")
         if isinstance(api_id, str):
             api_id = int(api_id)
+
         self.client = TC_telethon(
             session=self.session_file,
             api_id=api_id,
             api_hash=api_hash,
             proxy=self.telethon_proxy,
         )
-        TC_telethon()
+
         await self.client.connect()
         auth_success = (
             await self.client.is_user_authorized()
@@ -104,12 +132,6 @@ class Telega:
         me = await self.client.get_me()
         print(f"Logged in as {me.phone} ({me.id})")
         return auth_success
-
-    async def check_client_auth(self):
-        if self.client:
-            auth = await self.client.is_user_authorized()
-            if not auth:
-                raise Exception(f"Session {self.session_id} not authorized")
 
     async def start_bot(self, bot_username, param="start"):
         await self.check_client_auth()
