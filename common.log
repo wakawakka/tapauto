@@ -1,0 +1,3 @@
+2024-10-11 03:47:37,615 - a79f - ERROR - Bad HTTP status:
+	Url: https://notpx.app/api/v1/mining/claim
+	Proxy: socks5://07196708-zone-custom-region-CA-city-toronto-sessid-o47kzll7-sessTime-120:6pGOVG0G@f.proxys5.net:6200	Status: 504

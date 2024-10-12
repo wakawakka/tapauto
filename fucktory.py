@@ -184,13 +184,13 @@ class Fucktory:
             sub_job = not_locked_actual_job[offset:offset + charges]
             offset += charges
             if offset >= len(not_locked_actual_job):
-                print('FILLED ALL TASKS')
+                print('ALL JOB SPLIT BY WORKERS!!!')
                 break
             task = asyncio.create_task(self.single_run(self.workers[worker_name], sub_job))
             tasks.append(task)
         else:
-            print(f'LEFT SOME TASKS: {len(not_locked_actual_job) - offset}')
-        print(f'PONESLAS NAHUI {len(tasks)}')
+            print(f'LEFT PIXELS WITOUT WORKERS: {len(not_locked_actual_job) - offset}')
+        print(f'AMOUNT OF STARTED WORKERS: {len(tasks)}')
         await asyncio.gather(*tasks)
 
 
