@@ -16,6 +16,8 @@ import random
 import pandas as pd
 import asyncio
 import aiofiles
+import logging
+import os
 
 from notpixel_actions import PixelActions
 import notpixel_tools
@@ -23,6 +25,7 @@ import settings
 import telegram_utils
 import notpixel_tools
 import notpixel_actions
+import utils
 
 
 class Worker:
@@ -46,14 +49,18 @@ class Fucktory:
         for x_pad in range(self.img.size[0]):
             for y_pad in range(self.img.size[1]):
                 x, y = init_x + x_pad, init_y + y_pad
-                self.locksmap[(x,y)] = asyncio.Lock()
+                self.locksmap[(x, y)] = asyncio.Lock()
                 # залокали нахуй по идее не должно быть беды потому что обращения к locksmap никогда не долждны ставить туда новый объект,
                 # а тольео менять состояние локера, что сейф
-        
+
         self.file_locker = asyncio.Lock()
         self.workers_locker = asyncio.Lock()
 
-        print(f"Initialized Fucktory size of {self.img.size}")
+        self.logger = utils.get_logger(
+            os.path.join(settings.log_dir, "fucktory.log"), logging.DEBUG
+        )
+
+        self.logger.info(f"Initialized Fucktory size of {self.img.size}")
         # code.interact(local=locals())
 
     async def get_job(self):
@@ -68,36 +75,39 @@ class Fucktory:
                     content = await f.read()
                     self.workers = json.loads(content)
                     for worker_name in self.workers:
-                        self.workers[worker_name]['locker'] = asyncio.Lock()
+                        self.workers[worker_name]["locker"] = asyncio.Lock()
 
     async def dump_workers(self):
         async with self.workers_locker:
             async with self.file_locker:
                 async with aiofiles.open(self.workers_fname, "w") as f:
                     await f.write(json.dumps(self.workers, indent=4))
-    
+
     async def get_actual_workers(self):
         async with self.workers_locker:
             actual_workers = []
             for worker_name, worker in self.workers.items():
                 # All rules to take workers write there like worker['full_restore_time'] > now etc.
-                if worker['locker'].locked():
+                if worker["locker"].locked():
                     pass
                 actual_workers.append(worker_name)
         return actual_workers
-    
+
     async def estimated_charges(self, worker):
         return 2
 
     async def single_run(self, worker, tasks):
+        bot_username = "notpixel"
         for task in tasks:
             self.locksmap[(task[0], task[1])].lock()
 
         try:
-            async with worker['locker']:
+            async with worker["locker"]:
                 proxy_host, proxy_port, proxy_user, proxy_password = (
                     notpixel_tools.parse_proxy_url("https://" + worker["proxy"])
                 )
+                logfile_path = os.path.join(settings.log_dir, worker["number"])
+                log_level = logging.DEBUG
                 tg = telegram_utils.Telega(
                     session_id=worker["number"],
                     telegram_cache_dir=settings.telegram_cache,
@@ -105,14 +115,22 @@ class Fucktory:
                     proxy_port=proxy_port,
                     proxy_user=proxy_user,
                     proxy_password=proxy_password,
+                    logfile_path=logfile_path,
+                    logging_level=log_level,
                 )
                 tdata_path = worker["path"]
-                account_password = worker.get('password', None)
+                account_password = worker.get("password", None)
                 await tg.init_client_tdata(
-                    tdata_path, platform="desktop", hardware_id="228", password=account_password
+                    tdata_path,
+                    platform="desktop",
+                    hardware_id=worker["number"],
+                    password=account_password,
                 )
+                telegram_bot_started = worker.get("bot_started", None)
+                if not telegram_bot_started:
+                    await tg.start_bot(bot_username=bot_username)
                 app_url = await tg.get_bot_webapp(
-                    bot_username="notpixel",
+                    bot_username=bot_username,
                     url="https://notpx.app",
                     platform="android",
                 )
@@ -126,6 +144,8 @@ class Fucktory:
                     proxy_password=proxy_password,
                     gui_browser_worker_type=False,
                     headless=True,
+                    logfile_path=logfile_path,
+                    logging_level=log_level,
                 )
                 job_result = await pa.run(tasks)
                 if pa.sb:
@@ -137,13 +157,13 @@ class Fucktory:
 
     def run_sequentially(self, catch=True):
         for worker_name, worker in self.workers.items():
-            print("NA RABOTU SUKA:", worker)
+            self.logger.info(f"NA RABOTU SUKA: {worker}")
             failed = False
             if catch:
                 try:
                     result = self.single_run(worker, self.task)
                 except Exception as e:
-                    print(f"ERROR for {worker}, {e}, {str(e)}")
+                    self.logger.error(f"ERROR for {worker}, {e}, {str(e)}")
                     result = {}
                     worker["last_status"] = f"{e}"
                     failed = True
@@ -169,37 +189,41 @@ class Fucktory:
                 assert self.task[i][1] == point[1]
             self.task = self.task[len(painted) :]
             if len(self.task) == 0:
-                print("ALL PAINTED!!!!!!")
+                self.logger.info("ALL PAINTED!!!!!!")
                 break
         else:
-            print(f"All worker used, but still left {len(self.task)} points(")
-    
-    async def run_async(self, catch=True):
+            self.logger.info(
+                f"All worker used, but still left {len(self.task)} points("
+            )
+
+    async def run_async(self):
         actual_job = await self.get_job()
-        print(f'CURRENT BAD POINTS {len(actual_job)}')
+        self.logger.info(f"CURRENT BAD POINTS {len(actual_job)}")
         actual_workers = await self.get_actual_workers()
         not_locked_actual_job = []
         for point_job in actual_job:
             if not self.locksmap[(point_job[0], point_job[1])].locked():
                 not_locked_actual_job.append(point_job)
-        print(f'CURRENT NOT LOCKED BAD POINTS {len(not_locked_actual_job)}')
+        self.logger.info(f"CURRENT NOT LOCKED BAD POINTS {len(not_locked_actual_job)}")
 
         tasks = []
         offset = 0
         for worker_name in random.shuffle(actual_workers):
             charges = await self.estimated_charges(self.workers[worker_name])
-            sub_job = not_locked_actual_job[offset:offset + charges]
+            sub_job = not_locked_actual_job[offset : offset + charges]
             offset += charges
             if offset >= len(not_locked_actual_job):
-                print('FILLED ALL TASKS')
+                self.logger.info("FILLED ALL TASKS")
                 break
-            task = asyncio.create_task(self.single_run(self.workers[worker_name], sub_job))
+            task = asyncio.create_task(
+                self.single_run(self.workers[worker_name], sub_job)
+            )
             tasks.append(task)
         else:
-            print(f'LEFT SOME TASKS: {len(not_locked_actual_job) - offset}')
-        print(f'PONESLAS NAHUI {len(tasks)}')
+            self.logger.info(f"LEFT SOME TASKS: {len(not_locked_actual_job) - offset}")
+        self.logger.info(f"PONESLAS NAHUI {len(tasks)}")
         await asyncio.gather(*tasks)
-    
+
     async def runner_service(self, period=10):
         loop = asyncio.get_event_loop()
         loop.run_forever()
@@ -211,12 +235,13 @@ class Fucktory:
 async def main():
     picture_path = "./notpixel_settings/228.png"
     slaves_path = "slaves_test.json"
+
     fk = Fucktory(picture_path, (228, 228))
     # code.interact(local=locals())
     # some logic on how much workers needed for task
     await fk.initial_get_workers(slaves_path)
     # some logic on parallel/non parallel run of the job
-    await fk.run_async(catch=False) 
+    await fk.run_async()
     # await fk.runner_service()
     code.interact(local=locals())
 

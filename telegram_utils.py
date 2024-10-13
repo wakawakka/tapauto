@@ -134,8 +134,9 @@ class Telega:
         return auth_success
 
     async def start_bot(self, bot_username, param="start"):
-        await self.check_client_auth()
+        self.logger.info(f"Telegram bot not started yet. Trying start...")
         bot = await self.client.get_entity(bot_username)
+        self.logger.info(f"Got bot entity, id: {bot.id}")
         result_start = await self.client(
             functions.messages.StartBotRequest(
                 bot=types.InputUser(user_id=bot.id, access_hash=bot.access_hash),
@@ -143,15 +144,22 @@ class Telega:
                 start_param=param,
             )
         )
+        events_s = [i.get("_") for i in result_start.to_dict().get("updates")]
+        self.logger.info(f"Api StartBotRequest events: id: {events_s}")
         result_init_message = await self.client.send_message(
-            entity=bot, message="Hello bebe!"
+            entity=bot, message="/start"
         )
+        self.logger.info(f"Sent duplicate message: {result_init_message.message}")
+        pass
 
     async def get_bot_webapp(
         self, bot_username: str, platform: str, url: str, param: str = None
     ):
-        await self.check_client_auth()
+        self.logger.info(
+            f"Getting bot web application URL for {bot_username}, {platform}, {url} with params {param}"
+        )
         bot = await self.client.get_entity(bot_username)
+        self.logger.info(f"Got bot entity, id: {bot.id}")
         result = await self.client(
             functions.messages.RequestWebViewRequest(
                 bot=types.InputUser(user_id=bot.id, access_hash=bot.access_hash),
@@ -162,4 +170,5 @@ class Telega:
                 url=url,
             )
         )
+        self.logger.info(f"Got bot web application URL: {result.url}")
         return result.url
