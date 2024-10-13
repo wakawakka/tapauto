@@ -43,6 +43,7 @@ class Fucktory:
         logfile_path="common.log",
         logging_level=logging.DEBUG,
     ):
+        self.logging_level = logging_level
         self.logger = utils.get_logger(
             filepath=logfile_path, level=logging_level, name="FuckTory"
         )
@@ -119,20 +120,24 @@ class Fucktory:
         return 1
 
     async def single_run(self, worker_name, tasks):
+        logfile_path = os.path.join(settings.log_dir, worker_name)
+        local_logger = utils.get_logger(
+            filepath=logfile_path, level=self.logging_level, name=f"single_run:{worker_name}"
+        )
+
         bot_username = "notpx_bot"
         worker = self.workers[worker_name]
         for task in tasks:
             await self.pixellocker[(task[0], task[1])].acquire()
         #job_result = {}
+
         try:
             async with self.workers[worker_name]["locker"]:
                 proxy_host, proxy_port, proxy_user, proxy_password = (
                     notpixel_tools.parse_proxy_url("https://" + worker["proxy"])
                 )
                 if self.workers[worker_name].get("tg") is None:
-                    self.logger.info(f"WORKER {worker_name} create NEW worker")
-                    logfile_path = os.path.join(settings.log_dir, worker["number"])
-                    log_level = logging.DEBUG
+                    local_logger.info(f"WORKER {worker_name} create NEW worker")
 
                     tg = telegram_utils.Telega(
                         session_id=worker["number"],
@@ -142,7 +147,7 @@ class Fucktory:
                         proxy_user=proxy_user,
                         proxy_password=proxy_password,
                         logfile_path=logfile_path,
-                        logging_level=log_level,
+                        logging_level=self.logging_level,
                         name=f"tutils:{worker_name}"
                     )
                     tdata_path = worker["path"]
@@ -157,18 +162,20 @@ class Fucktory:
                     telegram_bot_started = worker.get("bot_started", None)
                     if not telegram_bot_started:
                         await tg.start_bot(bot_username=bot_username)
+                    app_url = await tg.get_bot_webapp(
+                        bot_username=bot_username,
+                        url="https://notpx.app",
+                        platform="android",
+                    )
+
                     self.workers[worker_name]["tg"] = tg
                 else:
-                    self.logger.info(f"WORKER {worker_name} use Existing worker")
+                    local_logger.info(f"WORKER {worker_name} use Existing worker")
                     tg = self.workers[worker_name]["tg"]
 
-                app_url = await tg.get_bot_webapp(
-                    bot_username=bot_username,
-                    url="https://notpx.app",
-                    platform="android",
-                )
+                app_url = tg.app_url
                 huy_v_rot_styles = "&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
-                self.logger.info(app_url + huy_v_rot_styles)
+                local_logger.info(app_url + huy_v_rot_styles)
                 pa = notpixel_actions.PixelActions(
                     app_url + huy_v_rot_styles,
                     proxy_host=proxy_host,
@@ -179,16 +186,21 @@ class Fucktory:
                     headless=True,
                     name=f"pa:{worker_name}",
                     logfile_path=logfile_path,
-                    logging_level=log_level,
+                    logging_level=self.logging_level,
                 )
+                local_logger.info("PA initialized")
                 job_result = await pa.run(tasks)
+                local_logger.info(f"task done : {job_result}")
                 job_result["status"] = (
                     f"OK, painted {job_result['painted']}, left{job_result['charges']}"
                 )
                 if pa.sb:
                     pa.sb.browser.close()
+        except asyncio.CancelledError as e:
+            local_logger.info(f"WORKER {worker_name} cancelled")
+            job_result = {}
         except BaseException as e:
-            self.logger.info(f"WORKER {worker} failed with {e}, {repr(e)}")
+            local_logger.error(f"WORKER {worker_name} failed with {e}, {repr(e)}")
             try:
                 self.workers[worker_name]["tg"].disconnect()
             except:
@@ -206,7 +218,8 @@ class Fucktory:
 
             for j in job_result:
                 worker[j] = job_result[j]
-            worker["last_run"] = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
+            if job_result:
+                worker["last_run"] = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
             self.workers[worker_name] = worker
             await self.dump_workers()
             return job_result

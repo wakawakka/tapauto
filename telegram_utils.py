@@ -50,6 +50,7 @@ class Telega:
 
         self.session_id = session_id
         self.client = None
+        self.app_url = None
 
     # ONLY WINDOWS MODE
     async def init_client_tdata(
@@ -172,4 +173,5 @@ class Telega:
             )
         )
         self.logger.info(f"Got bot web application URL: {result.url}")
+        self.app_url = result.url
         return result.url
