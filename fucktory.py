@@ -131,6 +131,7 @@ class Fucktory:
                 )
                 logfile_path = os.path.join(settings.log_dir, worker["number"])
                 log_level = logging.DEBUG
+
                 tg = telegram_utils.Telega(
                     session_id=worker["number"],
                     telegram_cache_dir=settings.telegram_cache,
@@ -170,6 +171,8 @@ class Fucktory:
                     gui_browser_worker_type=False,
                     headless=True,
                     name=worker_name,
+                    logfile_path=logfile_path,
+                    logging_level=log_level,
                 )
                 job_result = await pa.run(tasks)
                 job_result["status"] = (
