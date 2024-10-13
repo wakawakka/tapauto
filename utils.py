@@ -2,9 +2,8 @@ import logging
 from uuid import uuid4
 
 
-def get_logger(filepath=None, level=logging.INFO) -> logging.Logger:
-    logger_id = uuid4().hex[:4]
-    logger = logging.Logger(logger_id)
+def get_logger(filepath=None, level=logging.INFO, name='unnamed') -> logging.Logger:
+    logger = logging.Logger(name)
     logger.setLevel(level)
 
     formatter = logging.Formatter(

@@ -32,8 +32,9 @@ class PixelActions:
         headless=False,
         logfile_path="common.log",
         logging_level=logging.DEBUG,
+        name="PixelActions unnamed"
     ):
-        self.logger = utils.get_logger(filepath=logfile_path, level=logging_level)
+        self.logger = utils.get_logger(filepath=logfile_path, level=logging_level, name=name)
 
         self.web_app_entry_url = web_app_entry_url
         self.proxy_host = proxy_host
@@ -326,10 +327,11 @@ class PixelActions:
     async def paint(self, pixels_to_paint):
         painted = []
         for x, y, task_pix_color in pixels_to_paint:
+            await self.paint_pixel(x, y, task_pix_color)
+            painted.append((x,y))
+            self.energy -= 1
             if self.energy < 1:
                 return painted
-            await self.paint_pixel(x, y, task_pix_color)
-            self.energy -= 1
         return painted
 
     async def run(self, pixels_to_paint):
@@ -351,7 +353,7 @@ class PixelActions:
             pd.Timestamp.now() + pd.Timedelta(seconds=charge_restore_in_seconds)
         ).strftime("%Y-%m-%d %H:%M:%S")
         return {
-            "painted": painted,
+            "painted": len(painted),
             "charges": self.energy,
             "charges_full_restore_time": charge_restore_time,
         }

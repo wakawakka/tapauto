@@ -28,6 +28,7 @@ class Telega:
         proxy_password: str,
         logfile_path="common.log",
         logging_level=logging.DEBUG,
+        name="Telega unnamed",
     ):
         self.logger = utils.get_logger(filepath=logfile_path, level=logging_level)
 
@@ -134,7 +135,7 @@ class Telega:
         return auth_success
 
     async def start_bot(self, bot_username, param="start"):
-        await self.check_client_auth()
+        #await self.check_client_auth()
         bot = await self.client.get_entity(bot_username)
         result_start = await self.client(
             functions.messages.StartBotRequest(
@@ -150,7 +151,7 @@ class Telega:
     async def get_bot_webapp(
         self, bot_username: str, platform: str, url: str, param: str = None
     ):
-        await self.check_client_auth()
+        #await self.check_client_auth()
         bot = await self.client.get_entity(bot_username)
         result = await self.client(
             functions.messages.RequestWebViewRequest(

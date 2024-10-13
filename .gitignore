@@ -10,3 +10,4 @@ data/
 extensions/
 tdatas/
 log.log
+*.log
