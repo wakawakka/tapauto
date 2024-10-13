@@ -25,6 +25,7 @@ import settings
 import telegram_utils
 import notpixel_tools
 import notpixel_actions
+import utils
 
 
 class Worker:
@@ -59,7 +60,7 @@ class Fucktory:
                 self.pixellocker[(x,y)] = asyncio.Lock()
                 # залокали нахуй по идее не должно быть беды потому что обращения к pixellocker никогда не долждны ставить туда новый объект,
                 # а тольео менять состояние локера, что сейф
-        
+
         self.file_locker = asyncio.Lock()
         self.workers_locker = asyncio.Lock()
 
@@ -78,7 +79,7 @@ class Fucktory:
                     content = await f.read()
                     self.workers = json.loads(content)
                     for worker_name in self.workers:
-                        self.workers[worker_name]['locker'] = asyncio.Lock()
+                        self.workers[worker_name]["locker"] = asyncio.Lock()
 
     async def dump_workers(self):
         async with self.workers_locker:
@@ -98,7 +99,7 @@ class Fucktory:
                 self.logger.info('FREE!')
                 actual_workers.append(worker_name)
         return actual_workers
-    
+
     async def estimated_charges(self, worker):
         return 1
 
@@ -112,6 +113,8 @@ class Fucktory:
                 proxy_host, proxy_port, proxy_user, proxy_password = (
                     notpixel_tools.parse_proxy_url("https://" + worker["proxy"])
                 )
+                logfile_path = os.path.join(settings.log_dir, worker["number"])
+                log_level = logging.DEBUG
                 tg = telegram_utils.Telega(
                     session_id=worker["number"],
                     telegram_cache_dir=settings.telegram_cache,
@@ -119,14 +122,22 @@ class Fucktory:
                     proxy_port=proxy_port,
                     proxy_user=proxy_user,
                     proxy_password=proxy_password,
+                    logfile_path=logfile_path,
+                    logging_level=log_level,
                 )
                 tdata_path = worker["path"]
-                account_password = worker.get('password', None)
+                account_password = worker.get("password", None)
                 await tg.init_client_tdata(
-                    tdata_path, platform="desktop", hardware_id="228", password=account_password
+                    tdata_path,
+                    platform="desktop",
+                    hardware_id=worker["number"],
+                    password=account_password,
                 )
+                telegram_bot_started = worker.get("bot_started", None)
+                if not telegram_bot_started:
+                    await tg.start_bot(bot_username=bot_username)
                 app_url = await tg.get_bot_webapp(
-                    bot_username="notpixel",
+                    bot_username=bot_username,
                     url="https://notpx.app",
                     platform="android",
                 )
@@ -176,7 +187,7 @@ class Fucktory:
         random.shuffle(actual_workers)
         for worker_name in actual_workers:
             charges = await self.estimated_charges(self.workers[worker_name])
-            sub_job = not_locked_actual_job[offset:offset + charges]
+            sub_job = not_locked_actual_job[offset : offset + charges]
             offset += charges
             if offset >= len(not_locked_actual_job):
                 self.logger.info('ALL JOB SPLIT BY WORKERS!!!')
@@ -212,6 +223,7 @@ class Fucktory:
 def main():
     picture_path = "./notpixel_settings/228.png"
     slaves_path = "slaves_test.json"
+
     fk = Fucktory(picture_path, (228, 228))
     # code.interact(local=locals())
     # some logic on how much workers needed for task
