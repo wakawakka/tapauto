@@ -94,7 +94,7 @@ class Fucktory:
                                 k: {
                                     kv: vv
                                     for kv, vv in v.items()
-                                    if kv not in ["locker"]
+                                    if kv not in ["locker", "tg"]
                                 }
                                 for k, v in self.workers.items()
                             },
@@ -123,37 +123,44 @@ class Fucktory:
         worker = self.workers[worker_name]
         for task in tasks:
             await self.pixellocker[(task[0], task[1])].acquire()
-        job_result = {}
+        #job_result = {}
         try:
             async with self.workers[worker_name]["locker"]:
                 proxy_host, proxy_port, proxy_user, proxy_password = (
                     notpixel_tools.parse_proxy_url("https://" + worker["proxy"])
                 )
-                logfile_path = os.path.join(settings.log_dir, worker["number"])
-                log_level = logging.DEBUG
+                if self.workers[worker_name].get("tg") is None:
+                    self.logger.info(f"WORKER {worker_name} create NEW worker")
+                    logfile_path = os.path.join(settings.log_dir, worker["number"])
+                    log_level = logging.DEBUG
 
-                tg = telegram_utils.Telega(
-                    session_id=worker["number"],
-                    telegram_cache_dir=settings.telegram_cache,
-                    proxy_host=proxy_host,
-                    proxy_port=proxy_port,
-                    proxy_user=proxy_user,
-                    proxy_password=proxy_password,
-                    logfile_path=logfile_path,
-                    logging_level=log_level,
-                )
-                tdata_path = worker["path"]
-                account_password = worker.get("password", None)
-                await tg.init_client_tdata(
-                    tdata_path,
-                    platform="desktop",
-                    hardware_id=worker["number"],
-                    password=account_password,
-                )
+                    tg = telegram_utils.Telega(
+                        session_id=worker["number"],
+                        telegram_cache_dir=settings.telegram_cache,
+                        proxy_host=proxy_host,
+                        proxy_port=proxy_port,
+                        proxy_user=proxy_user,
+                        proxy_password=proxy_password,
+                        logfile_path=logfile_path,
+                        logging_level=log_level,
+                        name=f"tutils:{worker_name}"
+                    )
+                    tdata_path = worker["path"]
+                    account_password = worker.get("password", None)
+                    await tg.init_client_tdata(
+                        tdata_path,
+                        platform="desktop",
+                        hardware_id=worker["number"],
+                        password=account_password,
+                    )
 
-                telegram_bot_started = worker.get("bot_started", None)
-                if not telegram_bot_started:
-                    await tg.start_bot(bot_username=bot_username)
+                    telegram_bot_started = worker.get("bot_started", None)
+                    if not telegram_bot_started:
+                        await tg.start_bot(bot_username=bot_username)
+                    self.workers[worker_name]["tg"] = tg
+                else:
+                    self.logger.info(f"WORKER {worker_name} use Existing worker")
+                    tg = self.workers[worker_name]["tg"]
 
                 app_url = await tg.get_bot_webapp(
                     bot_username=bot_username,
@@ -170,7 +177,7 @@ class Fucktory:
                     proxy_password=proxy_password,
                     gui_browser_worker_type=False,
                     headless=True,
-                    name=worker_name,
+                    name=f"pa:{worker_name}",
                     logfile_path=logfile_path,
                     logging_level=log_level,
                 )
@@ -180,8 +187,13 @@ class Fucktory:
                 )
                 if pa.sb:
                     pa.sb.browser.close()
-        except Exception as e:
+        except BaseException as e:
             self.logger.info(f"WORKER {worker} failed with {e}, {repr(e)}")
+            try:
+                self.workers[worker_name]["tg"].disconnect()
+            except:
+                pass
+            self.workers[worker_name]["tg"] = None
             job_result = {
                 "status": repr(e),
                 "painted": 0,
@@ -262,9 +274,8 @@ def main():
     asyncio.run(fk.initial_get_workers(slaves_path))
     # some logic on parallel/non parallel run of the job
 
-    # await fk.run_async(catch=False)
-    # asyncio.run(do_stuff_periodically(10, fk.run_async))
-    asyncio.run(fk.do_stuff_periodically_async(3, fk.run_async))
+    #asyncio.run(fk.run_async(catch=False))
+    asyncio.run(fk.do_stuff_periodically_async(10, fk.run_async))
 
 
 if __name__ == "__main__":

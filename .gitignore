@@ -11,3 +11,4 @@ extensions/
 tdatas/
 log.log
 *.log
+logs/
