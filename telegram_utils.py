@@ -1,5 +1,7 @@
 import logging
 import os
+import time
+import datetime
 
 from async_timeout import timeout
 from telethon import TelegramClient as TC_telethon
@@ -30,7 +32,9 @@ class Telega:
         logging_level=logging.DEBUG,
         name="Telega unnamed",
     ):
-        self.logger = utils.get_logger(filepath=logfile_path, level=logging_level, name=name)
+        self.logger = utils.get_logger(
+            filepath=logfile_path, level=logging_level, name=name
+        )
 
         self.cache_dir = telegram_cache_dir
         self.session_dir = os.path.join(self.cache_dir, session_id)
@@ -88,7 +92,7 @@ class Telega:
                 self.client = await TC_opentele.FromTDesktop(
                     tdesk,
                     session=self.session_file,
-                    #flag=CreateNewSession,
+                    # flag=CreateNewSession,
                     api=api,
                     password=password,
                     proxy=self.telethon_proxy,
@@ -174,4 +178,5 @@ class Telega:
         )
         self.logger.info(f"Got bot web application URL: {result.url}")
         self.app_url = result.url
+        self.app_url_dt = datetime.datetime.now()
         return result.url

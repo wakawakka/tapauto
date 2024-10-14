@@ -18,6 +18,7 @@ import asyncio
 import aiofiles
 import logging
 import os
+import datetime
 
 import utils
 from notpixel_actions import PixelActions
@@ -122,14 +123,16 @@ class Fucktory:
     async def single_run(self, worker_name, tasks):
         logfile_path = os.path.join(settings.log_dir, worker_name)
         local_logger = utils.get_logger(
-            filepath=logfile_path, level=self.logging_level, name=f"single_run:{worker_name}"
+            filepath=logfile_path,
+            level=self.logging_level,
+            name=f"single_run:{worker_name}",
         )
 
         bot_username = "notpx_bot"
         worker = self.workers[worker_name]
         for task in tasks:
             await self.pixellocker[(task[0], task[1])].acquire()
-        #job_result = {}
+        # job_result = {}
 
         try:
             async with self.workers[worker_name]["locker"]:
@@ -148,7 +151,7 @@ class Fucktory:
                         proxy_password=proxy_password,
                         logfile_path=logfile_path,
                         logging_level=self.logging_level,
-                        name=f"tutils:{worker_name}"
+                        name=f"tutils:{worker_name}",
                     )
                     tdata_path = worker["path"]
                     account_password = worker.get("password", None)
@@ -159,9 +162,10 @@ class Fucktory:
                         password=account_password,
                     )
 
-                    telegram_bot_started = worker.get("bot_started", None)
-                    if not telegram_bot_started:
-                        await tg.start_bot(bot_username=bot_username)
+                    # telegram_bot_started = worker.get("bot_started", None)
+                    # if not telegram_bot_started:
+                    #     await tg.start_bot(bot_username=bot_username)
+
                     app_url = await tg.get_bot_webapp(
                         bot_username=bot_username,
                         url="https://notpx.app",
@@ -173,7 +177,16 @@ class Fucktory:
                     local_logger.info(f"WORKER {worker_name} use Existing worker")
                     tg = self.workers[worker_name]["tg"]
 
+                dt_now = datetime.datetime.now()
                 app_url = tg.app_url
+                app_url_dt = tg.app_url_dt
+                if dt_now > app_url_dt + datetime.timedelta(minutes=10):
+                    app_url = await tg.get_bot_webapp(
+                        bot_username=bot_username,
+                        url="https://notpx.app",
+                        platform="android",
+                    )
+
                 huy_v_rot_styles = "&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
                 local_logger.info(app_url + huy_v_rot_styles)
                 pa = notpixel_actions.PixelActions(
@@ -287,7 +300,7 @@ def main():
     asyncio.run(fk.initial_get_workers(slaves_path))
     # some logic on parallel/non parallel run of the job
 
-    #asyncio.run(fk.run_async(catch=False))
+    # asyncio.run(fk.run_async(catch=False))
     asyncio.run(fk.do_stuff_periodically_async(10, fk.run_async))
 
 
