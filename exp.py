@@ -1,5 +1,3 @@
-from timeout_decorator import timeout
-
 import notpixel_actions
 import notpixel_tools
 from exceptions import *
