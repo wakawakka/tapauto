@@ -2,7 +2,7 @@ import logging
 from uuid import uuid4
 
 
-def get_logger(filepath=None, level=logging.INFO, name='unnamed') -> logging.Logger:
+def get_logger(filepath=None, level=logging.INFO, name="unnamed") -> logging.Logger:
     logger = logging.Logger(name)
     logger.setLevel(level)
 

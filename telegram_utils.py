@@ -152,10 +152,10 @@ class Telega:
         )
         events_s = [i.get("_") for i in result_start.to_dict().get("updates")]
         self.logger.info(f"Api StartBotRequest events: id: {events_s}")
-        result_init_message = await self.client.send_message(
-            entity=bot, message="/start"
-        )
-        self.logger.info(f"Sent duplicate message: {result_init_message.message}")
+        # result_init_message = await self.client.send_message(
+        #     entity=bot, message="/start"
+        # )
+        # self.logger.info(f"Sent duplicate message: {result_init_message.message}")
         pass
 
     async def get_bot_webapp(
