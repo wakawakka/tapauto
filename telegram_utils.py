@@ -92,7 +92,7 @@ class Telega:
                 self.client = await TC_opentele.FromTDesktop(
                     tdesk,
                     session=self.session_file,
-                    # flag=CreateNewSession,
+                    flag=CreateNewSession,
                     api=api,
                     password=password,
                     proxy=self.telethon_proxy,
