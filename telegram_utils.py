@@ -14,7 +14,7 @@ from opentele.td import TDesktop
 from opentele.tl import TelegramClient as TC_opentele
 
 PROFILE_LOAD_TIMEOUT = 5
-CONNECT_TIMEOUT = 10
+CONNECT_TIMEOUT = 15
 REQUEST_TIMEOUT = 10
 
 
@@ -31,6 +31,7 @@ class Telega:
         logfile_path="common.log",
         logging_level=logging.DEBUG,
         name="Telega unnamed",
+        remove_old_session_file=True,
     ):
         self.logger = utils.get_logger(
             filepath=logfile_path, level=logging_level, name=name
@@ -38,8 +39,11 @@ class Telega:
 
         self.cache_dir = telegram_cache_dir
         self.session_dir = os.path.join(self.cache_dir, session_id)
-        self.session_file = os.path.join(self.session_dir, f"{session_id}.session")
         os.makedirs(self.session_dir, exist_ok=True)
+
+        self.session_file = os.path.join(self.session_dir, f"{session_id}.session")
+        if remove_old_session_file and os.path.isfile(self.session_file):
+            os.remove(self.session_file)
 
         self.telethon_proxy = None
         if proxy_host:

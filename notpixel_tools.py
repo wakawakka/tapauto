@@ -55,6 +55,27 @@ async def http_request(
         raise HttpError(proxy=proxy, url=url, papa_Exception=e)
 
 
+async def ipinfo(proxy_host, proxy_port, proxy_user, proxy_password):
+    logger = get_logger("common.log", logging.DEBUG)
+    headers = {"User-Agent": "curl"}
+    proxy_string = f"socks5://{proxy_user}:{proxy_password}@{proxy_host}:{proxy_port}"
+    result = await http_request(
+        "GET",
+        "https://ipinfo.io/",
+        headers,
+        proxy=proxy_string,
+        http_timeout=10,
+        good_statuses=[200],
+        logger=logger,
+    )
+    logger.debug(result)
+    status = result.get("status")
+    content_len = len(result.get("content"))
+    logger.info(
+        f"Finish GET info URL GET, status: {status}, content len: {content_len}"
+    )
+
+
 def rgb_to_hex(pix):
     r, g, b = pix
     r, g, b = int(r), int(g), int(b)

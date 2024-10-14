@@ -157,7 +157,7 @@ class Fucktory:
                     account_password = worker.get("password", None)
                     await tg.init_client_tdata(
                         tdata_path,
-                        platform="desktop",
+                        platform="macos",
                         hardware_id=worker["number"],
                         password=account_password,
                     )
@@ -169,7 +169,7 @@ class Fucktory:
                     app_url = await tg.get_bot_webapp(
                         bot_username=bot_username,
                         url="https://notpx.app",
-                        platform="android",
+                        platform="ios",
                     )
 
                     self.workers[worker_name]["tg"] = tg
