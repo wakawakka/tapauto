@@ -215,7 +215,7 @@ class Fucktory:
         except BaseException as e:
             local_logger.error(f"WORKER {worker_name} failed with {e}, {repr(e)}")
             try:
-                self.workers[worker_name]["tg"].disconnect()
+                await self.workers[worker_name]["tg"].disconnect()
             except:
                 pass
             self.workers[worker_name]["tg"] = None
