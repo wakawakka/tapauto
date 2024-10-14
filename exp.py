@@ -6,10 +6,12 @@ from fucktory import Fucktory
 
 import asyncio
 
-proxy = "07196708-zone-custom-region-CA-city-vancouver-sessid-m5G27rH0-sessTime-120:6pGOVG0G@f.proxys5.net:6200"
+proxy = "07196708-zone-custom-region-CA-sessid-C9p85mlF-sessTime-120:6pGOVG0G@f.proxys5.net:6200"
 proxy_host, proxy_port, proxy_user, proxy_password = notpixel_tools.parse_proxy_url(
     "https://" + proxy
 )
+
+# proxy_host = None
 
 
 async def main_test_not_pixel():
@@ -52,7 +54,10 @@ async def main_test_telegram():
         hardware_id="16049015240",
         password="Reza1357",
     )
-    await t.start_bot(bot_username="notpx_bot")
+    await t.get_bot_webapp("notpx_bot", "android", "https://notpx.app")
+
+    print(t.app_url)
+    # await t.start_bot(bot_username="notpx_bot")
     pass
 
 
@@ -71,13 +76,14 @@ async def main_test_fucktory():
 
 
 async def test_proxy():
-    await notpixel_tools.ipinfo(proxy_host, proxy_port, proxy_user, proxy_password)
+    if proxy_host:
+        await notpixel_tools.ipinfo(proxy_host, proxy_port, proxy_user, proxy_password)
 
 
 if __name__ == "__main__":
     loop = asyncio.new_event_loop()
     loop.run_until_complete(test_proxy())
-    # loop.run_until_complete(main_test_telegram())
+    loop.run_until_complete(main_test_telegram())
     # loop.run_until_complete(main_test_fucktory())
 
     loop.close()
