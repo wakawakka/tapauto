@@ -205,7 +205,7 @@ class Fucktory:
                 job_result = await pa.run(tasks)
                 local_logger.info(f"task done : {job_result}")
                 job_result["status"] = (
-                    f"OK, painted {job_result['painted']}, left{job_result['charges']}"
+                    f"OK, painted {job_result['painted']}, left {job_result['charges']}"
                 )
                 if pa.sb:
                     pa.sb.browser.close()
