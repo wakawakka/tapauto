@@ -4,25 +4,66 @@
         "path": "C:\\projects\\tg_accs\\27665326403\\tdata",
         "proxy": "",
         "password": "7bai7f",
-        "status": "OK, painted [(228, 228), (228, 230), (228, 231)], left 0",
+        "status": "OK, painted [(232, 229)], left 0",
         "painted": [
             [
-                228,
-                228
-            ],
-            [
-                228,
-                230
-            ],
-            [
-                228,
-                231
+                232,
+                229
             ]
         ],
         "charges": 0,
-        "charges_full_restore_time": "UNKNOWN",
-        "last_run": "2024-10-15 09:16:08",
-        "energy_restore_speed": 600.0,
+        "last_run": "2024-10-15 10:05:08",
+        "energy_restore_speed": 570.0,
         "max_energy": 5
+    },
+    "27678171372": {
+        "number": "27678171372",
+        "path": "C:\\projects\\tg_accs\\27678171372\\tdata",
+        "proxy": "07196708-zone-custom-region-CA-sessid-6W6cyjdT-sessTime-20:6pGOVG0G@f.proxys5.net:6200",
+        "password": "zcxzaco2jsw4rc",
+        "status": "HttpError(\"Failed HTTP request:\\n\\tUrl: https://notpx.app/api/v1/mining/status\\n\\tProxy: socks5://07196708-zone-custom-region-CA-sessid-6W6cyjdT-sessTime-20:6pGOVG0G@f.proxys5.net:6200\\tPapa Exception -  type: <class 'exceptions.BadStatus'>, message: Bad HTTP status:\\n\\tUrl: https://notpx.app/api/v1/mining/status\\n\\tProxy: socks5://07196708-zone-custom-region-CA-sessid-6W6cyjdT-sessTime-20:6pGOVG0G@f.proxys5.net:6200\\tStatus: 500\")",
+        "painted": 0,
+        "charges": "UNKNOWN",
+        "charges_full_restore_time": "UNKNOWN",
+        "last_run": "2024-10-15 10:04:40"
+    },
+    "27678186111": {
+        "number": "27678186111",
+        "path": "C:\\projects\\tg_accs\\27678186111\\tdata",
+        "proxy": "07196708-zone-custom-region-CA-sessid-6EZs6dBF-sessTime-20:6pGOVG0G@f.proxys5.net:6200",
+        "password": "h3774wud",
+        "status": "HttpError(\"Failed HTTP request:\\n\\tUrl: https://notpx.app/api/v1/mining/status\\n\\tProxy: socks5://07196708-zone-custom-region-CA-sessid-6EZs6dBF-sessTime-20:6pGOVG0G@f.proxys5.net:6200\\tPapa Exception -  type: <class 'exceptions.BadStatus'>, message: Bad HTTP status:\\n\\tUrl: https://notpx.app/api/v1/mining/status\\n\\tProxy: socks5://07196708-zone-custom-region-CA-sessid-6EZs6dBF-sessTime-20:6pGOVG0G@f.proxys5.net:6200\\tStatus: 500\")",
+        "painted": 0,
+        "charges": "UNKNOWN",
+        "charges_full_restore_time": "UNKNOWN",
+        "last_run": "2024-10-15 10:04:37"
+    },
+    "27678203943": {
+        "number": "27678203943",
+        "path": "C:\\projects\\tg_accs\\27678203943\\tdata",
+        "proxy": "07196708-zone-custom-region-CA-sessid-wjVZLdM8-sessTime-20:6pGOVG0G@f.proxys5.net:6200",
+        "password": "4pi0vsdoohj",
+        "status": "HttpError(\"Failed HTTP request:\\n\\tUrl: https://notpx.app/api/v1/mining/status\\n\\tProxy: socks5://07196708-zone-custom-region-CA-sessid-wjVZLdM8-sessTime-20:6pGOVG0G@f.proxys5.net:6200\\tPapa Exception -  type: <class 'exceptions.BadStatus'>, message: Bad HTTP status:\\n\\tUrl: https://notpx.app/api/v1/mining/status\\n\\tProxy: socks5://07196708-zone-custom-region-CA-sessid-wjVZLdM8-sessTime-20:6pGOVG0G@f.proxys5.net:6200\\tStatus: 500\")",
+        "painted": 0,
+        "charges": "UNKNOWN",
+        "charges_full_restore_time": "UNKNOWN",
+        "last_run": "2024-10-15 10:04:35"
+    },
+    "27678344623": {
+        "number": "27678344623",
+        "path": "C:\\projects\\tg_accs\\27678344623\\tdata",
+        "proxy": "07196708-zone-custom-region-CA-sessid-XRNJDsmL-sessTime-20:6pGOVG0G@f.proxys5.net:6200",
+        "password": "78v3hx3darp"
+    },
+    "27678359977": {
+        "number": "27678359977",
+        "path": "C:\\projects\\tg_accs\\27678359977\\tdata",
+        "proxy": "07196708-zone-custom-region-CA-sessid-tatIzY9x-sessTime-20:6pGOVG0G@f.proxys5.net:6200",
+        "password": "ho9ostzv1t3h9x",
+        "status": "HttpError(\"Failed HTTP request:\\n\\tUrl: https://notpx.app/api/v1/mining/status\\n\\tProxy: socks5://07196708-zone-custom-region-CA-sessid-tatIzY9x-sessTime-20:6pGOVG0G@f.proxys5.net:6200\\tPapa Exception -  type: <class 'exceptions.BadStatus'>, message: Bad HTTP status:\\n\\tUrl: https://notpx.app/api/v1/mining/status\\n\\tProxy: socks5://07196708-zone-custom-region-CA-sessid-tatIzY9x-sessTime-20:6pGOVG0G@f.proxys5.net:6200\\tStatus: 500\")",
+        "painted": 0,
+        "charges": "UNKNOWN",
+        "charges_full_restore_time": "UNKNOWN",
+        "last_run": "2024-10-15 10:04:36"
     }
 }
