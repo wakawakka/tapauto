@@ -18,7 +18,7 @@ from opentele.td import TDesktop
 from opentele.tl import TelegramClient as TC_opentele
 
 PROFILE_LOAD_TIMEOUT = 5
-CONNECT_TIMEOUT = 30
+CONNECT_TIMEOUT = 120
 REQUEST_TIMEOUT = 10
 
 
@@ -65,6 +65,7 @@ class Telega:
         self.session_id = session_id
         self.client = None
         self.app_url = None
+        self.app_url_dt = None
         self.bot_started = False
 
     def get_api_by_platform(self, platform: str):

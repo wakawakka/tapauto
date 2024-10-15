@@ -1,3 +1,28 @@
 {
-
+    "27665326403": {
+        "number": "27665326403",
+        "path": "C:\\projects\\tg_accs\\27665326403\\tdata",
+        "proxy": "",
+        "password": "7bai7f",
+        "status": "OK, painted [(228, 228), (228, 230), (228, 231)], left 0",
+        "painted": [
+            [
+                228,
+                228
+            ],
+            [
+                228,
+                230
+            ],
+            [
+                228,
+                231
+            ]
+        ],
+        "charges": 0,
+        "charges_full_restore_time": "UNKNOWN",
+        "last_run": "2024-10-15 09:16:08",
+        "energy_restore_speed": 600.0,
+        "max_energy": 5
+    }
 }

@@ -145,7 +145,7 @@ class PixelActions:
             "Origin": "https://app.notpx.app",
         }
 
-    async def sleep_after_request(self, sleep_min=7, sleep_max=10):
+    async def sleep_after_request(self, sleep_min=14, sleep_max=18):
         await asyncio.sleep(random.randint(100 * sleep_min, 100 * sleep_max) / 100)
 
     async def emulate_app_start(self):
@@ -329,12 +329,14 @@ class PixelActions:
         max_charges = acc_state.get("max_charges", 0)
 
         painted = await self.paint(pixels_to_paint)
-        charge_restore_in_seconds = recharge_speed * (max_charges - self.energy)
-        charge_restore_time = (
-            pd.Timestamp.now() + pd.Timedelta(seconds=charge_restore_in_seconds)
-        ).strftime("%Y-%m-%d %H:%M:%S")
-        return {
-            "painted": len(painted),
+
+        job_status = {
+            "painted": painted,
             "charges": self.energy,
-            "charges_full_restore_time": charge_restore_time,
+            "energy_restore_speed": recharge_speed,
+            "max_energy": max_charges,
         }
+
+        self.logger.info(f"Job done, result: {job_status}")
+
+        return job_status
