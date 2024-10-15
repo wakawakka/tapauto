@@ -4,10 +4,17 @@
         "path": "tdatas/16049015240/tdata",
         "proxy": "07196708-zone-custom-region-CA-city-ottawa-sessid-Qoeuiuja-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
         "password": "Reza1357",
-        "status": "TelegramBadConvertProfile(\"Failed to convert TDATA to Telethon session:\\n\\tPath: tdatas/16049015240/tdata\\n\\tPapa Exception -  type: <class 'asyncio.exceptions.CancelledError'>, message: \")",
-        "painted": 0,
-        "charges": "UNKNOWN",
+        "status": "OK, painted [(228, 229)], left 2",
+        "painted": [
+            [
+                228,
+                229
+            ]
+        ],
+        "charges": 2,
         "charges_full_restore_time": "UNKNOWN",
-        "last_run": "2024-10-14 14:44:01"
+        "last_run": "2024-10-15 22:12:21",
+        "energy_restore_speed": 570.0,
+        "max_energy": 5
     }
 }

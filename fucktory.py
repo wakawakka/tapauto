@@ -168,8 +168,7 @@ class Fucktory:
 
                     app_url = await tg.get_bot_webapp(
                         bot_username=bot_username,
-                        url="https://notpx.app",
-                        platform="ios",
+                        platform="android",
                     )
 
                     self.workers[worker_name]["tg"] = tg
@@ -181,16 +180,16 @@ class Fucktory:
                 app_url = tg.app_url
                 app_url_dt = tg.app_url_dt
                 if dt_now > app_url_dt + datetime.timedelta(minutes=10):
+                    tg.logger.info(
+                        "Web app url generated more than 10 minutes ago. Recreating..."
+                    )
                     app_url = await tg.get_bot_webapp(
                         bot_username=bot_username,
-                        url="https://notpx.app",
                         platform="android",
                     )
 
-                huy_v_rot_styles = "&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
-                local_logger.info(app_url + huy_v_rot_styles)
                 pa = notpixel_actions.PixelActions(
-                    app_url + huy_v_rot_styles,
+                    app_url,
                     proxy_host=proxy_host,
                     proxy_port=proxy_port,
                     proxy_user=proxy_user,
