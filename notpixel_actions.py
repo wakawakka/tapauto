@@ -32,9 +32,11 @@ class PixelActions:
         headless=False,
         logfile_path="common.log",
         logging_level=logging.DEBUG,
-        name="PixelActions unnamed"
+        name="PixelActions unnamed",
     ):
-        self.logger = utils.get_logger(filepath=logfile_path, level=logging_level, name=name)
+        self.logger = utils.get_logger(
+            filepath=logfile_path, level=logging_level, name=name
+        )
 
         self.web_app_entry_url = web_app_entry_url
         self.proxy_host = proxy_host
@@ -145,27 +147,6 @@ class PixelActions:
 
     async def sleep_after_request(self, sleep_min=7, sleep_max=10):
         await asyncio.sleep(random.randint(100 * sleep_min, 100 * sleep_max) / 100)
-
-    # for tests
-    async def ipinfo(self):
-        self.logger.debug(f"Start GET info URL")
-        headers = {"User-Agent": "curl"}
-        result = await notpixel_tools.http_request(
-            "GET",
-            "https://ipinfo.io/",
-            headers,
-            proxy=self.proxy_string,
-            http_timeout=10,
-            good_statuses=[200],
-            logger=self.logger,
-        )
-        await self.sleep_after_request()
-        print(result)
-        status = result.get("status")
-        content_len = len(result.get("content"))
-        self.logger.info(
-            f"Finish GET info URL GET, status: {status}, content len: {content_len}"
-        )
 
     async def emulate_app_start(self):
         self.logger.debug(f"Start GET entry URL")
@@ -328,7 +309,7 @@ class PixelActions:
         painted = []
         for x, y, task_pix_color in pixels_to_paint:
             await self.paint_pixel(x, y, task_pix_color)
-            painted.append((x,y))
+            painted.append((x, y))
             self.energy -= 1
             if self.energy < 1:
                 return painted
