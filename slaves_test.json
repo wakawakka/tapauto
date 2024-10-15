@@ -3,59 +3,59 @@
         "number": "12264550366",
         "path": "C:\\projects\\tg_accs\\12264550366\\tdata",
         "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-o47kzll7-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
-        "last_run": "2024-10-13 10:39:43",
+        "last_run": "2024-10-15 01:30:34",
         "full_restore_time": "2024-10-08 03:31:19",
         "last_status": "painted 1, left 0",
-        "painted": 1,
-        "charges": 5,
-        "charges_full_restore_time": "2024-10-13 10:49:13",
-        "status": "OK, painted 1, left5"
+        "painted": 0,
+        "charges": "UNKNOWN",
+        "charges_full_restore_time": "UNKNOWN",
+        "status": "HttpError(\"Failed HTTP request:\\n\\tUrl: https://notpx.app/api/v1/repaint/start\\n\\tProxy: socks5://07196708-zone-custom-region-CA-city-toronto-sessid-o47kzll7-sessTime-120:6pGOVG0G@f.proxys5.net:6200\\tPapa Exception -  type: <class 'asyncio.exceptions.CancelledError'>, message: \")"
     },
     "12264558635": {
         "number": "12264558635",
         "path": "C:\\projects\\tg_accs\\12264558635\\tdata",
         "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-z0XjjaRn-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
-        "last_run": "2024-10-13 10:39:33",
+        "last_run": "2024-10-15 01:30:34",
         "full_restore_time": "2024-10-08 03:31:46",
         "last_status": "painted 0, left 0",
-        "painted": 1,
-        "charges": 5,
-        "charges_full_restore_time": "2024-10-13 10:49:03",
-        "status": "OK, painted 1, left5"
+        "painted": 0,
+        "charges": "UNKNOWN",
+        "charges_full_restore_time": "UNKNOWN",
+        "status": "CancelledError()"
     },
     "15874097035": {
         "number": "15874097035",
         "path": "C:\\projects\\tg_accs\\15874097035\\tdata",
         "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-OC4jAJ4O-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
-        "last_run": "2024-10-13 10:39:43",
+        "last_run": "2024-10-15 01:30:25",
         "full_restore_time": "2024-10-08 03:32:20",
         "last_status": "painted 1, left 0",
         "painted": 0,
         "charges": "UNKNOWN",
         "charges_full_restore_time": "UNKNOWN",
-        "status": "TelegramBadConvertProfile(\"Failed to convert TDATA to Telethon session:\\n\\tPath: C:\\\\projects\\\\tg_accs\\\\15874097035\\\\tdata\\n\\tPapa Exception -  type: <class 'sqlite3.OperationalError'>, message: database is locked\")"
+        "status": "TelegramBadConvertProfile(\"Failed to convert TDATA to Telethon session:\\n\\tPath: C:\\\\projects\\\\tg_accs\\\\15874097035\\\\tdata\\n\\tPapa Exception -  type: <class 'opentele.exception.TDesktopUnauthorized'>, message: TDesktopUnauthorized: TDesktop client is unauthorized [ Called by FromTDesktop() ]\")"
     },
     "18077006341": {
         "number": "18077006341",
         "path": "C:\\projects\\tg_accs\\18077006341\\tdata",
         "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-ZWNbB988-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
-        "last_run": "2024-10-13 10:39:35",
+        "last_run": "2024-10-15 01:30:34",
         "full_restore_time": "2024-10-07 05:04:44",
         "last_status": "painted 5, left 0",
-        "painted": 1,
-        "charges": 9,
-        "charges_full_restore_time": "2024-10-13 11:08:05",
-        "status": "OK, painted 1, left9"
+        "painted": 0,
+        "charges": "UNKNOWN",
+        "charges_full_restore_time": "UNKNOWN",
+        "status": "HttpError(\"Failed HTTP request:\\n\\tUrl: https://notpx.app/api/v1/repaint/start\\n\\tProxy: socks5://07196708-zone-custom-region-CA-city-toronto-sessid-ZWNbB988-sessTime-120:6pGOVG0G@f.proxys5.net:6200\\tPapa Exception -  type: <class 'asyncio.exceptions.CancelledError'>, message: \")"
     },
     "639468092706": {
         "number": "639468092706",
         "path": "C:\\projects\\tg_accs\\639468092706\\tdata",
         "proxy": "",
-        "last_run": "2024-10-13 10:39:27",
+        "last_run": "2024-10-15 01:24:33",
         "full_restore_time": "UNKNOWN",
-        "painted": 1,
-        "charges": 11,
-        "charges_full_restore_time": "2024-10-13 10:48:57",
-        "status": "OK, painted 1, left11"
+        "painted": 0,
+        "charges": "UNKNOWN",
+        "charges_full_restore_time": "UNKNOWN",
+        "status": "TelegramBadConvertProfile(\"Failed to convert TDATA to Telethon session:\\n\\tPath: C:\\\\projects\\\\tg_accs\\\\639468092706\\\\tdata\\n\\tPapa Exception -  type: <class 'sqlite3.OperationalError'>, message: database is locked\")"
     }
 }

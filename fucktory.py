@@ -117,7 +117,7 @@ class Fucktory:
         return actual_workers
 
     async def estimated_charges(self, worker):
-        return 1
+        return 5
 
     async def single_run(self, worker_name, tasks):
         logfile_path = os.path.join(settings.log_dir, worker_name)
@@ -196,7 +196,7 @@ class Fucktory:
                 )
                 if pa.sb:
                     pa.sb.browser.close()
-        except asyncio.CancelledError as e:
+        except asyncio.exceptions.CancelledError as e:
             local_logger.info(f"WORKER {worker_name} cancelled")
             job_result = {}
         except BaseException as e:
@@ -288,7 +288,7 @@ def main():
     # some logic on parallel/non parallel run of the job
 
     #asyncio.run(fk.run_async(catch=False))
-    asyncio.run(fk.do_stuff_periodically_async(10, fk.run_async))
+    asyncio.run(fk.do_stuff_periodically_async(30, fk.run_async))
 
 
 if __name__ == "__main__":
