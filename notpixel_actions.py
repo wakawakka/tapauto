@@ -148,6 +148,53 @@ class PixelActions:
     async def sleep_after_request(self, sleep_min=14, sleep_max=18):
         await asyncio.sleep(random.randint(100 * sleep_min, 100 * sleep_max) / 100)
 
+    async def emulate_js_loading(self, mainpage_content):
+        self.logger.info(f"Start Emulate JS loading")
+        headers = {"User-Agent": self.user_agent}
+        content = mainpage_content.decode()
+        js_hrefs = re.findall(r'href="(.+?\.js)"', content)
+        loaded_js_count = 0
+        bad_loaded_js_count = 0
+        results = await asyncio.gather(
+            *[
+                notpixel_tools.http_request(
+                    "GET",
+                    "https://app.notpx.app" + js_href,
+                    headers,
+                    proxy=self.proxy_string,
+                    http_timeout=10,
+                    good_statuses=[200],
+                    logger=self.logger,
+                )
+                for js_href in js_hrefs
+            ]
+        )
+        for i in results:
+            status = i.get("status")
+            if status == 200:
+                loaded_js_count += 1
+            else:
+                bad_loaded_js_count += 1
+        self.logger.info(
+            f"Emulate JS loading GOOD: {loaded_js_count}, BAD: {bad_loaded_js_count}"
+        )
+        pass
+
+    async def emulate_ws(self):
+        self.logger.debug(f"Start emulate websocket")
+        headers = self.get_headers_api()
+        url = "https://notpx.app/api/v1/users/me"
+        result = await notpixel_tools.http_request(
+            "GET",
+            url,
+            headers,
+            proxy=self.proxy_string,
+            http_timeout=10,
+            good_statuses=[200],
+            logger=self.logger,
+        )
+        pass
+
     async def emulate_app_start(self):
         self.logger.debug(f"Start GET entry URL")
         headers = {"User-Agent": self.user_agent}
@@ -160,6 +207,8 @@ class PixelActions:
             good_statuses=[200],
             logger=self.logger,
         )
+        await self.emulate_js_loading(result.get("content", ""))
+        await self.emulate_ws()
         await self.sleep_after_request()
         status = result.get("status")
         content_len = len(result.get("content"))

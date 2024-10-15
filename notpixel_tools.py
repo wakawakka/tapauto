@@ -12,6 +12,20 @@ from exceptions import BadStatus, HttpTimeout, HttpError
 from utils import get_logger
 
 
+async def open_websocket(
+    proxy=None,
+    logger=None,
+):
+    if not logger:
+        logger = get_logger("common.log", logging.DEBUG)
+    proxy_connector = None
+    if proxy:
+        proxy_connector = ProxyConnector.from_url(proxy)
+    async with aiohttp.ClientSession(connector=proxy_connector) as session:
+        session.ws_connect()
+    pass
+
+
 async def http_request(
     rtype,  # GET|POST
     url,
