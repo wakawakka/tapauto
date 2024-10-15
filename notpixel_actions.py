@@ -181,7 +181,7 @@ class PixelActions:
             headers,
             proxy=self.proxy_string,
             http_timeout=10,
-            good_statuses=[200],
+            good_statuses=[200, 500, 504],
             logger=self.logger,
         )
         await self.sleep_after_request()

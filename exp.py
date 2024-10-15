@@ -11,12 +11,12 @@ proxy_host, proxy_port, proxy_user, proxy_password = notpixel_tools.parse_proxy_
     "https://" + proxy
 )
 
-# proxy_host = None
+proxy_host = None
 
 
 async def main_test_not_pixel():
 
-    url = "https://app.notpx.app/#tgWebAppData=user%3D%257B%2522id%2522%253A726551560%252C%2522first_name%2522%253A%2522A%2522%252C%2522last_name%2522%253A%2522S%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522is_premium%2522%253Atrue%252C%2522allows_write_to_pm%2522%253Atrue%257D%26chat_instance%3D-7507039722228485151%26chat_type%3Dsender%26auth_date%3D1728482016%26hash%3D689ef6478a97ea5ed00ce4c8d3027b496ff697dc17e82f8469b15fb1cdef797b&tgWebAppVersion=7.10&tgWebAppPlatform=tdesktop&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
+    url = "https://app.notpx.app/#tgWebAppData=user%3D%257B%2522id%2522%253A6444194100%252C%2522first_name%2522%253A%2522Not%2522%252C%2522last_name%2522%253A%2522Pixel%2520Ads%2522%252C%2522username%2522%253A%2522npxad%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522allows_write_to_pm%2522%253Atrue%257D%26chat_instance%3D4069628147610715339%26chat_type%3Dsender%26auth_date%3D1728987746%26hash%3Dfa77106db1c72f4297c112a6fc5768f1dfad885016111a4f3ac05a2c501314fa&tgWebAppVersion=7.10&tgWebAppPlatform=android&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
 
     pa = notpixel_actions.PixelActions(
         url,
@@ -61,6 +61,29 @@ async def main_test_telegram():
     pass
 
 
+async def main_test_api_telegram():
+    t = Telega(
+        telegram_cache_dir="tdatas/not_pixel",
+        session_id="pixel_ads",
+        proxy_host=proxy_host,
+        proxy_port=proxy_port,
+        proxy_user=proxy_user,
+        proxy_password=proxy_password,
+        logfile_path="common.log",
+        logging_level=logging.DEBUG,
+    )
+    await t.init_client_api(
+        api_id="24559526",
+        api_hash="b3b683347bfb4709793511c90bce1ec9",
+        phone="79146662650",
+    )
+    # dialogs = await t.client.get_dialogs()
+    # for d in dialogs:
+    #     print(d.id)
+    await t.get_bot_webapp("notpx_bot", "android")
+    pass
+
+
 async def main_test_fucktory():
     picture_path = "./notpixel_settings/228.png"
     slaves_path = "slaves_mac.json"
@@ -82,8 +105,10 @@ async def test_proxy():
 
 if __name__ == "__main__":
     loop = asyncio.new_event_loop()
-    loop.run_until_complete(test_proxy())
-    loop.run_until_complete(main_test_telegram())
+    # loop.run_until_complete(test_proxy())
+    loop.run_until_complete(main_test_not_pixel())
+    # loop.run_until_complete(main_test_api_telegram())
+
     # loop.run_until_complete(main_test_fucktory())
 
     loop.close()
