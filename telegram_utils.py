@@ -3,6 +3,8 @@ import os
 import time
 import datetime
 import asyncio
+import random
+import json
 
 import socks
 from async_timeout import timeout
@@ -161,7 +163,9 @@ class Telega:
             user_phone = phone
             if not phone:
                 user_phone = input("Enter your phone: ")
-            print(f"First run. Sending code request to Telegram Account {user_phone}")
+            self.logger.info(
+                f"First run. Sending code request to Telegram Account {user_phone}"
+            )
             await self.client.sign_in(user_phone)
             self_user = None
             while self_user is None:
@@ -169,7 +173,7 @@ class Telega:
                 self_user = await self.client.sign_in(code=code)
             auth_success = await self.client.is_user_authorized()
         me = await self.client.get_me()
-        print(f"Logged in as {me.phone} ({me.id})")
+        self.logger.info(f"Logged in as {me.phone} ({me.id})")
         return auth_success
 
     async def start_bot(self, bot_username, param="start"):
@@ -217,24 +221,62 @@ class Telega:
             else:
                 raise Exception(error_message)
 
-    async def get_bot_webapp(
-        self, bot_username: str, platform: str, url: str, param: str = None
-    ):
+    async def get_bot_webapp(self, bot_username: str, platform: str, param=None):
         await self.check_auth(try_reauth=True)
         await self.start_bot(bot_username)
         self.logger.info(
-            f"Getting bot web application URL for {bot_username}, {platform}, {url} with params {param}"
+            f"Getting bot web application URL for {bot_username}, {platform}, with params {param}"
         )
         bot = await self.client.get_entity(bot_username)
+
         self.logger.info(f"Got bot entity, id: {bot.id}")
+        # result = await self.client(
+        #     functions.messages.RequestWebViewRequest(
+        #         bot=types.InputUser(user_id=bot.id, access_hash=bot.access_hash),
+        #         peer=types.InputPeerUser(user_id=bot.id, access_hash=bot.access_hash),
+        #         platform=platform,
+        #         from_bot_menu=False,
+        #         compact=False,
+        #         start_param=param,
+        #         url=url,
+        #     )
+        # )
+
+        bot_user = types.InputUser(bot.id, bot.access_hash)
+
+        bot_app = await self.client(
+            functions.messages.GetBotAppRequest(
+                app=types.InputBotAppShortName(bot_id=bot_user, short_name="app"),
+                hash=1229,
+            )
+        )
+        input_bot_app = types.InputBotAppID(bot_app.app.id, bot_app.app.access_hash)
+        theme_styles = {
+            "accent_text_color": "#168acd",
+            "bg_color": "#ffffff",
+            "bottom_bar_bg_color": "#ffffff",
+            "button_color": "#40a7e3",
+            "button_text_color": "#ffffff",
+            "destructive_text_color": "#d14e4e",
+            "header_bg_color": "#ffffff",
+            "hint_color": "#999999",
+            "link_color": "#168acd",
+            "secondary_bg_color": "#f1f1f1",
+            "section_bg_color": "#ffffff",
+            "section_header_text_color": "#168acd",
+            "section_separator_color": "#e7e7e7",
+            "subtitle_text_color": "#999999",
+            "text_color": "#000000",
+        }
         result = await self.client(
-            functions.messages.RequestWebViewRequest(
-                bot=types.InputUser(user_id=bot.id, access_hash=bot.access_hash),
+            functions.messages.RequestAppWebViewRequest(
+                app=input_bot_app,
                 peer=types.InputPeerUser(user_id=bot.id, access_hash=bot.access_hash),
                 platform=platform,
-                from_bot_menu="YES",
+                # from_bot_menu=False,
+                # compact=False,
                 start_param=param,
-                url=url,
+                theme_params=types.TypeDataJSON(json.dumps(theme_styles)),
             )
         )
         self.logger.info(f"Got bot web application URL: {result.url}")
