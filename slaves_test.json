@@ -3,59 +3,113 @@
         "number": "12264550366",
         "path": "C:\\projects\\tg_accs\\12264550366\\tdata",
         "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-o47kzll7-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
-        "last_run": "2024-10-15 01:30:34",
+        "last_run": "2024-10-15 05:47:33",
         "full_restore_time": "2024-10-08 03:31:19",
         "last_status": "painted 1, left 0",
         "painted": 0,
         "charges": "UNKNOWN",
         "charges_full_restore_time": "UNKNOWN",
-        "status": "HttpError(\"Failed HTTP request:\\n\\tUrl: https://notpx.app/api/v1/repaint/start\\n\\tProxy: socks5://07196708-zone-custom-region-CA-city-toronto-sessid-o47kzll7-sessTime-120:6pGOVG0G@f.proxys5.net:6200\\tPapa Exception -  type: <class 'asyncio.exceptions.CancelledError'>, message: \")"
+        "status": "HttpError(\"Failed HTTP request:\\n\\tUrl: https://notpx.app/api/v1/mining/claim\\n\\tProxy: socks5://07196708-zone-custom-region-CA-city-toronto-sessid-o47kzll7-sessTime-120:6pGOVG0G@f.proxys5.net:6200\\tPapa Exception -  type: <class 'exceptions.BadStatus'>, message: Bad HTTP status:\\n\\tUrl: https://notpx.app/api/v1/mining/claim\\n\\tProxy: socks5://07196708-zone-custom-region-CA-city-toronto-sessid-o47kzll7-sessTime-120:6pGOVG0G@f.proxys5.net:6200\\tStatus: 504\")"
     },
     "12264558635": {
         "number": "12264558635",
         "path": "C:\\projects\\tg_accs\\12264558635\\tdata",
         "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-z0XjjaRn-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
-        "last_run": "2024-10-15 01:30:34",
+        "last_run": "2024-10-15 05:47:04",
         "full_restore_time": "2024-10-08 03:31:46",
         "last_status": "painted 0, left 0",
         "painted": 0,
         "charges": "UNKNOWN",
         "charges_full_restore_time": "UNKNOWN",
-        "status": "CancelledError()"
+        "status": "AuthKeyDuplicatedError('The authorization key (session file) was used under two different IP addresses simultaneously, and can no longer be used. Use the same session exclusively, or use different sessions (caused by ResolveUsernameRequest)')"
     },
     "15874097035": {
         "number": "15874097035",
         "path": "C:\\projects\\tg_accs\\15874097035\\tdata",
         "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-OC4jAJ4O-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
-        "last_run": "2024-10-15 01:30:25",
+        "last_run": "2024-10-15 05:13:40",
         "full_restore_time": "2024-10-08 03:32:20",
         "last_status": "painted 1, left 0",
         "painted": 0,
         "charges": "UNKNOWN",
         "charges_full_restore_time": "UNKNOWN",
-        "status": "TelegramBadConvertProfile(\"Failed to convert TDATA to Telethon session:\\n\\tPath: C:\\\\projects\\\\tg_accs\\\\15874097035\\\\tdata\\n\\tPapa Exception -  type: <class 'opentele.exception.TDesktopUnauthorized'>, message: TDesktopUnauthorized: TDesktop client is unauthorized [ Called by FromTDesktop() ]\")"
+        "status": "AuthKeyUnregisteredError('The key is not registered in the system (caused by ResolveUsernameRequest)')"
     },
     "18077006341": {
         "number": "18077006341",
         "path": "C:\\projects\\tg_accs\\18077006341\\tdata",
         "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-ZWNbB988-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
-        "last_run": "2024-10-15 01:30:34",
+        "last_run": "2024-10-15 05:31:00",
         "full_restore_time": "2024-10-07 05:04:44",
-        "last_status": "painted 5, left 0",
         "painted": 0,
         "charges": "UNKNOWN",
         "charges_full_restore_time": "UNKNOWN",
-        "status": "HttpError(\"Failed HTTP request:\\n\\tUrl: https://notpx.app/api/v1/repaint/start\\n\\tProxy: socks5://07196708-zone-custom-region-CA-city-toronto-sessid-ZWNbB988-sessTime-120:6pGOVG0G@f.proxys5.net:6200\\tPapa Exception -  type: <class 'asyncio.exceptions.CancelledError'>, message: \")"
+        "status": "HttpError(\"Failed HTTP request:\\n\\tUrl: https://notpx.app/api/v1/mining/claim\\n\\tProxy: socks5://07196708-zone-custom-region-CA-city-toronto-sessid-ZWNbB988-sessTime-120:6pGOVG0G@f.proxys5.net:6200\\tPapa Exception -  type: <class 'exceptions.BadStatus'>, message: Bad HTTP status:\\n\\tUrl: https://notpx.app/api/v1/mining/claim\\n\\tProxy: socks5://07196708-zone-custom-region-CA-city-toronto-sessid-ZWNbB988-sessTime-120:6pGOVG0G@f.proxys5.net:6200\\tStatus: 504\")"
     },
     "639468092706": {
         "number": "639468092706",
         "path": "C:\\projects\\tg_accs\\639468092706\\tdata",
         "proxy": "",
-        "last_run": "2024-10-15 01:24:33",
+        "last_run": "2024-10-15 05:30:46",
         "full_restore_time": "UNKNOWN",
         "painted": 0,
         "charges": "UNKNOWN",
         "charges_full_restore_time": "UNKNOWN",
-        "status": "TelegramBadConvertProfile(\"Failed to convert TDATA to Telethon session:\\n\\tPath: C:\\\\projects\\\\tg_accs\\\\639468092706\\\\tdata\\n\\tPapa Exception -  type: <class 'sqlite3.OperationalError'>, message: database is locked\")"
+        "status": "HttpError(\"Failed HTTP request:\\n\\tUrl: https://notpx.app/api/v1/mining/claim\\n\\tProxy: None\\tPapa Exception -  type: <class 'exceptions.BadStatus'>, message: Bad HTTP status:\\n\\tUrl: https://notpx.app/api/v1/mining/claim\\n\\tProxy: None\\tStatus: 504\")"
+    },
+    "16049015240": {
+        "number": "16049015240",
+        "path": "C:\\projects\\tg_accs\\16049015240\\tdata",
+        "proxy": "07196708-zone-custom-region-CA-city-ottawa-sessid-Qoeuiuja-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
+        "password": "Reza1357",
+        "status": "AttributeError(\"'NoneType' object has no attribute 'disconnected'\")",
+        "painted": 0,
+        "charges": "UNKNOWN",
+        "charges_full_restore_time": "UNKNOWN",
+        "last_run": "2024-10-15 05:46:58"
+    },
+    "27620745705": {
+        "number": "27620745705",
+        "path": "C:\\projects\\tg_accs\\27620745705\\tdata",
+        "proxy": "07196708-zone-custom-region-ZA-sessid-Fld9V9wO-sessTime-15:6pGOVG0G@f.proxys5.net:6200",
+        "password": "2o6leg",
+        "status": "TelegramBadProfile(\"Failed to load TDATA:\\n\\tPath: C:\\\\projects\\\\tg_accs\\\\27620745705\\\\tdata\\n\\tPapa Exception -  type: <class 'opentele.exception.TFileNotFound'>, message: TFileNotFound: Could not open key_data [ Called by ReadFile() ]\")",
+        "painted": 0,
+        "charges": "UNKNOWN",
+        "charges_full_restore_time": "UNKNOWN",
+        "last_run": "2024-10-15 04:56:58"
+    },
+    "8801745658318": {
+        "number": "8801745658318",
+        "path": "C:\\projects\\tg_accs\\8801745658318\\tdata",
+        "proxy": "07196708-zone-custom-region-BD-sessid-s7ugDyYr-sessTime-120:6pGOVG0G@f.proxys5.net:6200v",
+        "password": "190000",
+        "status": "ValueError(\"Port could not be cast to integer value as '6200v'\")",
+        "painted": 0,
+        "charges": "UNKNOWN",
+        "charges_full_restore_time": "UNKNOWN",
+        "last_run": "2024-10-15 04:40:12"
+    },
+    "8801747034955": {
+        "number": "8801747034955",
+        "path": "C:\\projects\\tg_accs\\8801747034955\\tdata",
+        "proxy": "07196708-zone-custom-region-BD-sessid-rXmrzJHm-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
+        "password": "190000",
+        "status": "UserDeactivatedBanError('The user has been deleted/deactivated (caused by ResolveUsernameRequest)')",
+        "painted": 0,
+        "charges": "UNKNOWN",
+        "charges_full_restore_time": "UNKNOWN",
+        "last_run": "2024-10-15 05:13:46"
+    },
+    "8801748878172": {
+        "number": "8801748878172",
+        "path": "C:\\projects\\tg_accs\\8801748878172\\tdata",
+        "proxy": "07196708-zone-custom-region-BD-sessid-6K8CCtyb-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
+        "password": "190000",
+        "status": "UserDeactivatedBanError('The user has been deleted/deactivated (caused by ResolveUsernameRequest)')",
+        "painted": 0,
+        "charges": "UNKNOWN",
+        "charges_full_restore_time": "UNKNOWN",
+        "last_run": "2024-10-15 05:47:16"
     }
 }

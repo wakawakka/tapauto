@@ -118,124 +118,131 @@ class Fucktory:
         return actual_workers
 
     async def estimated_charges(self, worker):
-        return 5
-
-    async def single_run(self, worker_name, tasks):
-        logfile_path = os.path.join(settings.log_dir, worker_name)
-        local_logger = utils.get_logger(
-            filepath=logfile_path,
-            level=self.logging_level,
-            name=f"single_run:{worker_name}",
-        )
-
+        return 4
+    
+    async def single_run_kernel(self, worker_name, tasks, local_logger, logfile_path):
         bot_username = "notpx_bot"
-        worker = self.workers[worker_name]
-        for task in tasks:
-            await self.pixellocker[(task[0], task[1])].acquire()
-        # job_result = {}
+        async with self.workers[worker_name]["locker"]:
+            worker = self.workers[worker_name]
+            proxy_host, proxy_port, proxy_user, proxy_password = (
+                notpixel_tools.parse_proxy_url("https://" + worker["proxy"])
+            )
+            if self.workers[worker_name].get("tg") is None:
+                local_logger.info(f"WORKER {worker_name} create NEW worker")
 
-        try:
-            async with self.workers[worker_name]["locker"]:
-                proxy_host, proxy_port, proxy_user, proxy_password = (
-                    notpixel_tools.parse_proxy_url("https://" + worker["proxy"])
-                )
-                if self.workers[worker_name].get("tg") is None:
-                    local_logger.info(f"WORKER {worker_name} create NEW worker")
-
-                    tg = telegram_utils.Telega(
-                        session_id=worker["number"],
-                        telegram_cache_dir=settings.telegram_cache,
-                        proxy_host=proxy_host,
-                        proxy_port=proxy_port,
-                        proxy_user=proxy_user,
-                        proxy_password=proxy_password,
-                        logfile_path=logfile_path,
-                        logging_level=self.logging_level,
-                        name=f"tutils:{worker_name}",
-                    )
-                    tdata_path = worker["path"]
-                    account_password = worker.get("password", None)
-                    await tg.init_client_tdata(
-                        tdata_path,
-                        platform="macos",
-                        hardware_id=worker["number"],
-                        password=account_password,
-                    )
-
-                    # telegram_bot_started = worker.get("bot_started", None)
-                    # if not telegram_bot_started:
-                    #     await tg.start_bot(bot_username=bot_username)
-
-                    app_url = await tg.get_bot_webapp(
-                        bot_username=bot_username,
-                        url="https://notpx.app",
-                        platform="ios",
-                    )
-
-                    self.workers[worker_name]["tg"] = tg
-                else:
-                    local_logger.info(f"WORKER {worker_name} use Existing worker")
-                    tg = self.workers[worker_name]["tg"]
-
-                dt_now = datetime.datetime.now()
-                app_url = tg.app_url
-                app_url_dt = tg.app_url_dt
-                if dt_now > app_url_dt + datetime.timedelta(minutes=10):
-                    app_url = await tg.get_bot_webapp(
-                        bot_username=bot_username,
-                        url="https://notpx.app",
-                        platform="android",
-                    )
-
-                huy_v_rot_styles = "&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
-                local_logger.info(app_url + huy_v_rot_styles)
-                pa = notpixel_actions.PixelActions(
-                    app_url + huy_v_rot_styles,
+                tg = telegram_utils.Telega(
+                    session_id=worker["number"],
+                    telegram_cache_dir=settings.telegram_cache,
                     proxy_host=proxy_host,
                     proxy_port=proxy_port,
                     proxy_user=proxy_user,
                     proxy_password=proxy_password,
-                    gui_browser_worker_type=False,
-                    headless=True,
-                    name=f"pa:{worker_name}",
                     logfile_path=logfile_path,
                     logging_level=self.logging_level,
+                    name=f"tutils:{worker_name}",
                 )
-                local_logger.info("PA initialized")
-                job_result = await pa.run(tasks)
-                local_logger.info(f"task done : {job_result}")
-                job_result["status"] = (
-                    f"OK, painted {job_result['painted']}, left {job_result['charges']}"
+                tdata_path = worker["path"]
+                account_password = worker.get("password", None)
+                await tg.init_client_tdata(
+                    tdata_path,
+                    platform="macos",
+                    hardware_id=worker["number"],
+                    password=account_password,
                 )
-                if pa.sb:
-                    pa.sb.browser.close()
-        except asyncio.exceptions.CancelledError as e:
-            local_logger.info(f"WORKER {worker_name} cancelled")
-            job_result = {}
-        except BaseException as e:
-            local_logger.error(f"WORKER {worker_name} failed with {e}, {repr(e)}")
-            try:
-                await self.workers[worker_name]["tg"].disconnect()
-            except:
-                pass
-            self.workers[worker_name]["tg"] = None
-            job_result = {
-                "status": repr(e),
-                "painted": 0,
-                "charges": "UNKNOWN",
-                "charges_full_restore_time": "UNKNOWN",
-            }
-        finally:
-            for task in tasks:
-                self.pixellocker[(task[0], task[1])].release()
 
-            for j in job_result:
-                worker[j] = job_result[j]
-            if job_result:
-                worker["last_run"] = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
-            self.workers[worker_name] = worker
-            await self.dump_workers()
+                # telegram_bot_started = worker.get("bot_started", None)
+                # if not telegram_bot_started:
+                #     await tg.start_bot(bot_username=bot_username)
+
+                app_url = await tg.get_bot_webapp(
+                    bot_username=bot_username,
+                    url="https://notpx.app",
+                    platform="ios",
+                )
+
+                self.workers[worker_name]["tg"] = tg
+            else:
+                local_logger.info(f"WORKER {worker_name} use Existing worker")
+                tg = self.workers[worker_name]["tg"]
+
+            dt_now = datetime.datetime.now()
+            app_url = tg.app_url
+            app_url_dt = tg.app_url_dt
+            if dt_now > app_url_dt + datetime.timedelta(minutes=10):
+                app_url = await tg.get_bot_webapp(
+                    bot_username=bot_username,
+                    url="https://notpx.app",
+                    platform="android",
+                )
+
+            huy_v_rot_styles = "&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
+            local_logger.info(app_url + huy_v_rot_styles)
+            pa = notpixel_actions.PixelActions(
+                app_url + huy_v_rot_styles,
+                proxy_host=proxy_host,
+                proxy_port=proxy_port,
+                proxy_user=proxy_user,
+                proxy_password=proxy_password,
+                gui_browser_worker_type=False,
+                headless=True,
+                name=f"pa:{worker_name}",
+                logfile_path=logfile_path,
+                logging_level=self.logging_level,
+            )
+            local_logger.info("PA initialized")
+            job_result = await pa.run(tasks)
+            local_logger.info(f"task done : {job_result}")
+            job_result["status"] = (
+                f"OK, painted {job_result['painted']}, left {job_result['charges']}"
+            )
+            if pa.sb:
+                pa.sb.browser.close()
             return job_result
+
+    async def single_run(self, worker_name, tasks, catch=True):
+        logfile_path = os.path.join(settings.log_dir, worker_name)
+        local_logger = utils.get_logger(
+            filepath=logfile_path,
+            level=self.logging_level,
+            name=f"single_run:{worker_name}",å
+        )
+
+        worker = self.workers[worker_name]
+        for task in tasks:
+            await self.pixellocker[(task[0], task[1])].acquire()
+        # job_result = {}
+        if catch:
+            try:
+                job_result = self.single_run_kernel(worker_name, tasks, local_logger, logfile_path)
+            except asyncio.exceptions.CancelledError as e:
+                local_logger.info(f"WORKER {worker_name} cancelled")
+                job_result = {}
+            except BaseException as e:
+                local_logger.error(f"WORKER {worker_name} failed with {e}, {repr(e)}")
+                self.workers[worker_name]["tg"] = None
+                job_result = {
+                    "status": repr(e),
+                    "painted": 0,
+                    "charges": "UNKNOWN",
+                    "charges_full_restore_time": "UNKNOWN",
+                }
+            finally:
+                for task in tasks:
+                    self.pixellocker[(task[0], task[1])].release()
+
+                for j in job_result:
+                    worker[j] = job_result[j]
+                if job_result:
+                    worker["last_run"] = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
+                self.workers[worker_name] = worker
+                await self.dump_workers()
+                return job_result
+        else:
+            return self.single_run_kernel(worker_name, tasks, local_logger, logfile_path)
+    
+    def test_single(self, worker_name, catch=False):
+        test_task = 
+        asyncio.run(self.single_run(self, worker_name, tasks, catch=True))
 
     async def run_async(self, catch=True):
         actual_job = await self.get_job()
@@ -277,18 +284,7 @@ class Fucktory:
                 f"len of done runs: {len([f for f in futures if f.done()])}"
             )
 
-    def do_stuff_periodically(self, interval, periodic_function, **kwargs):
-        futures = []
-        loop = asyncio.new_event_loop()
-        for i in range(100000):
-            self.logger.info(f"Starting periodic function {i}")
-            futures.append(loop.create_task(periodic_function(**kwargs)))
-            time.sleep(interval)
-            self.logger.info(f"len of runs: {len(futures)}")
-            self.logger.info(
-                f"len of done runs: {len([f for f in futures if f.done()])}"
-            )
-
+    
 
 def main():
     picture_path = "./notpixel_settings/228.png"
@@ -301,7 +297,7 @@ def main():
     # some logic on parallel/non parallel run of the job
 
     #asyncio.run(fk.run_async(catch=False))
-    asyncio.run(fk.do_stuff_periodically_async(30, fk.run_async))
+    asyncio.run(fk.do_stuff_periodically_async(600, fk.run_async))
 
 
 if __name__ == "__main__":
