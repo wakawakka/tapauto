@@ -3,8 +3,9 @@ import notpixel_tools
 from exceptions import *
 from telegram_utils import Telega
 from fucktory import Fucktory
-
+from db import TDB
 import asyncio
+import aiohttp
 
 proxy = "07196708-zone-custom-region-CA-sessid-C9p85mlF-sessTime-120:6pGOVG0G@f.proxys5.net:6200"
 proxy_host, proxy_port, proxy_user, proxy_password = notpixel_tools.parse_proxy_url(
@@ -16,7 +17,7 @@ proxy_host, proxy_port, proxy_user, proxy_password = notpixel_tools.parse_proxy_
 
 async def main_test_not_pixel():
 
-    url = "https://app.notpx.app/#tgWebAppData=user%3D%257B%2522id%2522%253A8136478519%252C%2522first_name%2522%253A%2522Sandra%2522%252C%2522last_name%2522%253A%2522Pollitt%2522%252C%2522username%2522%253A%2522SandraPollitt2003%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522allows_write_to_pm%2522%253Atrue%257D%26chat_instance%3D6841263227799306342%26chat_type%3Dsender%26auth_date%3D1728992398%26hash%3Db73666d142b7475cc1819ca803f0c173e1b9fbdfeb7e01a65cbc45b6d5858839&tgWebAppVersion=7.10&tgWebAppPlatform=android&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
+    url = "https://app.notpx.app/#tgWebAppData=user%3D%257B%2522id%2522%253A6444194100%252C%2522first_name%2522%253A%2522Not%2522%252C%2522last_name%2522%253A%2522Pixel%2520Ads%2522%252C%2522username%2522%253A%2522npxad%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522allows_write_to_pm%2522%253Atrue%257D%26chat_instance%3D4069628147610715339%26chat_type%3Dsender%26auth_date%3D1729000000%26hash%3D19f43a30600ece93bf74e4472cd7ec21bc467ecfce78b3cc09f958592173e3fa&tgWebAppVersion=7.10&tgWebAppPlatform=android&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
 
     pa = notpixel_actions.PixelActions(
         url,
@@ -99,14 +100,42 @@ async def test_proxy():
         await notpixel_tools.ipinfo(proxy_host, proxy_port, proxy_user, proxy_password)
 
 
+async def test_db():
+    db_path = "tgdb.db"
+    db = TDB(dbpath=db_path)
+    await db.init_db()
+    await db.drop_tables()
+    await db.init_schema()
+    await db.get_tables()
+    await db.close_db()
+    pass
+
+
+async def test_websocket():
+    URL = "wss://notpx.app/connection/websocket"
+    from cent import AsyncClient
+    import cent
+
+    from cent import InfoRequest, SubscribeRequest
+
+    api_url = URL
+    api_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjaGFubmVscyI6WyJldmVudDptZXNzYWdlIiwicGl4ZWw6bWVzc2FnZSJdLCJleHAiOjE3Mjk2MTEyMTAsInN1YiI6IjcyNjU1MTU2MCJ9.VZ3AjXOcGNVp89ESwNfqEUTlNMOttUW2Bliqc9bl-Uk"
+
+    client = AsyncClient(api_url, api_key)
+
+    pix = await client.subscribe(SubscribeRequest(user="user", channel="pixel:message"))
+    pass
+
+
 if __name__ == "__main__":
     loop = asyncio.new_event_loop()
     # loop.run_until_complete(test_proxy())
     # loop.run_until_complete(main_test_not_pixel())
     # loop.run_until_complete(main_test_telegram())
     # loop.run_until_complete(main_test_api_telegram())
-
-    loop.run_until_complete(main_test_fucktory())
+    # loop.run_until_complete(test_db())
+    # loop.run_until_complete(main_test_fucktory())
+    loop.run_until_complete(test_websocket())
 
     loop.close()
     print("Finish")
