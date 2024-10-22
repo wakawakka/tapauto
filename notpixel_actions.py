@@ -193,6 +193,7 @@ class PixelActions:
             good_statuses=[200],
             logger=self.logger,
         )
+        print(json.loads(result["content"]))
         pass
 
     async def emulate_app_start(self):
