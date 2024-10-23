@@ -4,7 +4,7 @@ import signal
 import zlib
 import json
 
-from centrifuge import (
+from centrifuge_mod import (
     CentrifugeError,
     Client,
     ClientEventHandler,
@@ -32,22 +32,18 @@ cf_logger.setLevel(logging.INFO)
 class ClientEventLoggerHandler(ClientEventHandler):
     """Check out comments of ClientEventHandler methods to see when they are called."""
 
-    def __init__(self, state: dict, papa):
+    def __init__(self, event_data: list, papa):
         super().__init__()
-        self.state = state
+        self.event_data = event_data
         self.papa = papa
 
     async def on_connecting(self, ctx: ConnectingContext) -> None:
         logging.info("connecting: %s", ctx)
 
     async def on_connected(self, ctx: ConnectedContext) -> None:
-        self.state["state"] = "CONNECTED"
         logging.info("connected: %s", ctx)
 
     async def on_disconnected(self, ctx: DisconnectedContext) -> None:
-        self.state["state"] = "DISCONNECT"
-        await self.papa.init_client()
-        await self.papa.connect()
         logging.info("disconnected: %s", ctx)
 
     async def on_error(self, ctx: ErrorContext) -> None:
@@ -67,6 +63,7 @@ class ClientEventLoggerHandler(ClientEventHandler):
         if ctx.channel == "pixel:message":
             decompressed_data = zlib.decompress(ctx.pub.data, wbits=-15)
             jdata = json.loads(decompressed_data)
+            self.event_data.append(jdata)
 
     async def on_join(self, ctx: ServerJoinContext) -> None:
         logging.info("join in server-side sub: %s", ctx)
@@ -79,49 +76,45 @@ class Fucka:
     def __init__(self):
         self.client = None
         self.reconnect_lock = asyncio.Lock()
-        self.state = {"papa": self}
+        self.buffer = []
 
     async def init_client(self):
         # async with self.reconnect_lock:
         self.client = Client(
             "wss://notpx.app/connection/websocket",
-            events=ClientEventLoggerHandler(state=self.state, papa=self),
-            token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjaGFubmVscyI6WyJldmVudDptZXNzYWdlIiwicGl4ZWw6bWVzc2FnZSJdLCJleHAiOjE3Mjk2NzM4NDUsInN1YiI6IjcyNjU1MTU2MCJ9.YF_a2bItowdPLJb-4Kehgow9fiGORYmcVzNneNv833g",
+            events=ClientEventLoggerHandler(event_data=self.buffer, papa=self),
+            token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjaGFubmVscyI6WyJldmVudDptZXNzYWdlIiwicGl4ZWw6bWVzc2FnZSJdLCJleHAiOjE3Mjk3MDIxNTMsInN1YiI6IjcyNjU1MTU2MCJ9.vxKT7hvGp_pO20z8u2TOgyDf0O1IlcMCAobTBpx_joo",
             use_protobuf=True,
             name="js",
+            headers={
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:132.0) Gecko/20100101 Firefox/132.0",
+            },
+            proxy_host="f.proxys5.net",
+            proxy_port=6200,
+            proxy_user="07196708-zone-custom-region-CA-sessid-C9xbLErb-sessTime-120",
+            proxy_password="6pGOVG0G",
         )
         return True
 
-    async def drop(self):
-        while True:
-            await asyncio.sleep(3)
-            await self.client.disconnect()
-
-    async def connect(self):
+    async def collect(self):
         await self.client.connect()
-
-    async def printer(self):
-        while True:
-            print(self.state)
+        while len(self.buffer) < 5:
+            print(len(self.buffer))
             await asyncio.sleep(0.5)
+        await self.client.disconnect()
 
 
-def run_fucka():
+def collect_pixels():
     f = Fucka()
     loop = asyncio.get_event_loop()
     loop.run_until_complete(f.init_client())
-
-    connect_task = loop.create_task(f.connect())
-    drop_task = loop.create_task(f.drop())
-    printer = loop.create_task(f.printer())
-
-    loop.run_forever()
+    loop.run_until_complete(f.collect())
 
     pass
 
 
 if __name__ == "__main__":
-    run_fucka()
+    collect_pixels()
 
 
 exit()
