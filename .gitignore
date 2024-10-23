@@ -12,3 +12,4 @@ tdatas/
 log.log
 *.log
 logs/
+node_modules
