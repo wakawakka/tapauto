@@ -14,3 +14,5 @@ aiohttp
 aiohttp_socks
 async-timeout
 python-socks[asyncio]
+aiosqlite
+centrifuge-python
