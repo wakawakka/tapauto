@@ -1,0 +1,76 @@
+{
+    "27610286451": {
+        "number": "27610286451",
+        "path": "C:\\projects\\tg_accs\\27610286451\\tdata",
+        "proxy": "07196708-zone-custom-region-ZA-city-capetown-sessid-4XpBplpn-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
+        "password": "frg71vlhyud3a",
+        "painted": 0,
+        "charges": "UNKNOWN",
+        "energy_restore_speed": 570.0,
+        "max_energy": 12,
+        "status": "ConnectionError('Cannot send requests while disconnected')",
+        "last_run": "2024-10-24 00:00:55",
+        "charges_full_restore_time": "UNKNOWN"
+    },
+    "27610433591": {
+        "number": "27610433591",
+        "path": "C:\\projects\\tg_accs\\27610433591\\tdata",
+        "proxy": "07196708-zone-custom-region-ZA-city-capetown-sessid-PZIuoT8K-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
+        "password": "eww51a4gtcc1d",
+        "status": "TelegramBadConvertProfile(\"Failed to convert TDATA to Telethon session:\\n\\tPath: C:\\\\projects\\\\tg_accs\\\\27610433591\\\\tdata\\n\\tPapa Exception -  type: <class 'python_socks._errors.ProxyError'>, message: Username and password authentication failure\")",
+        "painted": 0,
+        "charges": "UNKNOWN",
+        "charges_full_restore_time": "UNKNOWN",
+        "last_run": "2024-10-24 00:00:50"
+    },
+    "27610441735": {
+        "number": "27610441735",
+        "path": "C:\\projects\\tg_accs\\27610441735\\tdata",
+        "proxy": "07196708-zone-custom-region-ZA-city-capetown-sessid-2eW8PC4a-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
+        "password": "yn4t5pu",
+        "status": "TelegramBadConvertProfile(\"Failed to convert TDATA to Telethon session:\\n\\tPath: C:\\\\projects\\\\tg_accs\\\\27610441735\\\\tdata\\n\\tPapa Exception -  type: <class 'python_socks._errors.ProxyError'>, message: Username and password authentication failure\")",
+        "painted": 0,
+        "charges": "UNKNOWN",
+        "charges_full_restore_time": "UNKNOWN",
+        "last_run": "2024-10-24 00:00:49"
+    },
+    "+15197048682": {
+        "number": "+15197048682",
+        "path": "C:\\projects\\tg_accs\\+15197048682\\tdata",
+        "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-Y02gMEcL-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
+        "password": "9021",
+        "painted": 0,
+        "charges": "UNKNOWN",
+        "energy_restore_speed": 570.0,
+        "max_energy": 12,
+        "status": "ConnectionError('Cannot send requests while disconnected')",
+        "last_run": "2024-10-24 00:00:49",
+        "charges_full_restore_time": "UNKNOWN"
+    },
+    "+15197048685": {
+        "number": "+15197048685",
+        "path": "C:\\projects\\tg_accs\\+15197048685\\tdata",
+        "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-FIjnIUVq-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
+        "password": "9021",
+        "painted": 0,
+        "charges": "UNKNOWN",
+        "energy_restore_speed": 570.0,
+        "max_energy": 12,
+        "status": "ConnectionError('Cannot send requests while disconnected')",
+        "last_run": "2024-10-24 00:00:50",
+        "charges_full_restore_time": "UNKNOWN"
+    },
+    "+15197048688": {
+        "number": "+15197048688",
+        "path": "C:\\projects\\tg_accs\\+15197048688\\tdata",
+        "proxy": "07196708-zone-custom-region-CA-city-toronto-sessid-rrYu5MD3-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
+        "password": "9021",
+        "painted": 0,
+        "charges": "UNKNOWN",
+        "energy_restore_speed": 570.0,
+        "max_energy": 12,
+        "status": "ConnectionError('Cannot send requests while disconnected')",
+        "last_run": "2024-10-24 00:00:49",
+        "charges_full_restore_time": "UNKNOWN"
+    }
+}

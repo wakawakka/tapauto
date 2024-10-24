@@ -40,14 +40,15 @@ class Telega:
             filepath=logfile_path, level=logging_level, name=name
         )
 
-        self.cache_dir = telegram_cache_dir
-        self.session_dir = os.path.join(self.cache_dir, session_id)
-        os.makedirs(self.session_dir, exist_ok=True)
+        os.makedirs(telegram_cache_dir, exist_ok=True)
 
-        self.session_file = os.path.join(self.session_dir, f"{session_id}.session")
+        self.session_file = os.path.join(telegram_cache_dir, f"{session_id}.session")
+        print('session file: ', self.session_file)
         if os.path.isfile(self.session_file):
+            print("USE CXURRENT ADIDASS")
             self.use_session_flag = UseCurrentSession
         else:
+            print("CREATE NEW ADIDASS")
             self.use_session_flag = CreateNewSession
             # os.remove(self.session_file)
 
@@ -128,9 +129,10 @@ class Telega:
 
             except BaseException as e:
                 if not self.use_session_flag == UseCurrentSession:
+                    print("ADIDASSSSS")
                     raise TelegramBadConvertProfile(tdata_path, e, self.logger)
                 self.logger.error(
-                    "Create telethon session from TDATA with UseCurrentSession failed. Trying to remove old session and create NEW"
+                    f"Create telethon session from TDATA with UseCurrentSession failed with {repr(e)}. Trying to remove old session and create NEW"
                 )
                 self.use_session_flag = CreateNewSession
                 if not self.client.disconnected:

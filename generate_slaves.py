@@ -23,7 +23,7 @@ def generate_json(path, proxies_path):
     return slaves
 if __name__ == '__main__':
     path = "C:\\projects\\tg_accs\\"
-    proxies_path = "canada_proxy.txt"
+    proxies_path = "proxy_toronto.txt"
     output_file = "slaves_combat.json"
     slaves = generate_json(path, proxies_path)
     with open(output_file, 'w') as f:

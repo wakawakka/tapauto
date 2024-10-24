@@ -118,7 +118,7 @@ class Fucktory:
         return actual_workers
 
     async def estimated_charges(self, worker):
-        return 4
+        return 3
     
     async def single_run_kernel(self, worker_name, tasks, local_logger, logfile_path):
         bot_username = "notpx_bot"
@@ -226,7 +226,7 @@ class Fucktory:
                 await self.dump_workers()
                 return job_result
         else:
-            return self.single_run_kernel(worker_name, tasks, local_logger, logfile_path)
+            return await self.single_run_kernel(worker_name, tasks, local_logger, logfile_path)
 
     async def run_async(self, catch=True):
         actual_job = await self.get_job()
@@ -248,7 +248,8 @@ class Fucktory:
             if offset >= len(not_locked_actual_job):
                 self.logger.info("ALL JOB SPLIT BY WORKERS!!!")
                 break
-            task = asyncio.create_task(self.single_run(worker_name, sub_job))
+            task = asyncio.create_task(self.single_run(worker_name, sub_job, catch=catch))
+            await asyncio.sleep(0.5)
             tasks.append(task)
         else:
             self.logger.info(
@@ -272,7 +273,7 @@ class Fucktory:
 
 def main():
     picture_path = "./notpixel_settings/228.png"
-    slaves_path = "slaves_test_duddoss.json"
+    slaves_path = "slaves_test_duddoss2.json"
 
     fk = Fucktory(picture_path, (228, 228))
     # code.interact(local=locals())
@@ -280,7 +281,7 @@ def main():
     asyncio.run(fk.initial_get_workers(slaves_path))
     # some logic on parallel/non parallel run of the job
 
-    asyncio.run(fk.run_async(catch=False))
+    asyncio.run(fk.run_async(catch=True))
     #asyncio.run(fk.do_stuff_periodically_async(600, fk.run_async))
 
 
