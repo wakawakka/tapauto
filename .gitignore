@@ -13,3 +13,5 @@ log.log
 *.log
 logs/
 node_modules
+*.db
+launch.json

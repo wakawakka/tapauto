@@ -17,7 +17,7 @@ proxy_host, proxy_port, proxy_user, proxy_password = notpixel_tools.parse_proxy_
 
 async def main_test_not_pixel():
 
-    url = "https://app.notpx.app/#tgWebAppData=user%3D%257B%2522id%2522%253A726551560%252C%2522first_name%2522%253A%2522A%2522%252C%2522last_name%2522%253A%2522S%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522is_premium%2522%253Atrue%252C%2522allows_write_to_pm%2522%253Atrue%257D%26chat_instance%3D-7507039722228485151%26chat_type%3Dsender%26auth_date%3D1729610057%26hash%3Dfaffba81b2380a6f136a1f5c2a835baa3e6f30778668c49c678eae2d1f206917&tgWebAppVersion=7.10&tgWebAppPlatform=tdesktop&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
+    url = "https://app.notpx.app/#tgWebAppData=user%3D%257B%2522id%2522%253A726551560%252C%2522first_name%2522%253A%2522A%2522%252C%2522last_name%2522%253A%2522S%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522is_premium%2522%253Atrue%252C%2522allows_write_to_pm%2522%253Atrue%257D%26chat_instance%3D-7507039722228485151%26chat_type%3Dsender%26auth_date%3D1729869819%26hash%3Ddfb5080508fa2384bd817725252cc7637d121ac532e01f122e88751aa9ef4634&tgWebAppVersion=7.10&tgWebAppPlatform=tdesktop&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
 
     pa = notpixel_actions.PixelActions(
         url,
@@ -27,12 +27,19 @@ async def main_test_not_pixel():
         proxy_password=proxy_password,
         gui_browser_worker_type=None,
     )
-    task = (
-        (80, 80, (255, 141, 161)),
-        # (80, 81, (255, 141, 161)),
-    )
-    await pa.emulate_ws()
-    await pa.emulate_ws()
+    # task = (
+    #     (80, 80, (255, 141, 161)),
+    #     # (80, 81, (255, 141, 161)),
+    # )
+    info = await pa.get_account_state(False, False)
+    pass
+    # await pa.run(task)
+    # templates = await pa.get_templates()
+    # await pa.get_template_colors(917981974)
+    # await pa.select_template(917981974)
+
+    # await pa.get_ws_token()
+
     # await pa.run(task)
 
 
@@ -110,22 +117,6 @@ async def test_db():
     await db.init_schema()
     await db.get_tables()
     await db.close_db()
-    pass
-
-
-async def test_websocket():
-    URL = "wss://notpx.app/connection/websocket"
-    from cent import AsyncClient
-    import cent
-
-    from cent import InfoRequest, SubscribeRequest
-
-    api_url = URL
-    api_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjaGFubmVscyI6WyJldmVudDptZXNzYWdlIiwicGl4ZWw6bWVzc2FnZSJdLCJleHAiOjE3Mjk2MTEyMTAsInN1YiI6IjcyNjU1MTU2MCJ9.VZ3AjXOcGNVp89ESwNfqEUTlNMOttUW2Bliqc9bl-Uk"
-
-    client = AsyncClient(api_url, api_key)
-
-    pix = await client.subscribe(SubscribeRequest(user="user", channel="pixel:message"))
     pass
 
 

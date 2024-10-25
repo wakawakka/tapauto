@@ -12,7 +12,8 @@ pysocks
 pandas
 aiohttp
 aiohttp_socks
-async-timeout
 python-socks[asyncio]
 aiosqlite
 centrifuge-python
+opentele
+aioretry
