@@ -20,8 +20,8 @@ upgrade_charge_restoration_price = {
 # UpgradeChargeCount
 upgrade_charge_count = {2: 5, 3: 100, 4: 200, 5: 300, 6: 400, 7: None}
 
-telegram_cache = "telegram_data"
-os.makedirs(telegram_cache, exist_ok=True)
+sessions_dir = "sessions_dir"
+os.makedirs(sessions_dir, exist_ok=True)
 
 log_dir = "logs"
 os.makedirs(log_dir, exist_ok=True)
