@@ -1,11 +1,14 @@
+import asyncio
+
+import aiohttp
+
 import notpixel_actions
 import notpixel_tools
+import settings
+from dbutils import TDB
 from exceptions import *
-from telegram_utils import Telega
 from fucktory import Fucktory
-from db import TDB
-import asyncio
-import aiohttp
+from telegram_utils import Telega
 
 proxy = "07196708-zone-custom-region-CA-sessid-C9p85mlF-sessTime-120:6pGOVG0G@f.proxys5.net:6200"
 proxy_host, proxy_port, proxy_user, proxy_password = notpixel_tools.parse_proxy_url(
@@ -110,12 +113,26 @@ async def test_proxy():
 
 
 async def test_db():
-    db_path = "tgdb.db"
+    db_path = settings.db_path
     db = TDB(dbpath=db_path)
     await db.init_db()
-    await db.drop_tables()
-    await db.init_schema()
+    # await db.drop_tables()
+    # await db.init_schema()
     await db.get_tables()
+    await db.add_user(
+        number="16049015240",
+        tdata_path="tdatas/16049015240/tdata",
+        password="Reza1357",
+        proxy="07196708-zone-custom-region-CA-city-ottawa-sessid-Qoeuiuja-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
+    )
+    await db.add_user(
+        number="16049015241",
+        tdata_path="tdatas/16049015241/tdata",
+        password="Reza1357",
+        proxy="07196708-zone-custom-region-CA-city-ottawa-sessid-Qoeuiuja-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
+    )
+    users = await db.get_users()
+
     await db.close_db()
     pass
 
@@ -123,10 +140,10 @@ async def test_db():
 if __name__ == "__main__":
     loop = asyncio.new_event_loop()
     # loop.run_until_complete(test_proxy())
-    loop.run_until_complete(main_test_not_pixel())
+    # loop.run_until_complete(main_test_not_pixel())
     # loop.run_until_complete(main_test_telegram())
     # loop.run_until_complete(main_test_api_telegram())
-    # loop.run_until_complete(test_db())
+    loop.run_until_complete(test_db())
     # loop.run_until_complete(main_test_fucktory())
     # loop.run_until_complete(test_websocket())
 

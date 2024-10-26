@@ -21,7 +21,10 @@ upgrade_charge_restoration_price = {
 upgrade_charge_count = {2: 5, 3: 100, 4: 200, 5: 300, 6: 400, 7: None}
 
 sessions_dir = "sessions_dir"
-os.makedirs(sessions_dir, exist_ok=True)
-
+db_path = "tgdb.db"
 log_dir = "logs"
+
+from settings_local import *
+
+os.makedirs(sessions_dir, exist_ok=True)
 os.makedirs(log_dir, exist_ok=True)
