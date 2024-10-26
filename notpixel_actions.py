@@ -536,7 +536,7 @@ class PixelActions:
         ws_token = await self.get_ws_token()
         acc_state = await self.get_account_state(claim=True, upgrade=True)
         # charges = acc_state.get("charges", 0)
-        charges = 1
+        charges = 3
         templates = await self.get_templates()
 
         template_id = random.choice(list(templates))

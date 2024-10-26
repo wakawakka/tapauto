@@ -95,6 +95,9 @@ class Worker:
                 number=self.telegram_session_id, balance=int(balance)
             )
             await self.db.log_run_attempt(number=self.telegram_session_id, success=True)
+            await self.db.set_user_status(
+                number=self.telegram_session_id, status="GOOD"
+            )
 
             return full_restore_timeout
         except BaseException as e:
