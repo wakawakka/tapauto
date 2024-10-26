@@ -137,15 +137,65 @@ async def test_db():
     pass
 
 
+async def add_users_to_db():
+    import json
+
+    db_path = settings.db_path
+    db = TDB(dbpath=db_path)
+    await db.init_db()
+    # await db.drop_tables()
+    # await db.init_schema()
+    await db.get_tables()
+
+    with open("server_accs_filled.json", "r") as f:
+        data = f.read()
+        user_data = json.loads(data)
+        for user in user_data:
+            await db.add_user(
+                number=user_data[user].get("number"),
+                tdata_path=user_data[user].get("tdata"),
+                password=user_data[user].get("password"),
+                proxy=user_data[user].get("proxy"),
+            )
+    users = await db.get_users()
+
+    await db.close_db()
+    pass
+
+
+async def fill_server_accs_proxy():
+    import json
+    import random
+
+    server_accs = "server_accs.json"
+    proxy_file = "proxies"
+    with open(server_accs, "r") as f:
+        acc_data = f.read()
+        acc_data = json.loads(acc_data)
+    with open(proxy_file, "r") as f:
+        proxies = f.read()
+        proxies = proxies.split("\n")
+        random.shuffle(proxies)
+    for acc_number in acc_data:
+        proxy = proxies.pop()
+        if not acc_data[acc_number].get("proxy"):
+            acc_data[acc_number]["proxy"] = proxy
+
+    with open("server_accs_filled.json", "w") as f:
+        f.write(json.dumps(acc_data))
+
+
 if __name__ == "__main__":
     loop = asyncio.new_event_loop()
     # loop.run_until_complete(test_proxy())
     # loop.run_until_complete(main_test_not_pixel())
     # loop.run_until_complete(main_test_telegram())
     # loop.run_until_complete(main_test_api_telegram())
-    loop.run_until_complete(test_db())
+    # loop.run_until_complete(test_db())
     # loop.run_until_complete(main_test_fucktory())
     # loop.run_until_complete(test_websocket())
+    # loop.run_until_complete(fill_server_accs_proxy())
+    loop.run_until_complete(add_users_to_db())
 
     loop.close()
     print("Finish")
