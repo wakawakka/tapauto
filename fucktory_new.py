@@ -153,7 +153,9 @@ async def run_fucktory():
 
     workers = await get_workers(db)
     init_client_tasks = [
-        asyncio.create_task(workers[worker_id].init_telegram_client(platform="macos"))
+        asyncio.create_task(
+            workers[worker_id].init_telegram_client(platform=TELEGRAM_PLATFORM)
+        )
         for worker_id in workers
     ]
     unloaded_workers = set()
