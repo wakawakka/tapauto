@@ -115,7 +115,6 @@ async def test_proxy():
 async def test_db():
     db_path = settings.db_path
     db = TDB(dbpath=db_path)
-    await db.init_db()
     # await db.drop_tables()
     # await db.init_schema()
     await db.get_tables()
@@ -142,7 +141,6 @@ async def add_users_to_db():
 
     db_path = settings.db_path
     db = TDB(dbpath=db_path)
-    await db.init_db()
     # await db.drop_tables()
     # await db.init_schema()
     await db.get_tables()
@@ -158,8 +156,6 @@ async def add_users_to_db():
                 proxy=user_data[user].get("proxy"),
             )
     users = await db.get_users()
-
-    await db.close_db()
     pass
 
 

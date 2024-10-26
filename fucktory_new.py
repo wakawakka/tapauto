@@ -152,7 +152,6 @@ async def run_fucktory():
     logger = utils.get_logger(fucktory_logfile, level=logging.DEBUG, name="FUCK")
 
     db = dbutils.TDB(settings.db_path, logfile_path=fucktory_logfile)
-    await db.init_db()
 
     workers = await get_workers(db)
     init_client_tasks = [
