@@ -158,12 +158,15 @@ async def run_fucktory():
     db = dbutils.TDB(settings.db_path, logfile_path=fucktory_logfile)
 
     workers = await get_workers(db)
-    init_client_tasks = [
-        asyncio.create_task(
-            workers[worker_id].init_telegram_client(platform=TELEGRAM_PLATFORM)
+    init_client_tasks = []
+    for worker_id in workers:
+        init_client_tasks.append(
+            asyncio.create_task(
+                workers[worker_id].init_telegram_client(platform=TELEGRAM_PLATFORM)
+            )
         )
-        for worker_id in workers
-    ]
+        # await asyncio.sleep(5)
+
     unloaded_workers = set()
     for client_init in asyncio.as_completed(init_client_tasks):
         result = await client_init
@@ -178,6 +181,7 @@ async def run_fucktory():
             exception = result.get("exception")
             await db.set_user_status(number=worker_id, status=str(exception))
             workers.pop(worker_id)
+
     logger.info("CLIENT LOADING SUMMARY")
     logger.info("\tGOOD:")
     for worker_id in workers:
@@ -188,7 +192,9 @@ async def run_fucktory():
     input("Press enter to start BIG WORK on GOOD workers")
 
     for worker_id in workers:
+        logger.info(f"STARTING SMENA OF WORKER: {worker_id}")
         loop.create_task(workers[worker_id].poyti_na_smenu(logger))
+        await asyncio.sleep(5)
 
 
 if __name__ == "__main__":
