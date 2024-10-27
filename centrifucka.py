@@ -22,7 +22,7 @@ from centrifuge_mod import (
 )
 from exceptions import *
 
-TIMEOUT = 15
+TIMEOUT = 30
 
 
 class ClientEventLoggerHandler(ClientEventHandler):
@@ -119,7 +119,7 @@ class Fucka:
 
     async def collect_pixels_to_repaint(self, count: int, good_pixels: dict):
         try:
-            async with asyncio.timeout(15):
+            async with asyncio.timeout(TIMEOUT):
                 await self.client.connect()
                 repaint_pixels = {}
                 while len(repaint_pixels) < count:
