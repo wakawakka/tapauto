@@ -12,6 +12,7 @@ tdatas/
 log.log
 *.log
 logs/
+logs2/
 node_modules
 *.db
 launch.json

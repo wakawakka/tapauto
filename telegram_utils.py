@@ -39,15 +39,15 @@ class Telega:
             filepath=logfile_path, level=logging_level, name=logging_name
         )
 
-        os.makedirs(telegram_cache_dir, exist_ok=True)
+        self.cache_dir = telegram_cache_dir
+        self.session_dir = os.path.join(self.cache_dir, session_id)
+        os.makedirs(self.session_dir, exist_ok=True)
 
-        self.session_file = os.path.join(telegram_cache_dir, f"{session_id}.session")
-        print('session file: ', self.session_file)
+        self.session_file = os.path.join(self.session_dir, f"{session_id}.session")
+        self.logger.info(f"Using session file: {self.session_file}")
         if os.path.isfile(self.session_file):
-            print("USE CXURRENT ADIDASS")
             self.use_session_flag = UseCurrentSession
         else:
-            print("CREATE NEW ADIDASS")
             self.use_session_flag = CreateNewSession
             # os.remove(self.session_file)
 
@@ -68,19 +68,19 @@ class Telega:
         self.app_url_dt = None
         self.bot_started = False
 
-    def get_api_by_platform(self, platform: str):
-        match platform:
-            case "desktop":
-                api_gen = API.TelegramDesktop
-            case "ios":
-                api_gen = API.TelegramIOS
-            case "macos":
-                api_gen = API.TelegramMacOS
-            case "android":
-                api_gen = API.TelegramAndroid
-            case _:
-                raise Exception('Platform variants: "desktop, ios, macos, android"')
-        return api_gen
+    # def get_api_by_platform(self, platform: str):
+    #     match platform:
+    #         case "desktop":
+    #             api_gen = API.TelegramDesktop
+    #         case "ios":
+    #             api_gen = API.TelegramIOS
+    #         case "macos":
+    #             api_gen = API.TelegramMacOS
+    #         case "android":
+    #             api_gen = API.TelegramAndroid
+    #         case _:
+    #             raise Exception('Platform variants: "desktop, ios, macos, android"')
+    #     return api_gen
 
     # ONLY WINDOWS MODE
     async def init_client_tdata(
@@ -96,8 +96,9 @@ class Telega:
         self.hardware_id = hardware_id
         self.password = password
 
-        api_gen = self.get_api_by_platform(platform)
-        api = api_gen.Generate(unique_id=hardware_id)
+        # api_gen = self.get_api_by_platform(platform)
+        # api = api_gen.Generate(unique_id=hardware_id)
+        api = API.TelegramDesktop.Generate(system="windows", unique_id=hardware_id)
 
         async with asyncio.timeout(PROFILE_LOAD_TIMEOUT):
             try:
@@ -128,10 +129,9 @@ class Telega:
 
             except BaseException as e:
                 if not self.use_session_flag == UseCurrentSession:
-                    print("ADIDASSSSS")
                     raise TelegramBadConvertProfile(tdata_path, e, self.logger)
                 self.logger.error(
-                    f"Create telethon session from TDATA with UseCurrentSession failed with {repr(e)}. Trying to remove old session and create NEW"
+                    f"Create telethon session from TDATA with UseCurrentSession failed. Original exception: {e}"
                 )
                 self.use_session_flag = CreateNewSession
                 if not self.client.disconnected:
@@ -287,3 +287,84 @@ class Telega:
         self.app_url = result.url
         self.app_url_dt = datetime.datetime.now()
         return result.url
+
+        # async def test(self):
+        #     api = API.TelegramDesktop.Generate(system="Windows", unique_id="228")
+        #     await self.client.disconnect()
+        #     new_client = TC_opentele(self.session_file, api=api)
+        #     new_tdata = self.tdata_path + "_converted"
+        #     new_tdesk = await new_client.ToTDesktop(
+        #         CreateNewSession, api=api, password=self.password
+        #     )
+        #     new_tdesk.SaveTData(new_tdata)
+        #     pass
+
+    async def create_own_tdata(
+        self,
+        number,
+        tdata_input,
+        tdata_output,
+        profile_settings_json,
+        new_session_file,
+    ):
+        profile_config = {}
+        with open(profile_settings_json, "r") as f:
+            profile_config = json.loads(f.read())
+
+        app_id = profile_config.get("app_id")
+        app_hash = profile_config.get("app_hash")
+        app_version = profile_config.get("app_version")
+        device = profile_config.get("device")
+        sdk = profile_config.get("sdk")
+        password = profile_config.get("twoFA", None)
+
+        if app_id and app_hash and app_version and device and sdk:
+            old_api = API.TelegramDesktop(
+                api_id=app_id,
+                api_hash=app_hash,
+                app_version=app_version,
+                device_model=device,
+                system_version=sdk,
+            )
+        else:
+            old_api = API.TelegramDesktop.Generate()
+
+        new_api = API.TelegramDesktop.Generate(system="windows", unique_id=number)
+
+        tdesk_old = TDesktop(tdata_input, api=old_api)
+        assert tdesk_old.isLoaded()
+
+        client_old = await TC_opentele.FromTDesktop(
+            tdesk_old,
+            session=new_session_file,
+            flag=CreateNewSession,
+            api=old_api,
+            password=password,
+            proxy=self.telethon_proxy,
+        )
+
+        await client_old.connect()
+        await client_old.PrintSessions()
+
+        assert await client_old.is_user_authorized()
+
+        await client_old.disconnect()
+
+        client_new = TC_opentele(
+            new_session_file, api=new_api, proxy=self.telethon_proxy
+        )
+        await client_new.connect()
+        await client_new.PrintSessions()
+
+        assert await client_new.is_user_authorized()
+
+        tdata_new = await client_new.ToTDesktop(
+            UseCurrentSession, new_api, password=password
+        )
+        await tdata_new.SaveTData(tdata_output)
+
+        await client_new.disconnect()
+
+        # client_old = TC_opentele(old_session_file)
+
+        pass
