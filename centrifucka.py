@@ -125,7 +125,7 @@ class Fucka:
                 while len(repaint_pixels) < count:
                     if not self.buffer.empty():
                         update = await self.buffer.get()
-                        for color in uspdate:
+                        for color in update:
                             for pixel_id in update[color]:
                                 if pixel_id in good_pixels:
                                     if color != good_pixels[pixel_id]:
@@ -138,6 +138,8 @@ class Fucka:
                 return repaint_pixels
         except BaseException as e:
             raise CentrifugeException(e, logger=self.logger)
+        finally:
+            await self.client.disconnect()
 
 
 def collect_pixels():
