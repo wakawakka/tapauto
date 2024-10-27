@@ -12,9 +12,9 @@ from telethon import functions, types
 
 import utils
 from exceptions import TelegramBadConvertProfile, TelegramBadProfile
-from opentele.api import API, CreateNewSession, UseCurrentSession
-from opentele.td import TDesktop
-from opentele.tl import TelegramClient as TC_opentele
+from opentele_mod.api import API, CreateNewSession, UseCurrentSession
+from opentele_mod.td import TDesktop
+from opentele_mod.tl import TelegramClient as TC_opentele
 
 PROFILE_LOAD_TIMEOUT = 5
 CONNECT_TIMEOUT = 120
