@@ -129,7 +129,7 @@ class Telega:
                 if not self.use_session_flag == UseCurrentSession:
                     raise TelegramBadConvertProfile(tdata_path, e, self.logger)
                 self.logger.error(
-                    "Create telethon session from TDATA with UseCurrentSession failed. Trying to remove old session and create NEW"
+                    f"Create telethon session from TDATA with UseCurrentSession failed. Original exception: {e}"
                 )
                 self.use_session_flag = CreateNewSession
                 if not self.client.disconnected:
@@ -285,3 +285,78 @@ class Telega:
         self.app_url = result.url
         self.app_url_dt = datetime.datetime.now()
         return result.url
+
+        # async def test(self):
+        #     api = API.TelegramDesktop.Generate(system="Windows", unique_id="228")
+        #     await self.client.disconnect()
+        #     new_client = TC_opentele(self.session_file, api=api)
+        #     new_tdata = self.tdata_path + "_converted"
+        #     new_tdesk = await new_client.ToTDesktop(
+        #         CreateNewSession, api=api, password=self.password
+        #     )
+        #     new_tdesk.SaveTData(new_tdata)
+        #     pass
+
+    async def create_own_tdata(
+        self,
+        number,
+        tdata_input,
+        tdata_output,
+        profile_settings_json,
+        old_session_file,
+        new_session_file,
+    ):
+        profile_config = {}
+        with open(profile_settings_json, "r") as f:
+            profile_config = json.loads(f.read())
+
+        app_id = profile_config.get("app_id")
+        app_hash = profile_config.get("app_hash")
+        app_version = profile_config.get("app_version")
+        device = profile_config.get("device")
+        sdk = profile_config.get("sdk")
+        password = profile_config.get("twoFA", None)
+
+        if app_id and app_hash and app_version and device and sdk:
+            old_api = API.TelegramDesktop(
+                api_id=app_id,
+                api_hash=app_hash,
+                app_version=app_version,
+                device_model=device,
+                system_version=sdk,
+            )
+        else:
+            old_api = API.TelegramDesktop.Generate()
+
+        new_api = API.TelegramDesktop.Generate(system="windows", unique_id=number)
+        # tdesk_old = TDesktop(tdata_input, api=api)
+        # assert tdesk_old.isLoaded()
+
+        # client_old = await TC_opentele.FromTDesktop(
+        #     tdesk_old,
+        #     session=old_session_file,
+        #     flag=UseCurrentSession,
+        #     api=api,
+        #     password=password,
+        #     proxy=self.telethon_proxy,
+        # )
+
+        client_old = TC_opentele(
+            session=old_session_file, api=old_api, proxy=self.telethon_proxy
+        )
+
+        await client_old.connect()
+        await client_old.PrintSessions()
+
+        assert await client_old.is_user_authorized()
+
+        tdata_new = await client_old.ToTDesktop(
+            CreateNewSession, new_api, password=password
+        )
+        await tdata_new.SaveTData(tdata_output)
+
+        await client_old.disconnect()
+
+        # client_old = TC_opentele(old_session_file)
+
+        pass
