@@ -47,10 +47,11 @@ async def main_test_not_pixel():
 
 
 async def main_test_telegram():
+    acc = "27656464807"
 
     t = Telega(
-        telegram_cache_dir="tdatas/bebe2",
-        session_id="27620745705",
+        telegram_cache_dir=f"sessions/{acc}",
+        session_id=acc,
         proxy_host=proxy_host,
         proxy_port=proxy_port,
         proxy_user=proxy_user,
@@ -59,13 +60,23 @@ async def main_test_telegram():
         logging_level=logging.DEBUG,
     )
 
-    await t.init_client_tdata(
-        tdata_path="tdatas/16049015240/tdata",
-        platform="macos",
-        hardware_id="16049015240",
-        password="Reza1357",
+    # await t.init_client_tdata(
+    #     tdata_path=f"tdatas/{acc}/tdata",
+    #     platform="macos",
+    #     hardware_id=acc,
+    #     password="4040!",
+    # )
+    # await t.check_auth()
+    # await t.test()
+
+    await t.create_own_tdata(
+        number=acc,
+        tdata_input=f"tdatas/{acc}/tdata",
+        tdata_output=f"tdatas/{acc}_conv/tdata",
+        profile_settings_json=f"tdatas/{acc}/{acc}.json",
+        old_session_file=f"tdatas/{acc}/{acc}.session",
+        new_session_file=f"tdatas/{acc}/{acc}_conv.session",
     )
-    await t.get_bot_webapp("notpx_bot", "android")
     # await t.start_bot(bot_username="notpx_bot")
     pass
 
@@ -185,13 +196,17 @@ if __name__ == "__main__":
     loop = asyncio.new_event_loop()
     # loop.run_until_complete(test_proxy())
     # loop.run_until_complete(main_test_not_pixel())
-    # loop.run_until_complete(main_test_telegram())
+    loop.run_until_complete(main_test_telegram())
     # loop.run_until_complete(main_test_api_telegram())
     # loop.run_until_complete(test_db())
     # loop.run_until_complete(main_test_fucktory())
     # loop.run_until_complete(test_websocket())
     # loop.run_until_complete(fill_server_accs_proxy())
-    loop.run_until_complete(add_users_to_db())
-
+    # loop.create_task(add_users_to_db())
+    # loop.create_task(add_users_to_db())
+    # loop.run_until_complete(add_users_to_db())
+    # TODO FIX
+    # add timeout to
+    # SELECT BY MINIMUM SUBS
     loop.close()
     print("Finish")
