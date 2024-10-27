@@ -39,15 +39,15 @@ class Telega:
             filepath=logfile_path, level=logging_level, name=logging_name
         )
 
-        os.makedirs(telegram_cache_dir, exist_ok=True)
+        self.cache_dir = telegram_cache_dir
+        self.session_dir = os.path.join(self.cache_dir, session_id)
+        os.makedirs(self.session_dir, exist_ok=True)
 
-        self.session_file = os.path.join(telegram_cache_dir, f"{session_id}.session")
-        print("session file: ", self.session_file)
+        self.session_file = os.path.join(self.session_dir, f"{session_id}.session")
+        self.logger.info(f"Using session file: {self.session_file}")
         if os.path.isfile(self.session_file):
-            print("USE CXURRENT ADIDASS")
             self.use_session_flag = UseCurrentSession
         else:
-            print("CREATE NEW ADIDASS")
             self.use_session_flag = CreateNewSession
             # os.remove(self.session_file)
 
@@ -129,7 +129,6 @@ class Telega:
 
             except BaseException as e:
                 if not self.use_session_flag == UseCurrentSession:
-                    print("ADIDASSSSS")
                     raise TelegramBadConvertProfile(tdata_path, e, self.logger)
                 self.logger.error(
                     f"Create telethon session from TDATA with UseCurrentSession failed. Original exception: {e}"
@@ -306,7 +305,6 @@ class Telega:
         tdata_input,
         tdata_output,
         profile_settings_json,
-        old_session_file,
         new_session_file,
     ):
         profile_config = {}
@@ -338,15 +336,11 @@ class Telega:
 
         client_old = await TC_opentele.FromTDesktop(
             tdesk_old,
-            session=old_session_file,
-            flag=UseCurrentSession,
-            api=api,
+            session=new_session_file,
+            flag=CreateNewSession,
+            api=old_api,
             password=password,
             proxy=self.telethon_proxy,
-        )
-
-        client_old = TC_opentele(
-            session=old_session_file, api=old_api, proxy=self.telethon_proxy
         )
 
         await client_old.connect()
@@ -354,12 +348,22 @@ class Telega:
 
         assert await client_old.is_user_authorized()
 
-        tdata_new = await client_old.ToTDesktop(
-            CreateNewSession, new_api, password=password
+        await client_old.disconnect()
+
+        client_new = TC_opentele(
+            new_session_file, api=new_api, proxy=self.telethon_proxy
+        )
+        await client_new.connect()
+        await client_new.PrintSessions()
+
+        assert await client_new.is_user_authorized()
+
+        tdata_new = await client_new.ToTDesktop(
+            UseCurrentSession, new_api, password=password
         )
         await tdata_new.SaveTData(tdata_output)
 
-        await client_old.disconnect()
+        await client_new.disconnect()
 
         # client_old = TC_opentele(old_session_file)
 
