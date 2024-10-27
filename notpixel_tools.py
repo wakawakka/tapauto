@@ -5,25 +5,10 @@ import logging
 import aiohttp
 import requests
 from aiohttp_socks import ChainProxyConnector, ProxyConnector, ProxyType
-from async_timeout import timeout
 from PIL import Image
 
 from exceptions import BadStatus, HttpTimeout, HttpError
 from utils import get_logger
-
-
-async def open_websocket(
-    proxy=None,
-    logger=None,
-):
-    if not logger:
-        logger = get_logger("common.log", logging.DEBUG)
-    proxy_connector = None
-    if proxy:
-        proxy_connector = ProxyConnector.from_url(proxy)
-    async with aiohttp.ClientSession(connector=proxy_connector) as session:
-        session.ws_connect()
-    pass
 
 
 async def http_request(
@@ -33,9 +18,10 @@ async def http_request(
     proxy=None,
     data_p=None,
     json_p=None,
-    http_timeout=10,
+    http_timeout=30,
     good_statuses=[200],
     logger=None,
+    retry_count=3,
 ):
     if not logger:
         logger = get_logger("common.log", logging.DEBUG)
@@ -43,26 +29,43 @@ async def http_request(
     if proxy:
         proxy_connector = ProxyConnector.from_url(proxy)
     try:
-        async with timeout(http_timeout):
+        async with asyncio.timeout(http_timeout):
             async with aiohttp.ClientSession(connector=proxy_connector) as session:
                 match rtype:
                     case "GET":
                         roperator = session.get
                     case "POST":
                         roperator = session.post
-                async with roperator(
-                    url, headers=headers, json=json_p, data=data_p
-                ) as r:
-                    success = r.status in good_statuses
-                    if not success:
-                        raise BadStatus(
-                            proxy=proxy,
-                            url=url,
-                            status=r.status,
+                    case "PUT":
+                        roperator = session.put
+                    case "OPTIONS":
+                        roperator = session.options
+                    case _:
+                        raise Exception(
+                            f"BAD request type '{rtype}'. Allowed: GET,POST,PUT,OPTIONS"
                         )
-                    content = await r.read()
+                while retry_count:
+                    try:
+                        async with roperator(
+                            url, headers=headers, json=json_p, data=data_p
+                        ) as r:
+                            success = r.status in good_statuses
+                            if not success:
+                                raise BadStatus(
+                                    proxy=proxy,
+                                    url=url,
+                                    status=r.status,
+                                )
+                            content = await r.read()
+                            return {"status": r.status, "content": content}
+                    except BaseException as e:
+                        retry_count -= 1
+                        logger.error(
+                            f"Failed to {rtype} {url}, left tries - {retry_count}"
+                        )
+                        if not retry_count:
+                            raise e
 
-                    return {"status": r.status, "content": content}
     except asyncio.TimeoutError:
         raise HttpTimeout(proxy=proxy, url=url)
     except BaseException as e:
@@ -95,7 +98,7 @@ def rgb_to_hex(pix):
     r, g, b = int(r), int(g), int(b)
     # return hex((r << 16) + (g << 8) + b).replace('0x','#').upper()
     n = (r << 16) + (g << 8) + b
-    return f"#{n:06X}"
+    return f"{n:06X}"
 
 
 def parse_proxy_url(proxy_url):
@@ -116,6 +119,14 @@ def parse_proxy_url(proxy_url):
         proxy_user = None
         proxy_pass = None
     return proxy_host, proxy_port, proxy_user, proxy_pass
+
+
+def get_pixels(image_file_content):
+    img_io = io.BytesIO(image_file_content)
+    img_io.seek(0)
+    img = Image.open(img_io)
+    pixels = img.load()
+    return pixels
 
 
 def get_image_state(proxies=None):

@@ -118,8 +118,8 @@ class Fucktory:
         return actual_workers
 
     async def estimated_charges(self, worker):
-        return 3
-    
+        return 4
+
     async def single_run_kernel(self, worker_name, tasks, local_logger, logfile_path):
         bot_username = "notpx_bot"
         async with self.workers[worker_name]["locker"]:
@@ -139,7 +139,7 @@ class Fucktory:
                     proxy_password=proxy_password,
                     logfile_path=logfile_path,
                     logging_level=self.logging_level,
-                    name=f"tutils:{worker_name}",
+                    logging_name=f"tutils:{worker_name}",
                 )
                 tdata_path = worker["path"]
                 account_password = worker.get("password", None)
@@ -155,14 +155,15 @@ class Fucktory:
                 tg = self.workers[worker_name]["tg"]
 
             dt_now = datetime.datetime.now()
-            if tg.app_url is None or dt_now > tg.app_url_dt + datetime.timedelta(minutes=10):
+            if tg.app_url is None or dt_now > tg.app_url_dt + datetime.timedelta(
+                minutes=10
+            ):
                 app_url = await tg.get_bot_webapp(
                     bot_username=bot_username,
                     platform="android",
                 )
             else:
                 app_url = tg.app_url
-
 
             local_logger.info(app_url)
             pa = notpixel_actions.PixelActions(
@@ -173,12 +174,12 @@ class Fucktory:
                 proxy_password=proxy_password,
                 gui_browser_worker_type=False,
                 headless=True,
-                name=f"pa:{worker_name}",
+                logging_name=f"pa:{worker_name}",
                 logfile_path=logfile_path,
                 logging_level=self.logging_level,
             )
             local_logger.info("PA initialized")
-            job_result = await pa.run(tasks)
+            job_result = await pa.paint_pixels(tasks)
             local_logger.info(f"task done : {job_result}")
             job_result["status"] = (
                 f"OK, painted {job_result['painted']}, left {job_result['charges']}"
@@ -201,7 +202,9 @@ class Fucktory:
         # job_result = {}
         if catch:
             try:
-                job_result = await self.single_run_kernel(worker_name, tasks, local_logger, logfile_path)
+                job_result = await self.single_run_kernel(
+                    worker_name, tasks, local_logger, logfile_path
+                )
             except asyncio.exceptions.CancelledError as e:
                 local_logger.info(f"WORKER {worker_name} cancelled")
                 job_result = {}
@@ -221,7 +224,9 @@ class Fucktory:
                 for j in job_result:
                     worker[j] = job_result[j]
                 if job_result:
-                    worker["last_run"] = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
+                    worker["last_run"] = pd.Timestamp.now().strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
                 self.workers[worker_name] = worker
                 await self.dump_workers()
                 return job_result
@@ -269,7 +274,6 @@ class Fucktory:
                 f"len of done runs: {len([f for f in futures if f.done()])}"
             )
 
-    
 
 def main():
     picture_path = "./notpixel_settings/228.png"

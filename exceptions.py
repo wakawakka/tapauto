@@ -37,6 +37,18 @@ class TelegramBadProfile(BaseException):
         logger.error(message)
 
 
+class CentrifugeException(BaseException):
+    def __init__(self, papa_Exception: Exception, logger: logging.Logger = None):
+        message = (
+            f"Centrifuge failed to get pixels:\n"
+            f"\tPapa Exception -  type: {type(papa_Exception)}, message: {papa_Exception}"
+        )
+        super().__init__(message)
+        if not logger:
+            logger = get_logger("common.log", logging.DEBUG)
+        logger.error(message)
+
+
 class HttpTimeout(BaseException):
     def __init__(self, proxy, url, logger: logging.Logger = None):
         # Call the base class constructor with the parameters it needs

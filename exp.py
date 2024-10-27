@@ -1,11 +1,14 @@
+import asyncio
+
+import aiohttp
+
 import notpixel_actions
 import notpixel_tools
+import settings
+from dbutils import TDB
 from exceptions import *
-from telegram_utils import Telega
 from fucktory import Fucktory
-from db import TDB
-import asyncio
-import aiohttp
+from telegram_utils import Telega
 
 proxy = "07196708-zone-custom-region-CA-sessid-C9p85mlF-sessTime-120:6pGOVG0G@f.proxys5.net:6200"
 proxy_host, proxy_port, proxy_user, proxy_password = notpixel_tools.parse_proxy_url(
@@ -17,7 +20,7 @@ proxy_host, proxy_port, proxy_user, proxy_password = notpixel_tools.parse_proxy_
 
 async def main_test_not_pixel():
 
-    url = "https://app.notpx.app/#tgWebAppData=user%3D%257B%2522id%2522%253A726551560%252C%2522first_name%2522%253A%2522A%2522%252C%2522last_name%2522%253A%2522S%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522is_premium%2522%253Atrue%252C%2522allows_write_to_pm%2522%253Atrue%257D%26chat_instance%3D-7507039722228485151%26chat_type%3Dsender%26auth_date%3D1729610057%26hash%3Dfaffba81b2380a6f136a1f5c2a835baa3e6f30778668c49c678eae2d1f206917&tgWebAppVersion=7.10&tgWebAppPlatform=tdesktop&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
+    url = "https://app.notpx.app/#tgWebAppData=user%3D%257B%2522id%2522%253A726551560%252C%2522first_name%2522%253A%2522A%2522%252C%2522last_name%2522%253A%2522S%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522is_premium%2522%253Atrue%252C%2522allows_write_to_pm%2522%253Atrue%257D%26chat_instance%3D-7507039722228485151%26chat_type%3Dsender%26auth_date%3D1729869819%26hash%3Ddfb5080508fa2384bd817725252cc7637d121ac532e01f122e88751aa9ef4634&tgWebAppVersion=7.10&tgWebAppPlatform=tdesktop&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
 
     pa = notpixel_actions.PixelActions(
         url,
@@ -27,12 +30,19 @@ async def main_test_not_pixel():
         proxy_password=proxy_password,
         gui_browser_worker_type=None,
     )
-    task = (
-        (80, 80, (255, 141, 161)),
-        # (80, 81, (255, 141, 161)),
-    )
-    await pa.emulate_ws()
-    await pa.emulate_ws()
+    # task = (
+    #     (80, 80, (255, 141, 161)),
+    #     # (80, 81, (255, 141, 161)),
+    # )
+    info = await pa.get_account_state(False, False)
+    pass
+    # await pa.run(task)
+    # templates = await pa.get_templates()
+    # await pa.get_template_colors(917981974)
+    # await pa.select_template(917981974)
+
+    # await pa.get_ws_token()
+
     # await pa.run(task)
 
 
@@ -103,41 +113,85 @@ async def test_proxy():
 
 
 async def test_db():
-    db_path = "tgdb.db"
+    db_path = settings.db_path
     db = TDB(dbpath=db_path)
-    await db.init_db()
-    await db.drop_tables()
-    await db.init_schema()
+    # await db.drop_tables()
+    # await db.init_schema()
     await db.get_tables()
+    await db.add_user(
+        number="16049015240",
+        tdata_path="tdatas/16049015240/tdata",
+        password="Reza1357",
+        proxy="07196708-zone-custom-region-CA-city-ottawa-sessid-Qoeuiuja-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
+    )
+    await db.add_user(
+        number="16049015241",
+        tdata_path="tdatas/16049015241/tdata",
+        password="Reza1357",
+        proxy="07196708-zone-custom-region-CA-city-ottawa-sessid-Qoeuiuja-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
+    )
+    users = await db.get_users()
+
     await db.close_db()
     pass
 
 
-async def test_websocket():
-    URL = "wss://notpx.app/connection/websocket"
-    from cent import AsyncClient
-    import cent
+async def add_users_to_db():
+    import json
 
-    from cent import InfoRequest, SubscribeRequest
+    db_path = settings.db_path
+    db = TDB(dbpath=db_path)
+    # await db.drop_tables()
+    # await db.init_schema()
+    await db.get_tables()
 
-    api_url = URL
-    api_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjaGFubmVscyI6WyJldmVudDptZXNzYWdlIiwicGl4ZWw6bWVzc2FnZSJdLCJleHAiOjE3Mjk2MTEyMTAsInN1YiI6IjcyNjU1MTU2MCJ9.VZ3AjXOcGNVp89ESwNfqEUTlNMOttUW2Bliqc9bl-Uk"
-
-    client = AsyncClient(api_url, api_key)
-
-    pix = await client.subscribe(SubscribeRequest(user="user", channel="pixel:message"))
+    with open("server_accs_filled.json", "r") as f:
+        data = f.read()
+        user_data = json.loads(data)
+        for user in user_data:
+            await db.add_user(
+                number=user_data[user].get("number"),
+                tdata_path=user_data[user].get("tdata"),
+                password=user_data[user].get("password"),
+                proxy=user_data[user].get("proxy"),
+            )
+    users = await db.get_users()
     pass
+
+
+async def fill_server_accs_proxy():
+    import json
+    import random
+
+    server_accs = "server_accs.json"
+    proxy_file = "proxies"
+    with open(server_accs, "r") as f:
+        acc_data = f.read()
+        acc_data = json.loads(acc_data)
+    with open(proxy_file, "r") as f:
+        proxies = f.read()
+        proxies = proxies.split("\n")
+        random.shuffle(proxies)
+    for acc_number in acc_data:
+        proxy = proxies.pop()
+        if not acc_data[acc_number].get("proxy"):
+            acc_data[acc_number]["proxy"] = proxy
+
+    with open("server_accs_filled.json", "w") as f:
+        f.write(json.dumps(acc_data))
 
 
 if __name__ == "__main__":
     loop = asyncio.new_event_loop()
     # loop.run_until_complete(test_proxy())
-    loop.run_until_complete(main_test_not_pixel())
+    # loop.run_until_complete(main_test_not_pixel())
     # loop.run_until_complete(main_test_telegram())
     # loop.run_until_complete(main_test_api_telegram())
     # loop.run_until_complete(test_db())
     # loop.run_until_complete(main_test_fucktory())
     # loop.run_until_complete(test_websocket())
+    # loop.run_until_complete(fill_server_accs_proxy())
+    loop.run_until_complete(add_users_to_db())
 
     loop.close()
     print("Finish")

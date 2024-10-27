@@ -7,15 +7,14 @@ import random
 import json
 
 import socks
-from async_timeout import timeout
 from telethon import TelegramClient as TC_telethon
 from telethon import functions, types
 
 import utils
 from exceptions import TelegramBadConvertProfile, TelegramBadProfile
-from opentele.api import API, CreateNewSession, UseCurrentSession
-from opentele.td import TDesktop
-from opentele.tl import TelegramClient as TC_opentele
+from opentele_mod.api import API, CreateNewSession, UseCurrentSession
+from opentele_mod.td import TDesktop
+from opentele_mod.tl import TelegramClient as TC_opentele
 
 PROFILE_LOAD_TIMEOUT = 5
 CONNECT_TIMEOUT = 120
@@ -34,10 +33,10 @@ class Telega:
         proxy_password: str,
         logfile_path="common.log",
         logging_level=logging.DEBUG,
-        name="Telega unnamed",
+        logging_name="Telega unnamed",
     ):
         self.logger = utils.get_logger(
-            filepath=logfile_path, level=logging_level, name=name
+            filepath=logfile_path, level=logging_level, name=logging_name
         )
 
         os.makedirs(telegram_cache_dir, exist_ok=True)
@@ -100,7 +99,7 @@ class Telega:
         api_gen = self.get_api_by_platform(platform)
         api = api_gen.Generate(unique_id=hardware_id)
 
-        async with timeout(PROFILE_LOAD_TIMEOUT):
+        async with asyncio.timeout(PROFILE_LOAD_TIMEOUT):
             try:
                 tdesk = TDesktop(tdata_path)
                 assert tdesk.isLoaded()
@@ -108,7 +107,7 @@ class Telega:
                 raise TelegramBadProfile(tdata_path, e, self.logger)
         self.logger.info(f"Telegram profile loaded - path: {tdata_path}")
 
-        async with timeout(CONNECT_TIMEOUT):
+        async with asyncio.timeout(CONNECT_TIMEOUT):
             try:
                 self.client = await TC_opentele.FromTDesktop(
                     tdesk,
@@ -212,6 +211,8 @@ class Telega:
 
     async def check_auth(self, try_reauth=True):
         auth_ok = await self.client.is_user_authorized()
+        msg = f"Check_auth AUTH: {auth_ok}"
+        self.logger.debug(msg)
         if not auth_ok:
             error_message = "Client not authorized"
             self.logger.error(error_message)
@@ -222,7 +223,7 @@ class Telega:
                     self.tdata_path, self.platform, self.hardware_id, self.password
                 )
             else:
-                raise Exception(error_message)
+                raise Exception(msg)
 
     async def get_bot_webapp(self, bot_username: str, platform: str, param=None):
         await self.check_auth(try_reauth=True)

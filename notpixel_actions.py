@@ -1,4 +1,5 @@
 import asyncio
+import io
 import json
 import logging
 import random
@@ -6,17 +7,22 @@ import re
 import time
 from hashlib import md5
 from urllib.parse import unquote
+from concurrent.futures import ThreadPoolExecutor
 
 import pandas as pd
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+from PIL import Image
 
 import notpixel_tools
+from centrifucka import Fucka
 import secure_browser
 import settings
 import useragents
 import utils
+
+HTTP_REQUEST_TIMEOUT = 30
 
 
 class PixelActions:
@@ -32,10 +38,10 @@ class PixelActions:
         headless=False,
         logfile_path="common.log",
         logging_level=logging.DEBUG,
-        name="PixelActions unnamed",
+        logging_name="PixelActions unnamed",
     ):
         self.logger = utils.get_logger(
-            filepath=logfile_path, level=logging_level, name=name
+            filepath=logfile_path, level=logging_level, name=logging_name
         )
 
         self.web_app_entry_url = web_app_entry_url
@@ -44,6 +50,17 @@ class PixelActions:
         self.proxy_user = proxy_user
         self.proxy_password = proxy_password
         self.proxy_extention_path = proxy_extention_path
+
+        self.pool = ThreadPoolExecutor(max_workers=2)
+        self.centrifuga = Fucka(
+            proxy_host=self.proxy_host,
+            proxy_port=self.proxy_port,
+            proxy_user=self.proxy_user,
+            proxy_password=self.proxy_password,
+            logfile_path=logfile_path,
+            logging_level=logging_level,
+            logging_name=logging_name,
+        )
 
         self.energy = 0
         self.auth_token = self.get_autorization_header()
@@ -111,7 +128,7 @@ class PixelActions:
                     )
                     break
                 except BaseException as e:
-                    print("not found button:", e, str(e))
+                    print(f"not found button: {e}")
         else:
             self.sb.browser.get(self.web_app_entry_url)
 
@@ -162,7 +179,7 @@ class PixelActions:
                     "https://app.notpx.app" + js_href,
                     headers,
                     proxy=self.proxy_string,
-                    http_timeout=10,
+                    http_timeout=HTTP_REQUEST_TIMEOUT,
                     good_statuses=[200],
                     logger=self.logger,
                 )
@@ -180,8 +197,8 @@ class PixelActions:
         )
         pass
 
-    async def emulate_ws(self):
-        self.logger.debug(f"Start emulate websocket")
+    async def get_ws_token(self):
+        self.logger.debug(f"Start get websocket token")
         headers = self.get_headers_api()
         url = "https://notpx.app/api/v1/users/me"
         result = await notpixel_tools.http_request(
@@ -189,12 +206,14 @@ class PixelActions:
             url,
             headers,
             proxy=self.proxy_string,
-            http_timeout=10,
+            http_timeout=HTTP_REQUEST_TIMEOUT,
             good_statuses=[200],
             logger=self.logger,
         )
-        print(json.loads(result["content"]))
-        pass
+        data = json.loads(result["content"])
+        token = data.get("websocketToken")
+        self.logger.debug(f"Got ws token: {token}")
+        return token
 
     async def emulate_app_start(self):
         self.logger.debug(f"Start GET entry URL")
@@ -204,12 +223,11 @@ class PixelActions:
             self.web_app_entry_url,
             headers,
             proxy=self.proxy_string,
-            http_timeout=10,
+            http_timeout=HTTP_REQUEST_TIMEOUT,
             good_statuses=[200],
             logger=self.logger,
         )
         await self.emulate_js_loading(result.get("content", ""))
-        await self.emulate_ws()
         await self.sleep_after_request()
         status = result.get("status")
         content_len = len(result.get("content"))
@@ -230,7 +248,7 @@ class PixelActions:
             url,
             headers,
             proxy=self.proxy_string,
-            http_timeout=10,
+            http_timeout=HTTP_REQUEST_TIMEOUT,
             good_statuses=[200, 500, 504],
             logger=self.logger,
         )
@@ -251,7 +269,7 @@ class PixelActions:
             url,
             headers,
             proxy=self.proxy_string,
-            http_timeout=10,
+            http_timeout=HTTP_REQUEST_TIMEOUT,
             good_statuses=[200],
             logger=self.logger,
         )
@@ -264,10 +282,6 @@ class PixelActions:
         )
 
     async def install_upgrades(self, balance, boosts):
-        if self.sb:
-            browser_url = "https://app.notpx.app/claiming"
-            if self.sb.browser.current_url != browser_url:
-                self.sb.browser.get(browser_url)
 
         # ordered by upgrade priority
         upgrade_keys = {
@@ -279,14 +293,113 @@ class PixelActions:
             current_level = boosts.get(uk)
             upgrade_price = upgrade_keys[uk].get(current_level + 1)
             if balance > upgrade_price:
-                await self.upgrade_boost(uk)
+                try:
+                    await self.upgrade_boost(uk)
+                except:
+                    self.logger.error(f"Upgrade {uk} failed")
                 balance -= upgrade_price
 
+    async def get_templates(self):
+        url = "https://notpx.app/api/v1/image/template/list?limit=12&offset=0"
+        self.logger.debug(f"Start GET template list")
+        headers = self.get_headers_api()
+        result = await notpixel_tools.http_request(
+            "GET",
+            url,
+            headers,
+            proxy=self.proxy_string,
+            http_timeout=HTTP_REQUEST_TIMEOUT,
+            good_statuses=[200],
+            logger=self.logger,
+        )
+        await self.sleep_after_request()
+        content = result.get("content")
+        data = json.loads(content)
+        templates = {}
+        for ti in data:
+            _id = ti.get("templateId")
+            url = ti.get("url")
+            templates[_id] = url
+        self.logger.info(f"GOT template list: {templates.keys()}")
+        return templates
+
+    async def get_template_pixels_by_url(self, template_image_url: str):
+        self.logger.debug(f"Start GET template image info {template_image_url}")
+        headers = {"User-Agent": self.user_agent}
+        image_info = await notpixel_tools.http_request(
+            "GET",
+            template_image_url,
+            headers,
+            proxy=self.proxy_string,
+            http_timeout=HTTP_REQUEST_TIMEOUT,
+            good_statuses=[200],
+            logger=self.logger,
+        )
+        image_content = image_info.get("content")
+        pixels = await asyncio.get_event_loop().run_in_executor(
+            self.pool, notpixel_tools.get_pixels, image_content
+        )
+        return pixels
+
+    async def get_template_colors(self, template_id: int):
+        url = f"https://notpx.app/api/v1/image/template/{template_id}"
+        self.logger.debug(f"Start GET template info {template_id}")
+        headers = self.get_headers_api()
+        template_info = await notpixel_tools.http_request(
+            "GET",
+            url,
+            headers,
+            proxy=self.proxy_string,
+            http_timeout=HTTP_REQUEST_TIMEOUT,
+            good_statuses=[200],
+            logger=self.logger,
+        )
+        content = template_info.get("content")
+        template_info_d = json.loads(content)
+        color_data = {}
+        image_url = template_info_d.get("url")
+        if image_url:
+            pixels = await self.get_template_pixels_by_url(image_url)
+            image_size = template_info_d.get("imageSize")
+            for x in range(image_size):
+                for y in range(image_size):
+                    pixel = pixels[x, y]
+                    pixel_id = (
+                        (template_info_d.get("y") + y) * 1000
+                        + template_info_d.get("x")
+                        + x
+                        + 1
+                    )
+                    color = notpixel_tools.rgb_to_hex(pixel[:3])
+                    color_data[pixel_id] = color
+
+        else:
+            self.logger.error(f"Failed to get image pixels info {image_url}")
+
+        self.logger.info(f"Got template info {template_info_d}")
+
+        return color_data
+
+    async def select_template(self, template_id):
+        url = f"https://notpx.app/api/v1/image/template/subscribe/{template_id}"
+        self.logger.debug(f"Start Choose template {template_id}")
+        headers = self.get_headers_api()
+        template_info = await notpixel_tools.http_request(
+            "PUT",
+            url,
+            headers,
+            proxy=self.proxy_string,
+            http_timeout=HTTP_REQUEST_TIMEOUT,
+            good_statuses=[200, 204, 403],
+            logger=self.logger,
+        )
+        status = template_info.get("status")
+        if status == 403:
+            self.logger.info(f"Template {template_id} was selected before. ITS BAD")
+        elif status in [200, 204]:
+            self.logger.info(f"Template {template_id} selected successfully")
+
     async def get_account_state(self, claim=True, upgrade=True):
-        if self.sb:
-            browser_url = "https://app.notpx.app/claiming"
-            if self.sb.browser.current_url != browser_url:
-                self.sb.browser.get(browser_url)
         url = "https://notpx.app/api/v1/mining/status"
         self.logger.debug(f"Start GET account status")
         headers = self.get_headers_api()
@@ -295,7 +408,7 @@ class PixelActions:
             url,
             headers,
             proxy=self.proxy_string,
-            http_timeout=10,
+            http_timeout=HTTP_REQUEST_TIMEOUT,
             good_statuses=[200],
             logger=self.logger,
         )
@@ -315,7 +428,10 @@ class PixelActions:
 
         claimed = data.get("claimed")
         if claim and claimed == 0:
-            await self.claim()
+            try:
+                await self.claim()
+            except:
+                self.logger.error("Claim failed")
         boosts = data.get("boosts", {})
         if upgrade and boosts:
             await self.install_upgrades(balance=balance, boosts=boosts)
@@ -327,13 +443,13 @@ class PixelActions:
             "balance": balance,
         }
 
-    async def paint_pixel(self, x: int, y: int, color: tuple):
+    async def paint_pixel_old(self, x: int, y: int, color: tuple):
         if self.sb:
             browser_url = "https://app.notpx.app/"
             if self.sb.browser.current_url != browser_url:
                 self.sb.browser.get(browser_url)
         url = "https://notpx.app/api/v1/repaint/start"
-        color_s = notpixel_tools.rgb_to_hex(color)
+        color_s = "#" + notpixel_tools.rgb_to_hex(color)
         self.logger.debug(f"Start PAINT PIXEL {x}:{y}")
         headers = self.get_headers_api()
         pixel_id = y * 1000 + x + 1
@@ -343,7 +459,7 @@ class PixelActions:
             headers,
             json_p={"pixelId": pixel_id, "newColor": color_s},
             proxy=self.proxy_string,
-            http_timeout=10,
+            http_timeout=HTTP_REQUEST_TIMEOUT,
             good_statuses=[200],
             logger=self.logger,
         )
@@ -355,17 +471,41 @@ class PixelActions:
             f"Finish PAINT PIXEL {x}:{y} to {color_s}, status: {status}, content: {content} content len: {content_len}"
         )
 
+    async def paint_pixel(self, pixel_id: int, color: str):
+        url = "https://notpx.app/api/v1/repaint/start"
+        if not color.startswith("#"):
+            color = f"#{color}"
+        self.logger.debug(f"Start PAINT PIXEL {pixel_id} to {color}")
+        headers = self.get_headers_api()
+        result = await notpixel_tools.http_request(
+            "POST",
+            url,
+            headers,
+            json_p={"pixelId": pixel_id, "newColor": color},
+            proxy=self.proxy_string,
+            http_timeout=HTTP_REQUEST_TIMEOUT,
+            good_statuses=[200],
+            logger=self.logger,
+        )
+        status = result.get("status")
+        content = result.get("content")
+        content_len = len(content)
+        self.logger.info(
+            f"Finish PAINT PIXEL {pixel_id} to {color}, status: {status}, content: {content} content len: {content_len}"
+        )
+        return status == 200
+
     async def paint(self, pixels_to_paint):
         painted = []
         for x, y, task_pix_color in pixels_to_paint:
-            await self.paint_pixel(x, y, task_pix_color)
+            await self.paint_pixel_old(x, y, task_pix_color)
             painted.append((x, y))
             self.energy -= 1
             if self.energy < 1:
                 return painted
         return painted
 
-    async def run(self, pixels_to_paint):
+    async def paint_pixels(self, pixels_to_paint):
         if self.sb:  # NOT ASYNC
             self.gui_app_start()
             self.gui_click_initial_buttons()
@@ -390,3 +530,47 @@ class PixelActions:
         self.logger.info(f"Job done, result: {job_status}")
 
         return job_status
+
+    async def repaint_pixels(self):
+        await self.emulate_app_start()
+        ws_token = await self.get_ws_token()
+        acc_state = await self.get_account_state(claim=True, upgrade=True)
+        # charges = acc_state.get("charges", 0)
+        charges = 3
+        templates = await self.get_templates()
+
+        template_id = random.choice(list(templates))
+        await self.select_template(template_id=template_id)
+        good_pixel_colors = await self.get_template_colors(template_id)
+        await self.centrifuga.init_client(token=ws_token, user_agent=self.user_agent)
+        paint_task = await self.centrifuga.collect_pixels_to_repaint(
+            charges, good_pixels=good_pixel_colors
+        )
+
+        # repaint
+        for shot_i in range(charges):
+            pixel_id = random.choice(list(paint_task.keys()))
+            color = paint_task.pop(pixel_id)
+            try:
+                await self.paint_pixel(pixel_id, color)
+                charges -= 1
+            except BaseException as e:
+                logging.error((f"FAILED PAINT PIXEL {pixel_id} to {color}"))
+
+        # update acc state (not nessesary)
+        try:
+            acc_state = await self.get_account_state(claim=False, upgrade=False)
+            charges = acc_state.get("charges", 0)
+        except:
+            logging.error(
+                "Error updating acc state after actions. Return initial values"
+            )
+            acc_state["charges"] = charges
+
+        # {
+        #     "charges": charges,
+        #     "charge_restore_speed": recharge_speed,
+        #     "max_charges": max_charges,
+        #     "balance": balance,
+        # }
+        return acc_state

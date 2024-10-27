@@ -1,0 +1,15 @@
+{
+    "16049015240": {
+        "number": "16049015240",
+        "path": "tdatas/16049015240/tdata",
+        "proxy": "07196708-zone-custom-region-CA-city-ottawa-sessid-Qoeuiuja-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
+        "password": "Reza1357",
+        "status": "HttpError(\"Failed HTTP request:\\n\\tUrl: https://notpx.app/api/v1/repaint/start\\n\\tProxy: socks5://07196708-zone-custom-region-CA-city-ottawa-sessid-Qoeuiuja-sessTime-120:6pGOVG0G@f.proxys5.net:6200\\tPapa Exception -  type: <class 'exceptions.BadStatus'>, message: Bad HTTP status:\\n\\tUrl: https://notpx.app/api/v1/repaint/start\\n\\tProxy: socks5://07196708-zone-custom-region-CA-city-ottawa-sessid-Qoeuiuja-sessTime-120:6pGOVG0G@f.proxys5.net:6200\\tStatus: 504\")",
+        "painted": 0,
+        "charges": "UNKNOWN",
+        "charges_full_restore_time": "UNKNOWN",
+        "last_run": "2024-10-15 22:33:35",
+        "energy_restore_speed": 570.0,
+        "max_energy": 5
+    }
+}

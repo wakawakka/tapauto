@@ -12,5 +12,11 @@ tdatas/
 log.log
 *.log
 logs/
-logs*
 node_modules
+*.db
+launch.json
+server_accs_filled.json
+server_accs.json
+proxies
+settings_local.py
+*.session-journal

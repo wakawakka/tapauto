@@ -5,7 +5,7 @@ import {writeFile} from 'node:fs';
 const centrifuge = new Centrifuge('wss://notpx.app/connection/websocket');
 
 // GET https://notpx.app/api/v1/users/me
-centrifuge.setToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjaGFubmVscyI6WyJldmVudDptZXNzYWdlIiwicGl4ZWw6bWVzc2FnZSJdLCJleHAiOjE3Mjk2MTEyMTAsInN1YiI6IjcyNjU1MTU2MCJ9.VZ3AjXOcGNVp89ESwNfqEUTlNMOttUW2Bliqc9bl-Uk");
+centrifuge.setToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjaGFubmVscyI6WyJldmVudDptZXNzYWdlIiwicGl4ZWw6bWVzc2FnZSJdLCJleHAiOjE3Mjk4NDkxMDksInN1YiI6IjcyNjU1MTU2MCJ9.PmtNi_v5sYGSCamBI7FbsdFjzn-MxsBsTO8cPhgytnU");
 
 // Allocate Subscription to a channel
 // const sub = centrifuge.newSubscription('event:message');
