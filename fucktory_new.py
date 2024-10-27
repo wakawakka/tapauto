@@ -13,8 +13,8 @@ BOT_USERNAME = "notpx_bot"
 TELEGRAM_PLATFORM = "desktop"
 WEBAPP_PLATFORM = "android"
 
-EXCEPTION_START_TIMEOUT = 10 * 60  # 10 minutes
-
+RESTART_TIMEOUT = 10 * 60  # 10 minutes
+SINGLE_RUN_TIMEOUT = 5 * 60
 
 class Worker:
 
@@ -70,7 +70,9 @@ class Worker:
             return {"success": False, "id": self.telegram_session_id, "exception": e}
 
     async def single_run(self, logger):
+        
         try:
+            async with asyncio.
             webapp_url = await self.tg.get_bot_webapp(
                 bot_username=BOT_USERNAME, platform=WEBAPP_PLATFORM
             )
@@ -111,7 +113,7 @@ class Worker:
                 f"Worker {self.telegram_session_id} breaks with: {e}",
                 stack_info=True,
             )
-            return EXCEPTION_START_TIMEOUT
+            return RESTART_TIMEOUT
 
     async def poyti_na_smenu(self, logger):
         while True:  # ebashit bez vukhodnux

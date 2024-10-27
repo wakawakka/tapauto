@@ -1,9 +1,10 @@
 import asyncio
+import json
 import logging
 import signal
 import zlib
-import json
 
+import utils
 from centrifuge_mod import (
     CentrifugeError,
     Client,
@@ -12,15 +13,16 @@ from centrifuge_mod import (
     ConnectingContext,
     DisconnectedContext,
     ErrorContext,
+    ServerJoinContext,
+    ServerLeaveContext,
+    ServerPublicationContext,
     ServerSubscribedContext,
     ServerSubscribingContext,
     ServerUnsubscribedContext,
-    ServerPublicationContext,
-    ServerJoinContext,
-    ServerLeaveContext,
 )
+from exceptions import *
 
-import utils
+TIMEOUT = 15
 
 
 class ClientEventLoggerHandler(ClientEventHandler):
@@ -116,22 +118,26 @@ class Fucka:
         await self.client.disconnect()
 
     async def collect_pixels_to_repaint(self, count: int, good_pixels: dict):
-        await self.client.connect()
-        repaint_pixels = {}
-        while len(repaint_pixels) < count:
-            if not self.buffer.empty():
-                update = await self.buffer.get()
-                for color in update:
-                    for pixel_id in update[color]:
-                        if pixel_id in good_pixels:
-                            if color != good_pixels[pixel_id]:
-                                repaint_pixels[pixel_id] = good_pixels[pixel_id]
-                            elif pixel_id in repaint_pixels:
-                                repaint_pixels.pop(pixel_id)
-            await asyncio.sleep(0.2)
-        await self.client.disconnect()
-        self.logger.info(f"Got REPAINT pixels {repaint_pixels}")
-        return repaint_pixels
+        try:
+            async with asyncio.timeout(15):
+                await self.client.connect()
+                repaint_pixels = {}
+                while len(repaint_pixels) < count:
+                    if not self.buffer.empty():
+                        update = await self.buffer.get()
+                        for color in uspdate:
+                            for pixel_id in update[color]:
+                                if pixel_id in good_pixels:
+                                    if color != good_pixels[pixel_id]:
+                                        repaint_pixels[pixel_id] = good_pixels[pixel_id]
+                                    elif pixel_id in repaint_pixels:
+                                        repaint_pixels.pop(pixel_id)
+                    await asyncio.sleep(0.2)
+                await self.client.disconnect()
+                self.logger.info(f"Got REPAINT pixels {repaint_pixels}")
+                return repaint_pixels
+        except BaseException as e:
+            raise CentrifugeException(e, logger=self.logger)
 
 
 def collect_pixels():
