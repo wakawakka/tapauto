@@ -16,6 +16,7 @@ WEBAPP_PLATFORM = "android"
 RESTART_TIMEOUT = 10 * 60  # 10 minutes
 SINGLE_RUN_TIMEOUT = 5 * 60
 
+
 class Worker:
 
     def __init__(
@@ -70,38 +71,39 @@ class Worker:
             return {"success": False, "id": self.telegram_session_id, "exception": e}
 
     async def single_run(self, logger):
-        
         try:
-            async with asyncio.
-            webapp_url = await self.tg.get_bot_webapp(
-                bot_username=BOT_USERNAME, platform=WEBAPP_PLATFORM
-            )
-            pixar = notpixel_actions.PixelActions(
-                webapp_url,
-                proxy_host=self.proxy_host,
-                proxy_port=self.proxy_port,
-                proxy_user=self.proxy_user,
-                proxy_password=self.proxy_password,
-                logfile_path=self.log_filename,
-                logging_level=logging.DEBUG,
-                logging_name=f"px:{self.telegram_session_id}",
-            )
-            account_state = await pixar.repaint_pixels()
+            async with asyncio.timeout(SINGLE_RUN_TIMEOUT):
+                webapp_url = await self.tg.get_bot_webapp(
+                    bot_username=BOT_USERNAME, platform=WEBAPP_PLATFORM
+                )
+                pixar = notpixel_actions.PixelActions(
+                    webapp_url,
+                    proxy_host=self.proxy_host,
+                    proxy_port=self.proxy_port,
+                    proxy_user=self.proxy_user,
+                    proxy_password=self.proxy_password,
+                    logfile_path=self.log_filename,
+                    logging_level=logging.DEBUG,
+                    logging_name=f"px:{self.telegram_session_id}",
+                )
+                account_state = await pixar.repaint_pixels()
 
-            full_restore_timeout = (
-                account_state.get("max_charges") - account_state.get("charges")
-            ) * account_state.get("charge_restore_speed")
-            balance = account_state.get("balance")
+                full_restore_timeout = (
+                    account_state.get("max_charges") - account_state.get("charges")
+                ) * account_state.get("charge_restore_speed")
+                balance = account_state.get("balance")
 
-            await self.db.set_user_balance(
-                number=self.telegram_session_id, balance=int(balance)
-            )
-            await self.db.log_run_attempt(number=self.telegram_session_id, success=True)
-            await self.db.set_user_status(
-                number=self.telegram_session_id, status="GOOD"
-            )
+                await self.db.set_user_balance(
+                    number=self.telegram_session_id, balance=int(balance)
+                )
+                await self.db.log_run_attempt(
+                    number=self.telegram_session_id, success=True
+                )
+                await self.db.set_user_status(
+                    number=self.telegram_session_id, status="GOOD"
+                )
 
-            return full_restore_timeout
+                return full_restore_timeout
         except BaseException as e:
             await self.db.log_run_attempt(
                 number=self.telegram_session_id, success=False
