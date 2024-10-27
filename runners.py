@@ -61,7 +61,7 @@ def run_notpixels_browser(number, tdatas_base_path):
         logging_level=logging.DEBUG,
     )
 
-    password = ""
+    password = None
     if "Twofa.txt" in os.listdir(num_path):
         password = open(os.path.join(num_path, "Twofa.txt")).read()
 
