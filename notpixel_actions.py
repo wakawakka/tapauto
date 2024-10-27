@@ -300,19 +300,21 @@ class PixelActions:
                 balance -= upgrade_price
 
     async def get_templates(self):
-        url = "https://notpx.app/api/v1/image/template/list?limit=12&offset=0"
-        self.logger.debug(f"Start GET template list")
-        headers = self.get_headers_api()
-        result = await notpixel_tools.http_request(
-            "GET",
-            url,
-            headers,
-            proxy=self.proxy_string,
-            http_timeout=HTTP_REQUEST_TIMEOUT,
-            good_statuses=[200],
-            logger=self.logger,
-        )
-        await self.sleep_after_request()
+        get_from_page = 2
+        for i in range(get_from_page):
+            url = f"https://notpx.app/api/v1/image/template/list?limit=12&offset={get_from_page * i}"
+            self.logger.debug(f"Start GET template list from page {i}")
+            headers = self.get_headers_api()
+            result = await notpixel_tools.http_request(
+                "GET",
+                url,
+                headers,
+                proxy=self.proxy_string,
+                http_timeout=HTTP_REQUEST_TIMEOUT,
+                good_statuses=[200],
+                logger=self.logger,
+            )
+            await self.sleep_after_request()
         content = result.get("content")
         data = json.loads(content)
         templates = {}
