@@ -68,19 +68,19 @@ class Telega:
         self.app_url_dt = None
         self.bot_started = False
 
-    def get_api_by_platform(self, platform: str):
-        match platform:
-            case "desktop":
-                api_gen = API.TelegramDesktop
-            case "ios":
-                api_gen = API.TelegramIOS
-            case "macos":
-                api_gen = API.TelegramMacOS
-            case "android":
-                api_gen = API.TelegramAndroid
-            case _:
-                raise Exception('Platform variants: "desktop, ios, macos, android"')
-        return api_gen
+    # def get_api_by_platform(self, platform: str):
+    #     match platform:
+    #         case "desktop":
+    #             api_gen = API.TelegramDesktop
+    #         case "ios":
+    #             api_gen = API.TelegramIOS
+    #         case "macos":
+    #             api_gen = API.TelegramMacOS
+    #         case "android":
+    #             api_gen = API.TelegramAndroid
+    #         case _:
+    #             raise Exception('Platform variants: "desktop, ios, macos, android"')
+    #     return api_gen
 
     # ONLY WINDOWS MODE
     async def init_client_tdata(
@@ -96,8 +96,9 @@ class Telega:
         self.hardware_id = hardware_id
         self.password = password
 
-        api_gen = self.get_api_by_platform(platform)
-        api = api_gen.Generate(unique_id=hardware_id)
+        # api_gen = self.get_api_by_platform(platform)
+        # api = api_gen.Generate(unique_id=hardware_id)
+        api = API.TelegramDesktop.Generate(system="windows", unique_id=hardware_id)
 
         async with asyncio.timeout(PROFILE_LOAD_TIMEOUT):
             try:
@@ -331,17 +332,18 @@ class Telega:
             old_api = API.TelegramDesktop.Generate()
 
         new_api = API.TelegramDesktop.Generate(system="windows", unique_id=number)
-        # tdesk_old = TDesktop(tdata_input, api=api)
-        # assert tdesk_old.isLoaded()
 
-        # client_old = await TC_opentele.FromTDesktop(
-        #     tdesk_old,
-        #     session=old_session_file,
-        #     flag=UseCurrentSession,
-        #     api=api,
-        #     password=password,
-        #     proxy=self.telethon_proxy,
-        # )
+        tdesk_old = TDesktop(tdata_input, api=old_api)
+        assert tdesk_old.isLoaded()
+
+        client_old = await TC_opentele.FromTDesktop(
+            tdesk_old,
+            session=old_session_file,
+            flag=UseCurrentSession,
+            api=api,
+            password=password,
+            proxy=self.telethon_proxy,
+        )
 
         client_old = TC_opentele(
             session=old_session_file, api=old_api, proxy=self.telethon_proxy
