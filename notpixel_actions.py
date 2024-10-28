@@ -188,12 +188,12 @@ class PixelActions:
         for task in settings.free_tasks:
             task_check = settings.free_tasks[task]
             if not task_check in content:
-                logging.info(
+                self.logger.info(
                     f"Check of {task_check} in index failed. Task {task} completion blocked."
                 )
                 self.allowed_tasks[task] = False
             else:
-                logging.info(
+                self.logger.info(
                     f"Check of {task_check} in index Success. Task {task} completion allowed."
                 )
                 self.allowed_tasks[task] = True
