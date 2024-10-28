@@ -987,13 +987,3 @@
 07196708-zone-custom-region-CA-city-toronto-sessid-ml7lwjRj-sessTime-120:6pGOVG0G@f.proxys5.net:6200
 07196708-zone-custom-region-CA-city-toronto-sessid-FVAG8S5c-sessTime-120:6pGOVG0G@f.proxys5.net:6200
 07196708-zone-custom-region-CA-city-toronto-sessid-0mHDrw2K-sessTime-120:6pGOVG0G@f.proxys5.net:6200
-07196708-zone-custom-region-CA-city-toronto-sessid-WT7324FD-sessTime-120:6pGOVG0G@f.proxys5.net:6200
-07196708-zone-custom-region-CA-city-toronto-sessid-lkgOSjhN-sessTime-120:6pGOVG0G@f.proxys5.net:6200
-07196708-zone-custom-region-CA-city-toronto-sessid-G9HPIE9Y-sessTime-120:6pGOVG0G@f.proxys5.net:6200
-07196708-zone-custom-region-CA-city-toronto-sessid-L9raH45K-sessTime-120:6pGOVG0G@f.proxys5.net:6200
-07196708-zone-custom-region-CA-city-toronto-sessid-D9uFaeFC-sessTime-120:6pGOVG0G@f.proxys5.net:6200
-07196708-zone-custom-region-CA-city-toronto-sessid-OQO6cXG1-sessTime-120:6pGOVG0G@f.proxys5.net:6200
-07196708-zone-custom-region-CA-city-toronto-sessid-gTISA9yd-sessTime-120:6pGOVG0G@f.proxys5.net:6200
-07196708-zone-custom-region-CA-city-toronto-sessid-YmC9dzAW-sessTime-120:6pGOVG0G@f.proxys5.net:6200
-07196708-zone-custom-region-CA-city-toronto-sessid-Y17VaklV-sessTime-120:6pGOVG0G@f.proxys5.net:6200
-07196708-zone-custom-region-CA-city-toronto-sessid-5TPu1cAt-sessTime-120:6pGOVG0G@f.proxys5.net:6200
