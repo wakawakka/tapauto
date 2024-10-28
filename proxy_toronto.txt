@@ -997,4 +997,3 @@
 07196708-zone-custom-region-CA-city-toronto-sessid-YmC9dzAW-sessTime-120:6pGOVG0G@f.proxys5.net:6200
 07196708-zone-custom-region-CA-city-toronto-sessid-Y17VaklV-sessTime-120:6pGOVG0G@f.proxys5.net:6200
 07196708-zone-custom-region-CA-city-toronto-sessid-5TPu1cAt-sessTime-120:6pGOVG0G@f.proxys5.net:6200
-07196708-zone-custom-region-CA-city-toronto-sessid-ZPqlGHc3-sessTime-120:6pGOVG0G@f.proxys5.net:6200
