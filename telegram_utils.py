@@ -326,7 +326,6 @@ class Telega:
         await self.check_auth()
         self.logger.info(f"Changing {self.password} -> {new_password}")
         result = await self.client.edit_2fa(self.password, new_password=new_password)
-        self.client.edit_2fa()
         self.logger.info(f"Change password success: {result}")
         return result  # true / false
 
