@@ -194,6 +194,7 @@ async def run_fucktory():
         else:
             unloaded_workers.add(worker_id)
             exception = result.get("exception")
+            logger.error(f"Failed init telegram session {worker_id}. {exception}")
             await db.set_user_status(number=worker_id, status=str(exception))
             workers.pop(worker_id)
 
