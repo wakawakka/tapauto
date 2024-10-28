@@ -250,7 +250,8 @@ class Telega:
 
     async def get_bot_webapp(self, bot_username: str, platform: str, param=None):
         await self.check_auth(try_reauth=True)
-        await self.start_bot(bot_username)
+        if not param:
+            await self.start_bot(bot_username)
         self.logger.info(
             f"Getting bot web application URL for {bot_username}, {platform}, with params {param}"
         )
@@ -311,85 +312,9 @@ class Telega:
         self.app_url_dt = datetime.datetime.now()
         return result.url
 
-        # async def test(self):
-        #     api = API.TelegramDesktop.Generate(system="Windows", unique_id="228")
-        #     await self.client.disconnect()
-        #     new_client = TC_opentele(self.session_file, api=api)
-        #     new_tdata = self.tdata_path + "_converted"
-        #     new_tdesk = await new_client.ToTDesktop(
-        #         CreateNewSession, api=api, password=self.password
-        #     )
-        #     new_tdesk.SaveTData(new_tdata)
-        #     pass
-
     async def set_2fa(self, new_password):
         await self.check_auth()
         self.logger.info(f"Changing {self.password} -> {new_password}")
         result = await self.client.edit_2fa(self.password, new_password=new_password)
         self.logger.info(f"Change password success: {result}")
         return result  # true / false
-
-    # async def get_new_account_api(self, profile_settings_json):
-    #     profile_config = {}
-    #     with open(profile_settings_json, "r") as f:
-    #         profile_config = json.loads(f.read())
-
-    #     app_id = profile_config.get("app_id")
-    #     app_hash = profile_config.get("app_hash")
-    #     app_version = profile_config.get("app_version")
-    #     device = profile_config.get("device")
-    #     sdk = profile_config.get("sdk")
-    #     password = profile_config.get("twoFA", None)
-
-    #     if app_id and app_hash and app_version and device and sdk:
-    #         api = API.TelegramDesktop(
-    #             api_id=app_id,
-    #             api_hash=app_hash,
-    #             app_version=app_version,
-    #             device_model=device,
-    #             system_version=sdk,
-    #         )
-    #     else:
-    #         old_api = API.TelegramDesktop.Generate(system="windows", unique_id=number)
-
-    #     new_api = API.TelegramDesktop.Generate(system="windows", unique_id=number)
-
-    #     tdesk_old = TDesktop(tdata_input, api=old_api)
-    #     assert tdesk_old.isLoaded()
-
-    #     client_old = await TC_opentele.FromTDesktop(
-    #         tdesk_old,
-    #         session=self.session_file,
-    #         flag=CreateNewSession,
-    #         api=old_api,
-    #         password=password,
-    #         proxy=self.telethon_proxy,
-    #     )
-
-    #     await client_old.connect()
-    #     await client_old.PrintSessions()
-
-    #     await client_old.disconnect()
-
-    #     client_new = TC_opentele(
-    #         self.session_file, api=new_api, proxy=self.telethon_proxy
-    #     )
-    #     await client_new.connect()
-    #     assert await client_new.is_user_authorized()
-
-    #     await client_new.PrintSessions()
-
-    #     result = await client_new(functions.auth.ResetAuthorizationsRequest())
-
-    #     await client_new.PrintSessions()
-
-    #     tdata_new = await client_new.ToTDesktop(
-    #         UseCurrentSession, new_api, password=password
-    #     )
-    #     tdata_new.SaveTData(tdata_output)
-
-    #     await client_new.disconnect()
-
-    #     # client_old = TC_opentele(old_session_file)
-
-    #     pass

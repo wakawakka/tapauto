@@ -87,8 +87,15 @@ class Worker:
     async def single_run(self, logger):
         try:
             async with asyncio.timeout(SINGLE_RUN_TIMEOUT):
+
+                start_param = await self.db.get_start_param(self.telegram_session_id)
+                if start_param:
+                    await self.db.add_start_param_run(self.telegram_session_id)
+
                 webapp_url = await self.tg.get_bot_webapp(
-                    bot_username=BOT_USERNAME, platform=WEBAPP_PLATFORM
+                    bot_username=BOT_USERNAME,
+                    platform=WEBAPP_PLATFORM,
+                    param=start_param,  # "f726551560",
                 )
                 pixar = notpixel_actions.PixelActions(
                     webapp_url,
