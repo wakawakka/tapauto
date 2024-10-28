@@ -146,6 +146,11 @@ class Telega:
 
     async def check_password(self):
         our_telegram_password = f"f{self.session_id}"
+        if not self.password:
+            self.logger.info(
+                f"Account 2fa not set. Need to setup it manually, or create and test code."
+            )
+            return
         if self.password != our_telegram_password:
             self.logger.info(f"Account password not changed")
             change_success = await self.set_2fa(new_password=our_telegram_password)
@@ -321,6 +326,7 @@ class Telega:
         await self.check_auth()
         self.logger.info(f"Changing {self.password} -> {new_password}")
         result = await self.client.edit_2fa(self.password, new_password=new_password)
+        self.client.edit_2fa()
         self.logger.info(f"Change password success: {result}")
         return result  # true / false
 
