@@ -9,16 +9,18 @@ import settings
 init_table_queries = [
     """CREATE TABLE "user" (
 	"id"	INTEGER NOT NULL UNIQUE,
-    "number"    TEXT UNIQUE,
-    "tdata_path"    TEXT UNIQUE,
-    "password"  TEXT,
-    "proxy" TEXT,
-    "status" TEXT,
-    "balance" INGEGER,
-    "good_runs" INTEGER NOT NULL DEFAULT 0,
-    "bad_runs" INTEGER NOT NULL DEFAULT 0,
-    "disabled" INTEGER NOT NULL DEFAULT 0,
-    PRIMARY KEY("id" AUTOINCREMENT)
+	"number"	TEXT UNIQUE,
+	"tdata_path"	TEXT UNIQUE,
+	"password"	TEXT,
+	"proxy"	TEXT,
+	"status"	TEXT,
+	"balance"	INGEGER,
+	"good_runs"	INTEGER NOT NULL DEFAULT 0,
+	"bad_runs"	INTEGER NOT NULL DEFAULT 0,
+	"disabled"	INTEGER NOT NULL DEFAULT 0,
+	"start_param"	TEXT,
+	"start_param_run_count"	INTEGER DEFAULT 0,
+	PRIMARY KEY("id" AUTOINCREMENT)
 );""",
 ]
 
@@ -57,18 +59,15 @@ class TDB:
                     await con.commit()
         self.logger.debug(f"Create schema success")
 
-    async def add_user(self, number, tdata_path, password=None, proxy=None):
+    async def add_user(
+        self, number, tdata_path, password=None, proxy=None, startparam=None
+    ):
         async with aiosqlite.connect(self.db_path) as con:
-            query = "insert into user (number, tdata_path, password, proxy) values (?,?,?, ?)"
+            query = "insert into user (number, tdata_path, password, proxy, start_param) values (?,?,?,?,?)"
             try:
                 async with await con.execute(
                     query,
-                    (
-                        number,
-                        tdata_path,
-                        password,
-                        proxy,
-                    ),
+                    (number, tdata_path, password, proxy, startparam),
                 ) as cursor:
                     await con.commit()
                 self.logger.debug(f"User INSERT {number} success")
@@ -120,6 +119,30 @@ class TDB:
         async with aiosqlite.connect(self.db_path) as con:
             async with await con.execute(query, (number,)) as cursor:
                 await con.commit()
+
+    async def add_start_param_run(self, number):
+        query = "update user set start_param_run_count = start_param_run_count + 1 where number = ?"
+        async with aiosqlite.connect(self.db_path) as con:
+            async with await con.execute(query, (number,)) as cursor:
+                await con.commit()
+
+    # Migration
+    # ALTER TABLE "user"
+    # ADD start_param TEXT;
+
+    # ALTER TABLE "user"
+    # ADD start_param_run_count INTEGER DEFAULT 0;
+    async def get_start_param(self, number):
+        async with aiosqlite.connect(self.db_path) as con:
+            query = (
+                "select start_param,start_param_run_count from user where number = ?"
+            )
+            async with await con.execute(query, (number,)) as cursor:
+                row = await cursor.fetchone()
+                start_param = row[0]
+                start_param_run_count = row[1]
+        if start_param and start_param_run_count < 5:
+            return start_param
 
 
 async def init_database():

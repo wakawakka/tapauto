@@ -23,6 +23,7 @@ import useragents
 import utils
 
 HTTP_REQUEST_TIMEOUT = 30
+TEMPLATE_PAGE = 4
 
 
 class PixelActions:
@@ -50,6 +51,8 @@ class PixelActions:
         self.proxy_user = proxy_user
         self.proxy_password = proxy_password
         self.proxy_extention_path = proxy_extention_path
+
+        self.allowed_tasks = {i: False for i in settings.free_tasks}
 
         self.pool = ThreadPoolExecutor(max_workers=2)
         self.centrifuga = Fucka(
@@ -165,11 +168,52 @@ class PixelActions:
     async def sleep_after_request(self, sleep_min=14, sleep_max=18):
         await asyncio.sleep(random.randint(100 * sleep_min, 100 * sleep_max) / 100)
 
+    async def load_index(self, index_href):
+        # for check in settings.tasks_check_rules:
+        self.logger.info(f"Start Emulate JS index loading")
+        headers = {"User-Agent": self.user_agent}
+        index_request = await notpixel_tools.http_request(
+            "GET",
+            "https://app.notpx.app" + index_href,
+            headers,
+            proxy=self.proxy_string,
+            http_timeout=HTTP_REQUEST_TIMEOUT,
+            good_statuses=[200],
+            logger=self.logger,
+        )
+        status = index_request.get("status")
+        self.logger.info(f"JS {index_href} loading status: {status}")
+        content = index_request.get("content")
+
+        for task in settings.free_tasks:
+            task_check = settings.free_tasks[task]
+            if not task_check in content:
+                logging.info(
+                    f"Check of {task_check} in index failed. Task {task} completion blocked."
+                )
+                self.allowed_tasks[task] = False
+            else:
+                logging.info(
+                    f"Check of {task_check} in index Success. Task {task} completion allowed."
+                )
+                self.allowed_tasks[task] = True
+
     async def emulate_js_loading(self, mainpage_content):
         self.logger.info(f"Start Emulate JS loading")
         headers = {"User-Agent": self.user_agent}
         content = mainpage_content.decode()
-        js_hrefs = re.findall(r'href="(.+?\.js)"', content)
+
+        index_href_match = re.search(r'module.+?src="(.+?index-.+?\.js)"', content)
+        js_hrefs = re.findall(r'modulepreload.+?href="(.+?\.js)"', content)
+
+        if index_href_match:
+            index_href = index_href_match.group(1)
+            await self.load_index(index_href)
+        else:
+            raise Exception(
+                "Index.js not found. Update the code. (function: emulate_js_loading)"
+            )
+
         loaded_js_count = 0
         bad_loaded_js_count = 0
         results = await asyncio.gather(
@@ -300,7 +344,7 @@ class PixelActions:
                 balance -= upgrade_price
 
     async def get_templates(self):
-        get_from_page = 3
+        get_from_page = TEMPLATE_PAGE
         for i in range(get_from_page):
             url = f"https://notpx.app/api/v1/image/template/list?limit=12&offset={get_from_page * i}"
             self.logger.debug(f"Start GET template list from page {i}")
@@ -401,7 +445,26 @@ class PixelActions:
         elif status in [200, 204]:
             self.logger.info(f"Template {template_id} selected successfully")
 
-    async def get_account_state(self, claim=True, upgrade=True):
+    async def complete_tasks(self, tasks):
+        for task_name in self.allowed_tasks:
+            task_completed = tasks.get(task_name)
+            if task_completed:
+                continue
+            self.logger.info(f"Found uncompleted task: {task_name}")
+            url = f"https://notpx.app/api/v1/mining/task/check/{task_name}"
+            headers = self.get_headers_api()
+            complete_task_info = await notpixel_tools.http_request(
+                "GET",
+                url,
+                headers,
+                proxy=self.proxy_string,
+                http_timeout=HTTP_REQUEST_TIMEOUT,
+                good_statuses=[200],
+                logger=self.logger,
+            )
+            self.logger.info(f"Task complete result: {complete_task_info}")
+
+    async def get_account_state(self, claim=False, upgrade=False, complete_tasks=False):
         url = "https://notpx.app/api/v1/mining/status"
         self.logger.debug(f"Start GET account status")
         headers = self.get_headers_api()
@@ -437,6 +500,10 @@ class PixelActions:
         boosts = data.get("boosts", {})
         if upgrade and boosts:
             await self.install_upgrades(balance=balance, boosts=boosts)
+
+        tasks = data.get("tasks")
+        if complete_tasks:
+            await self.complete_tasks(tasks)
 
         return {
             "charges": charges,
@@ -536,7 +603,9 @@ class PixelActions:
     async def repaint_pixels(self):
         await self.emulate_app_start()
         ws_token = await self.get_ws_token()
-        acc_state = await self.get_account_state(claim=True, upgrade=True)
+        acc_state = await self.get_account_state(
+            claim=True, upgrade=True, complete_tasks=True
+        )
         # charges = acc_state.get("charges", 0)
         charges = 3
         templates = await self.get_templates()
@@ -561,7 +630,9 @@ class PixelActions:
 
         # update acc state (not nessesary)
         try:
-            acc_state = await self.get_account_state(claim=False, upgrade=False)
+            acc_state = await self.get_account_state(
+                claim=False, upgrade=False, complete_tasks=False
+            )
             charges = acc_state.get("charges", 0)
         except:
             logging.error(

@@ -106,20 +106,6 @@ async def main_test_api_telegram():
     pass
 
 
-async def main_test_fucktory():
-    picture_path = "./notpixel_settings/228.png"
-    slaves_path = "slaves_mac.json"
-
-    fk = Fucktory(picture_path, (228, 228))
-    # code.interact(local=locals())
-    # some logic on how much workers needed for task
-    await fk.initial_get_workers(slaves_path)
-    # some logic on parallel/non parallel run of the job
-    await fk.run_async(catch=False)
-    # asyncio.run(fk.do_stuff_periodically_async(10, fk.run_async))
-    pass
-
-
 async def test_proxy():
     if proxy_host:
         await notpixel_tools.ipinfo(proxy_host, proxy_port, proxy_user, proxy_password)
@@ -132,10 +118,11 @@ async def test_db():
     await db.init_schema()
     await db.get_tables()
     await db.add_user(
-        number="27845735456",
-        tdata_path="tdatas/27845735456/tdata",
-        password="6yff4zktek",
+        number="27642042550",
+        tdata_path="tdatas/27642042550/tdata",
+        password="f27642042550",
         proxy="07196708-zone-custom-region-CA-city-ottawa-sessid-Qoeuiuja-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
+        startparam="f726551560",
     )
     users = await db.get_users()
     print(users)
@@ -236,14 +223,14 @@ if __name__ == "__main__":
     # loop.run_until_complete(main_test_not_pixel())
     # loop.run_until_complete(main_test_telegram())
     # loop.run_until_complete(main_test_api_telegram())
-    # loop.run_until_complete(test_db())
+    loop.run_until_complete(test_db())
     # loop.run_until_complete(main_test_fucktory())
     # loop.run_until_complete(test_websocket())
     # loop.run_until_complete(fill_server_accs_proxy())
     # loop.create_task(add_users_to_db())
     # loop.create_task(add_users_to_db())
     # loop.run_until_complete(add_users_to_db())
-    loop.run_until_complete(add_downloaded_accs())
+    # loop.run_until_complete(add_downloaded_accs())
     # REFERALL TECHNICS
     loop.close()
     print("Finish")

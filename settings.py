@@ -24,6 +24,11 @@ sessions_dir = "sessions_dir"
 db_path = "tgdb.db"
 log_dir = "logs"
 
+free_tasks = {
+    "boinkTask": b'boinkTask:"boinkTask"',
+    "jettonTask": b'jettonTask:"jettonTask"',
+}
+
 from settings_local import *
 
 os.makedirs(sessions_dir, exist_ok=True)
