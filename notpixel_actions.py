@@ -300,7 +300,7 @@ class PixelActions:
                 balance -= upgrade_price
 
     async def get_templates(self):
-        get_from_page = 2
+        get_from_page = 3
         for i in range(get_from_page):
             url = f"https://notpx.app/api/v1/image/template/list?limit=12&offset={get_from_page * i}"
             self.logger.debug(f"Start GET template list from page {i}")

@@ -244,8 +244,6 @@ if __name__ == "__main__":
     # loop.create_task(add_users_to_db())
     # loop.run_until_complete(add_users_to_db())
     loop.run_until_complete(add_downloaded_accs())
-    # TODO FIX
-    # add timeout to
-    # SELECT BY MINIMUM SUBS
+    # REFERALL TECHNICS
     loop.close()
     print("Finish")
