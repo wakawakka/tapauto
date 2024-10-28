@@ -318,7 +318,7 @@ class Telega:
         #     pass
 
     async def set_2fa(self, new_password):
-        self.check_auth()
+        await self.check_auth()
         self.logger.info(f"Changing {self.password} -> {new_password}")
         result = await self.client.edit_2fa(self.password, new_password=new_password)
         self.logger.info(f"Change password success: {result}")
