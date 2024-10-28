@@ -120,6 +120,7 @@ class Telega:
                 )
                 if not self.client.is_connected():
                     await self.client.connect()
+                await self.check_auth()
                 acc_info = await self.client.get_me()
                 self.logger.info(
                     f"Telegram profile connect success - path: {tdata_path}, "
@@ -142,6 +143,23 @@ class Telega:
                     await self.init_client_tdata(
                         tdata_path, platform, hardware_id, password
                     )
+
+    async def check_password(self):
+        our_telegram_password = f"f{self.session_id}"
+        if self.password != our_telegram_password:
+            self.logger.info(f"Account password not changed")
+            change_success = await self.set_2fa(new_password=our_telegram_password)
+            if change_success:
+                self.password = our_telegram_password
+                return our_telegram_password
+            else:
+                raise Exception(
+                    f"Failed to change password. User id: {self.session_id} Old: {self.password} New: {self.password}"
+                )
+        else:
+            self.logger.info(
+                f"Account password OK: {our_telegram_password} (already changed by us)"
+            )
 
     async def init_client_api(self, api_id, api_hash, phone=None):
         if self.client:
@@ -299,72 +317,74 @@ class Telega:
         #     new_tdesk.SaveTData(new_tdata)
         #     pass
 
-    async def create_own_tdata(
-        self,
-        number,
-        tdata_input,
-        tdata_output,
-        profile_settings_json,
-        new_session_file,
-    ):
-        profile_config = {}
-        with open(profile_settings_json, "r") as f:
-            profile_config = json.loads(f.read())
+    async def set_2fa(self, new_password):
+        self.check_auth()
+        self.logger.info(f"Changing {self.password} -> {new_password}")
+        result = await self.client.edit_2fa(self.password, new_password=new_password)
+        self.logger.info(f"Change password success: {result}")
+        return result  # true / false
 
-        app_id = profile_config.get("app_id")
-        app_hash = profile_config.get("app_hash")
-        app_version = profile_config.get("app_version")
-        device = profile_config.get("device")
-        sdk = profile_config.get("sdk")
-        password = profile_config.get("twoFA", None)
+    # async def get_new_account_api(self, profile_settings_json):
+    #     profile_config = {}
+    #     with open(profile_settings_json, "r") as f:
+    #         profile_config = json.loads(f.read())
 
-        if app_id and app_hash and app_version and device and sdk:
-            old_api = API.TelegramDesktop(
-                api_id=app_id,
-                api_hash=app_hash,
-                app_version=app_version,
-                device_model=device,
-                system_version=sdk,
-            )
-        else:
-            old_api = API.TelegramDesktop.Generate()
+    #     app_id = profile_config.get("app_id")
+    #     app_hash = profile_config.get("app_hash")
+    #     app_version = profile_config.get("app_version")
+    #     device = profile_config.get("device")
+    #     sdk = profile_config.get("sdk")
+    #     password = profile_config.get("twoFA", None)
 
-        new_api = API.TelegramDesktop.Generate(system="windows", unique_id=number)
+    #     if app_id and app_hash and app_version and device and sdk:
+    #         api = API.TelegramDesktop(
+    #             api_id=app_id,
+    #             api_hash=app_hash,
+    #             app_version=app_version,
+    #             device_model=device,
+    #             system_version=sdk,
+    #         )
+    #     else:
+    #         old_api = API.TelegramDesktop.Generate(system="windows", unique_id=number)
 
-        tdesk_old = TDesktop(tdata_input, api=old_api)
-        assert tdesk_old.isLoaded()
+    #     new_api = API.TelegramDesktop.Generate(system="windows", unique_id=number)
 
-        client_old = await TC_opentele.FromTDesktop(
-            tdesk_old,
-            session=new_session_file,
-            flag=CreateNewSession,
-            api=old_api,
-            password=password,
-            proxy=self.telethon_proxy,
-        )
+    #     tdesk_old = TDesktop(tdata_input, api=old_api)
+    #     assert tdesk_old.isLoaded()
 
-        await client_old.connect()
-        await client_old.PrintSessions()
+    #     client_old = await TC_opentele.FromTDesktop(
+    #         tdesk_old,
+    #         session=self.session_file,
+    #         flag=CreateNewSession,
+    #         api=old_api,
+    #         password=password,
+    #         proxy=self.telethon_proxy,
+    #     )
 
-        assert await client_old.is_user_authorized()
+    #     await client_old.connect()
+    #     await client_old.PrintSessions()
 
-        await client_old.disconnect()
+    #     await client_old.disconnect()
 
-        client_new = TC_opentele(
-            new_session_file, api=new_api, proxy=self.telethon_proxy
-        )
-        await client_new.connect()
-        await client_new.PrintSessions()
+    #     client_new = TC_opentele(
+    #         self.session_file, api=new_api, proxy=self.telethon_proxy
+    #     )
+    #     await client_new.connect()
+    #     assert await client_new.is_user_authorized()
 
-        assert await client_new.is_user_authorized()
+    #     await client_new.PrintSessions()
 
-        tdata_new = await client_new.ToTDesktop(
-            UseCurrentSession, new_api, password=password
-        )
-        await tdata_new.SaveTData(tdata_output)
+    #     result = await client_new(functions.auth.ResetAuthorizationsRequest())
 
-        await client_new.disconnect()
+    #     await client_new.PrintSessions()
 
-        # client_old = TC_opentele(old_session_file)
+    #     tdata_new = await client_new.ToTDesktop(
+    #         UseCurrentSession, new_api, password=password
+    #     )
+    #     tdata_new.SaveTData(tdata_output)
 
-        pass
+    #     await client_new.disconnect()
+
+    #     # client_old = TC_opentele(old_session_file)
+
+    #     pass

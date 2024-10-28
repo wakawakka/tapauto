@@ -126,7 +126,7 @@ class Fucka:
                     if not self.buffer.empty():
                         update = await self.buffer.get()
                         for color in update:
-                            for pixel_id in update[color]:
+                            for pixel_id in update[color][::-1]:
                                 if pixel_id in good_pixels:
                                     if color != good_pixels[pixel_id]:
                                         repaint_pixels[pixel_id] = good_pixels[pixel_id]

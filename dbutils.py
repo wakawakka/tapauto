@@ -106,6 +106,12 @@ class TDB:
             async with await con.execute(query, (balance, number)) as cursor:
                 await con.commit()
 
+    async def set_user_password(self, number, password):
+        async with aiosqlite.connect(self.db_path) as con:
+            query = "update user set password = ? where number = ?"
+            async with await con.execute(query, (password, number)) as cursor:
+                await con.commit()
+
     async def log_run_attempt(self, number, success):
         if success:
             query = "update user set good_runs = good_runs + 1 where number = ?"

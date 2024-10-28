@@ -31,14 +31,22 @@ class Worker:
         telegram_password: str = None,
     ):
         self.tdata_path = tdata_path
-        self.telegram_password = telegram_password
+
         self.telegram_session_id = telegram_session_id
 
         self.log_filename = os.path.join(
             settings.log_dir, f"{self.telegram_session_id}.log"
         )
 
+        self.logger = utils.get_logger(
+            filepath=self.log_filename,
+            level=logging.DEBUG,
+            name=f"worker:{telegram_session_id}",
+        )
+
         self.db = db
+
+        self.telegram_password = telegram_password
 
         self.proxy_host = proxy_host
         self.proxy_port = proxy_port
@@ -66,6 +74,12 @@ class Worker:
                 hardware_id=self.telegram_session_id,
                 password=self.telegram_password,
             )
+
+            new_password = await self.tg.check_password()
+
+            if new_password:
+                await self.db.set_user_password(self.telegram_session_id, new_password)
+
             return {"success": True, "id": self.telegram_session_id, "exception": None}
         except BaseException as e:
             return {"success": False, "id": self.telegram_session_id, "exception": e}
