@@ -165,6 +165,49 @@ async def add_users_to_db():
     pass
 
 
+async def add_downloaded_accs():
+    import os
+    import zipfile
+    import shutil
+
+    folder = "accs_to_load"
+    where = "accs_release"
+    two_fa_filename = "Twofa.txt"
+    proxy_file = "proxy_toronto.txt"
+
+    db_path = settings.db_path
+    db = TDB(dbpath=db_path)
+
+    acc_arches = os.listdir(folder)
+    for arch in acc_arches:
+        if not ".zip" in arch:
+            continue
+        number = arch.replace(".zip", "")
+        arch_path = os.path.join(folder, arch)
+        folder_path = arch_path.replace(".zip", "")
+        with zipfile.ZipFile(arch_path, "r") as z:
+            z.extractall(folder_path)
+            shutil.copytree(
+                os.path.join(folder_path, "tdata"),
+                os.path.join(where, number, "tdata"),
+                dirs_exist_ok=True,
+            )
+            with open(os.path.join(folder_path, two_fa_filename)) as f:
+                code = f.read().strip()
+        with open(proxy_file) as f:
+            proxy_data = f.read()
+            proxies = proxy_data.strip().split("\n")
+            proxy = proxies.pop(-1)
+        with open(proxy_file, "w") as f:
+            f.write("\n".join(proxies))
+        await db.add_user(
+            number=number,
+            tdata_path=os.path.join(where, number, "tdata"),
+            password=code,
+            proxy=proxy,
+        )
+
+
 async def fill_server_accs_proxy():
     import json
     import random
@@ -200,6 +243,7 @@ if __name__ == "__main__":
     # loop.create_task(add_users_to_db())
     # loop.create_task(add_users_to_db())
     # loop.run_until_complete(add_users_to_db())
+    loop.run_until_complete(add_downloaded_accs())
     # TODO FIX
     # add timeout to
     # SELECT BY MINIMUM SUBS
