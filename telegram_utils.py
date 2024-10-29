@@ -89,6 +89,7 @@ class Telega:
         platform="desktop",
         hardware_id="228",  # used for fake "UserAgent" must be constant like a proxy
         password=None,
+        raise_current_session_run=False,
     ):
 
         self.tdata_path = tdata_path
@@ -121,28 +122,38 @@ class Telega:
                 if not self.client.is_connected():
                     await self.client.connect()
                 await self.check_auth()
+
                 acc_info = await self.client.get_me()
                 self.logger.info(
                     f"Telegram profile connect success - path: {tdata_path}, "
-                    f"id: {acc_info.id}, username: {acc_info.username}, phone: {acc_info.phone}"
+                    f"id: {acc_info.id}, num: {acc_info.phone}, username: {acc_info.username}, phone: {acc_info.phone}"
                 )
             # except asyncio.exceptions.CancelledError as e:
 
             except BaseException as e:
-                if not self.use_session_flag == UseCurrentSession:
-                    raise TelegramBadConvertProfile(tdata_path, e, self.logger)
-                self.logger.error(
-                    f"Create telethon session from TDATA with UseCurrentSession failed. Original exception: {e}"
-                )
-                self.use_session_flag = CreateNewSession
-                if not self.client.disconnected:
-                    await self.client.disconnect()
-                    if os.path.isfile(self.session_file):
-                        os.remove(self.session_file)
-                    del self.client
-                    await self.init_client_tdata(
-                        tdata_path, platform, hardware_id, password
+                if self.use_session_flag == CreateNewSession:
+                    self.logger.error(
+                        f"Create telethon session from TDATA with CreateNewSession failed. Original exception: {e}"
                     )
+                    raise TelegramBadConvertProfile(tdata_path, e, self.logger)
+
+                if self.use_session_flag == UseCurrentSession:
+                    self.logger.error(
+                        f"Create telethon session from TDATA with UseCurrentSession failed. Raise it: {raise_current_session_run}. Original exception: {e}"
+                    )
+                    if raise_current_session_run:
+                        raise TelegramBadConvertProfile(tdata_path, e, self.logger)
+                    self.logger.info("Changing flag to CreateNewSession")
+                    self.use_session_flag = CreateNewSession
+                    if not self.client.disconnected:
+                        self.logger.info("Recreating client with CreateNewSession flag")
+                        await self.client.disconnect()
+                        if os.path.isfile(self.session_file):
+                            os.remove(self.session_file)
+                        del self.client
+                        await self.init_client_tdata(
+                            tdata_path, platform, hardware_id, password
+                        )
 
     async def check_password(self):
         our_telegram_password = f"f{self.session_id}"
@@ -247,6 +258,8 @@ class Telega:
                 )
             else:
                 raise Exception(msg)
+        else:
+            return True
 
     async def get_bot_webapp(self, bot_username: str, platform: str, param=None):
         await self.check_auth(try_reauth=True)
