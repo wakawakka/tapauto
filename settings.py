@@ -18,7 +18,8 @@ upgrade_charge_restoration_price = {
     12: None,
 }
 # UpgradeChargeCount
-upgrade_charge_count = {2: 5, 3: 100, 4: 200, 5: 300, 6: 400, 7: None}
+# upgrade_charge_count = {2: 5, 3: 100, 4: 200, 5: 300, 6: 400, 7: None}
+upgrade_charge_count = {2: 5, 3: 100, 4: 200, 5: None}
 
 sessions_dir = "sessions_dir"
 db_path = "tgdb.db"
