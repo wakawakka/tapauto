@@ -336,7 +336,7 @@ class PixelActions:
         for uk in upgrade_keys:
             current_level = boosts.get(uk)
             upgrade_price = upgrade_keys[uk].get(current_level + 1)
-            if balance > upgrade_price:
+            if upgrade_price and balance > upgrade_price:
                 try:
                     await self.upgrade_boost(uk)
                 except:

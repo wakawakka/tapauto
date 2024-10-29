@@ -16,6 +16,8 @@ WEBAPP_PLATFORM = "android"
 RESTART_TIMEOUT = 10 * 60  # 10 minutes
 SINGLE_RUN_TIMEOUT = 5 * 60
 
+WORKER_INITIAL_START_TIMEOUT = 15
+
 
 class Worker:
 
@@ -218,7 +220,7 @@ async def run_fucktory():
     for worker_id in workers:
         logger.info(f"STARTING SMENA OF WORKER: {worker_id}")
         loop.create_task(workers[worker_id].poyti_na_smenu(logger))
-        await asyncio.sleep(5)
+        await asyncio.sleep(WORKER_INITIAL_START_TIMEOUT)
 
 
 if __name__ == "__main__":
