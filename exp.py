@@ -159,7 +159,7 @@ async def add_downloaded_accs():
     import shutil
 
     folder = "accs_to_load"
-    where = "accs_release"
+    where = r"C:\projects\tg_accs"
     two_fa_filename = "Twofa.txt"
     proxy_file = "proxy_toronto.txt"
 
@@ -193,6 +193,7 @@ async def add_downloaded_accs():
             tdata_path=os.path.join(where, number, "tdata"),
             password=code,
             proxy=proxy,
+            startparam="f6444194100",
         )
 
 
