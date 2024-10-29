@@ -73,6 +73,7 @@ class Worker:
                 platform=platform,
                 hardware_id=self.telegram_session_id,
                 password=self.telegram_password,
+                raise_current_session_run=True,
             )
 
             new_password = await self.tg.check_password()
