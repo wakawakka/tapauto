@@ -121,7 +121,7 @@ class Telega:
                 )
                 if not self.client.is_connected():
                     await self.client.connect()
-                await self.check_auth()
+                await self.check_auth(try_reauth=False)
 
                 acc_info = await self.client.get_me()
                 self.logger.info(
