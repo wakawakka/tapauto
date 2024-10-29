@@ -145,15 +145,18 @@ class Telega:
                         raise TelegramBadConvertProfile(tdata_path, e, self.logger)
                     self.logger.info("Changing flag to CreateNewSession")
                     self.use_session_flag = CreateNewSession
-                    if not self.client.disconnected:
-                        self.logger.info("Recreating client with CreateNewSession flag")
-                        await self.client.disconnect()
-                        if os.path.isfile(self.session_file):
-                            os.remove(self.session_file)
-                        del self.client
-                        await self.init_client_tdata(
-                            tdata_path, platform, hardware_id, password
-                        )
+                    await self.init_client_tdata(
+                        tdata_path, platform, hardware_id, password
+                    )
+                    # if not await self.client.disconnected:
+                    #     self.logger.info("Recreating client with CreateNewSession flag")
+                    #     await self.client.disconnect()
+                    #     if os.path.isfile(self.session_file):
+                    #     os.remove(self.session_file)
+                    #     del self.client
+                    #     await self.init_client_tdata(
+                    #         tdata_path, platform, hardware_id, password
+                    #     )
 
     async def check_password(self):
         our_telegram_password = f"f{self.session_id}"
