@@ -1,12 +1,14 @@
 from runners import *
 
 if __name__ == '__main__':
-    number = '27643883723'
+    number = '27638184223'
 
 
-    tdatas_base_path = r'C:\projects\tg_accs_gleb'
+    tdatas_base_path = r'C:\Users\gburgerfuck\Desktop\NOTPIXEL_RUNS\RUN_2710\data'
     tgportable_template_path = r'C:\Users\gburgerfuck\Desktop\TELEGRAMZ\tportable-template'
     keep_dir = r'C:\Users\gburgerfuck\Desktop\TELEGRAMZ'
 
     # run_tgportable(number, tdatas_base_path, tgportable_template_path, keep_dir)
-    run_notpixels_browser(number, tdatas_base_path)
+    run_notpixels_browser(number, tdatas_base_path, browser=True)
+
+

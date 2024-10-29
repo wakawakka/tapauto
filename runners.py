@@ -39,7 +39,7 @@ def run_tgportable(number, tdatas_base_path, tgportable_template_path, keep_dir)
     subprocess.run(f"{pc_exe_path} -f {tgportable_config_path} {tgportable_tgexe_path}", shell=True, check=True)
     print('FINISH')
 
-def run_notpixels_browser(number, tdatas_base_path):
+def run_notpixels_browser(number, tdatas_base_path, browser=True):
     num_path = os.path.join(tdatas_base_path, number)
     original_tdata_path = os.path.join(num_path, 'tdata')
 
@@ -75,6 +75,6 @@ def run_notpixels_browser(number, tdatas_base_path):
         url = await t.get_bot_webapp("notpx_bot", "android")
         return url
     url = asyncio.run(async_sosalnya())
-
-    sb = SecFirefoxBrowser(proxy_host, proxy_port, proxy_user, proxy_password)
-    sb.browser.get(url)
+    print(url)
+    if browser:
+        sb = SecFirefoxBrowser(proxy_host, proxy_port, proxy_user, proxy_password)
