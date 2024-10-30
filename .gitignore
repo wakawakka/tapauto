@@ -15,6 +15,7 @@ logs/
 logs2/
 node_modules
 *.db
+*.sqbpro
 launch.json
 server_accs_filled.json
 server_accs.json
