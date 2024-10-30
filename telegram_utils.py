@@ -17,7 +17,7 @@ from opentele_mod.td import TDesktop
 from opentele_mod.tl import TelegramClient as TC_opentele
 
 PROFILE_LOAD_TIMEOUT = 5
-CONNECT_TIMEOUT = 180
+CONNECT_TIMEOUT = 100
 REQUEST_TIMEOUT = 10
 
 
