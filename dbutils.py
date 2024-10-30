@@ -99,6 +99,12 @@ class TDB:
             async with await con.execute(query, (status, number)) as cursor:
                 await con.commit()
 
+    async def set_user_proxy(self, number, proxy):
+        async with aiosqlite.connect(self.db_path) as con:
+            query = "update user set status = ? where number = ?"
+            async with await con.execute(query, (proxy, number)) as cursor:
+                await con.commit()
+
     async def set_user_balance(self, number, balance):
         async with aiosqlite.connect(self.db_path) as con:
             query = "update user set balance = ? where number = ?"
