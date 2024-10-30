@@ -606,8 +606,10 @@ class PixelActions:
         acc_state = await self.get_account_state(
             claim=True, upgrade=True, complete_tasks=True
         )
-        # charges = acc_state.get("charges", 0)
-        charges = 3
+        charges = acc_state.get("charges", 0)
+        if charges > 12:
+            charges = 12
+        # charges = 3
         templates = await self.get_templates()
 
         template_id = random.choice(list(templates))
