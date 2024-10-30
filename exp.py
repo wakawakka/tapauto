@@ -153,6 +153,31 @@ async def add_users_to_db():
     pass
 
 
+async def change_proxy_for_accs():
+    proxy_file = "proxy_toronto.txt"
+    accs = """27843070393
+27843030175
+27840995072
+27681141997
+27842476054
+27842864138
+15197048685
+27842854968"""
+    accs = accs.split("\n")
+    db_path = settings.db_path
+    db = TDB(dbpath=db_path)
+
+    for number in accs:
+        number = number.strip()
+        with open(proxy_file) as f:
+            proxy_data = f.read()
+            proxies = proxy_data.strip().split("\n")
+            proxy = proxies.pop(-1)
+        with open(proxy_file, "w") as f:
+            f.write("\n".join(proxies))
+        await db.set_user_proxy(proxy)
+
+
 async def add_downloaded_accs():
     import os
     import zipfile
