@@ -991,10 +991,3 @@
 07196708-zone-custom-region-ZA-city-capetown-sessid-Ah0YIzir-sessTime-120:6pGOVG0G@f.proxys5.net:6200
 07196708-zone-custom-region-ZA-city-capetown-sessid-1P1LVFsw-sessTime-120:6pGOVG0G@f.proxys5.net:6200
 07196708-zone-custom-region-ZA-city-capetown-sessid-L2RdxUUq-sessTime-120:6pGOVG0G@f.proxys5.net:6200
-07196708-zone-custom-region-ZA-city-capetown-sessid-8HVDCgOx-sessTime-120:6pGOVG0G@f.proxys5.net:6200
-07196708-zone-custom-region-ZA-city-capetown-sessid-IGlUB083-sessTime-120:6pGOVG0G@f.proxys5.net:6200
-07196708-zone-custom-region-ZA-city-capetown-sessid-KXZ36I3H-sessTime-120:6pGOVG0G@f.proxys5.net:6200
-07196708-zone-custom-region-ZA-city-capetown-sessid-LHke6tZF-sessTime-120:6pGOVG0G@f.proxys5.net:6200
-07196708-zone-custom-region-ZA-city-capetown-sessid-LsgKmmfm-sessTime-120:6pGOVG0G@f.proxys5.net:6200
-07196708-zone-custom-region-ZA-city-capetown-sessid-JGmyh8yl-sessTime-120:6pGOVG0G@f.proxys5.net:6200
-07196708-zone-custom-region-ZA-city-capetown-sessid-ASXNduuz-sessTime-120:6pGOVG0G@f.proxys5.net:6200
