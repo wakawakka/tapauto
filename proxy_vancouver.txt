@@ -96,5 +96,3 @@
 07196708-zone-custom-region-CA-city-vancouver-sessid-x39SnJ2Y-sessTime-15:6pGOVG0G@f.proxys5.net:6200
 07196708-zone-custom-region-CA-city-vancouver-sessid-y6KCuXSU-sessTime-15:6pGOVG0G@f.proxys5.net:6200
 07196708-zone-custom-region-CA-city-vancouver-sessid-rWQKEbOm-sessTime-15:6pGOVG0G@f.proxys5.net:6200
-07196708-zone-custom-region-CA-city-vancouver-sessid-jvbtk1hP-sessTime-15:6pGOVG0G@f.proxys5.net:6200
-07196708-zone-custom-region-CA-city-vancouver-sessid-6qS2hFSH-sessTime-15:6pGOVG0G@f.proxys5.net:6200
