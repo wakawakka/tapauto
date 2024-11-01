@@ -30,6 +30,8 @@ free_tasks = {
     "jettonTask": b'jettonTask:"jettonTask"',
 }
 
+DOWNLOAD_JS_SCRIPTS = True
+
 from settings_local import *
 
 os.makedirs(sessions_dir, exist_ok=True)

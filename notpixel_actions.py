@@ -271,7 +271,8 @@ class PixelActions:
             good_statuses=[200],
             logger=self.logger,
         )
-        await self.emulate_js_loading(result.get("content", ""))
+        if settings.DOWNLOAD_JS_SCRIPTS:
+            await self.emulate_js_loading(result.get("content", ""))
         await self.sleep_after_request()
         status = result.get("status")
         content_len = len(result.get("content"))
