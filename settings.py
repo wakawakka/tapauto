@@ -26,8 +26,9 @@ db_path = "tgdb.db"
 log_dir = "logs"
 
 free_tasks = {
-    "boinkTask": b'boinkTask:"boinkTask"',
-    "jettonTask": b'jettonTask:"jettonTask"',
+    "boinkTask": b',boinkTask:"boinkTask,"',
+    "jettonTask": b',jettonTask:"jettonTask,"',
+    "pumpkin": b',pumpkin:"pumpkin",',
 }
 
 DOWNLOAD_JS_SCRIPTS = True

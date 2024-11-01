@@ -22,6 +22,7 @@ async def http_request(
     good_statuses=[200],
     logger=None,
     retry_count=3,
+    read_only_part_bytes=None,
 ):
     if not logger:
         logger = get_logger("common.log", logging.DEBUG)
@@ -56,7 +57,13 @@ async def http_request(
                                     url=url,
                                     status=r.status,
                                 )
-                            content = await r.read()
+                            if read_only_part_bytes:
+                                content = await r.content.readexactly(
+                                    read_only_part_bytes
+                                )
+                            else:
+                                content = await r.read()
+
                             return {"status": r.status, "content": content}
                     except BaseException as e:
                         retry_count -= 1
