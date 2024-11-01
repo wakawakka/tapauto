@@ -180,7 +180,7 @@ class PixelActions:
             http_timeout=HTTP_REQUEST_TIMEOUT,
             good_statuses=[200],
             logger=self.logger,
-            read_only_part_bytes=20000,
+            read_only_part_bytes=150000,
         )
         status = index_request.get("status")
         self.logger.info(f"JS {index_href} loading status: {status}")
