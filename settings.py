@@ -26,9 +26,9 @@ db_path = "tgdb.db"
 log_dir = "logs"
 
 free_tasks = {
-    "boinkTask": b',boinkTask:"boinkTask,"',
-    "jettonTask": b',jettonTask:"jettonTask,"',
-    "pumpkin": b',pumpkin:"pumpkin",',
+    # "boinkTask": b',boinkTask:"boinkTask,"',
+    "jettonTask": b'id:"jetton",reward:512,action:()=>{i("task_click"),X("https://t.me/jetton/bonus?startapp=cdQGhtRYyjY"',
+    # "pumpkin": b'a=t.meta.arg.reward;i&&(s===S.pumpkin&&n.dispatch(Ci({product:7,amount:6})),n.dispatch(Lt(a)));let o="Check failed"',
 }
 
 DOWNLOAD_JS_SCRIPTS = True
