@@ -1,26 +1,28 @@
 import asyncio
+import datetime
 import io
 import json
 import logging
 import random
 import re
 import time
+from concurrent.futures import ThreadPoolExecutor
 from hashlib import md5
 from urllib.parse import unquote
-from concurrent.futures import ThreadPoolExecutor
 
 import pandas as pd
+from PIL import Image
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from PIL import Image
 
 import notpixel_tools
-from centrifucka import Fucka
 import secure_browser
 import settings
 import useragents
 import utils
+from centrifucka import Fucka
+import dbutils
 
 HTTP_REQUEST_TIMEOUT = 30
 TEMPLATE_PAGE = 4
@@ -29,7 +31,9 @@ TEMPLATE_PAGE = 4
 class PixelActions:
     def __init__(
         self,
-        web_app_entry_url,
+        web_app_entry_url: str,
+        session_id: str,
+        db: dbutils.TDB,
         proxy_host="",
         proxy_port=0,
         proxy_user="",
@@ -46,6 +50,8 @@ class PixelActions:
         )
 
         self.web_app_entry_url = web_app_entry_url
+        self.db = db
+        self.session_id = session_id
         self.proxy_host = proxy_host
         self.proxy_port = int(proxy_port) if proxy_port is not None else 0
         self.proxy_user = proxy_user
@@ -69,12 +75,6 @@ class PixelActions:
         self.auth_token = self.get_autorization_header()
         self.init_user_agent()
 
-        # self.requests_proxy = None
-        # if proxy_host:
-        #     self.requests_proxy = {
-        #         "http": f"socks5://{proxy_user}:{proxy_password}@{proxy_host}:{proxy_port}",
-        #         "https": f"socks5://{proxy_user}:{proxy_password}@{proxy_host}:{proxy_port}",
-        #     }
         self.proxy_string = None
         if proxy_host:
             self.proxy_string = (
@@ -172,36 +172,63 @@ class PixelActions:
         # for check in settings.tasks_check_rules:
         self.logger.info(f"Start Emulate JS index loading")
         headers = {"User-Agent": self.user_agent}
+
+        index_last_update = await self.db.get_user_index_update_time(self.session_id)
+        dt_rfc_format = None
+        if index_last_update:
+            dt_last_update = datetime.datetime.fromisoformat(index_last_update)
+            dt_rfc_format = dt_last_update.strftime("%a, %d %b %Y %H:%M:%S GMT")
+            headers["If-Modified-Since"] = dt_rfc_format
+
         index_request = await notpixel_tools.http_request(
             "GET",
             "https://app.notpx.app" + index_href,
             headers,
             proxy=self.proxy_string,
             http_timeout=HTTP_REQUEST_TIMEOUT,
-            good_statuses=[200],
+            good_statuses=[200, 304],
             logger=self.logger,
-            read_only_part_bytes=150000,
         )
         status = index_request.get("status")
-        self.logger.info(f"JS {index_href} loading status: {status}")
         content = index_request.get("content")
 
-        for task in settings.free_tasks:
-            task_check = settings.free_tasks[task]
-            if not task_check in content:
-                self.logger.info(
-                    f"Check of {task_check} in index failed. Task {task} completion blocked."
-                )
-                self.allowed_tasks[task] = False
-            else:
-                self.logger.info(
-                    f"Check of {task_check} in index Success. Task {task} completion allowed."
-                )
-                self.allowed_tasks[task] = True
+        self.logger.info(
+            f"JS {index_href} loading status: {status}. Size: {len(content)}"
+        )
+
+        if status == 200:
+            dt_now = datetime.datetime.now(datetime.UTC)
+            dt_now_rfc = dt_now.strftime("%a, %d %b %Y %H:%M:%S GMT")
+            self.logger.info(
+                f"Index page downloaded. Setting index download time {dt_now_rfc} on user {self.session_id}"
+            )
+            await self.db.set_user_index_update_time(self.session_id, dt_now)
+
+            for task in settings.free_tasks:
+                task_check = settings.free_tasks[task]
+                if not task_check in content:
+                    self.logger.info(
+                        f"Check of {task_check} in index failed. Task {task} completion blocked."
+                    )
+                    self.allowed_tasks[task] = False
+                else:
+                    self.logger.info(
+                        f"Check of {task_check} in index Success. Task {task} completion allowed."
+                    )
+                    self.allowed_tasks[task] = True
+        elif status == 304:
+            self.logger.info(
+                f"All task completion blocked until new index.js download. Last load was {dt_rfc_format}"
+            )
 
     async def emulate_js_loading(self, mainpage_content):
         self.logger.info(f"Start Emulate JS loading")
-        headers = {"User-Agent": self.user_agent}
+
+        dt_now = datetime.datetime.now(datetime.UTC)
+        dt_since = dt_now - datetime.timedelta(minutes=30)
+        time_since = dt_since.strftime("%a, %d %b %Y %H:%M:%S GMT")
+
+        headers = {"User-Agent": self.user_agent, "If-Modified-Since": time_since}
         content = mainpage_content.decode()
 
         index_href_match = re.search(r'module.+?src="(.+?index-.+?\.js)"', content)
@@ -225,21 +252,24 @@ class PixelActions:
                     headers,
                     proxy=self.proxy_string,
                     http_timeout=HTTP_REQUEST_TIMEOUT,
-                    good_statuses=[200],
+                    good_statuses=[200, 304],
                     logger=self.logger,
-                    read_only_part_bytes=10,
+                    retry_count=1,
                 )
                 for js_href in js_hrefs
             ]
         )
+        sum_len = 0
         for i in results:
             status = i.get("status")
+            content = i.get("content")
+            sum_len += len(content)
             if status == 200:
                 loaded_js_count += 1
             else:
                 bad_loaded_js_count += 1
         self.logger.info(
-            f"Emulate JS loading GOOD: {loaded_js_count}, BAD: {bad_loaded_js_count}"
+            f"Emulate JS loading GOOD: {loaded_js_count}, BAD: {bad_loaded_js_count} SIZE: {sum_len} bytes."
         )
         pass
 
@@ -385,6 +415,9 @@ class PixelActions:
             logger=self.logger,
         )
         image_content = image_info.get("content")
+        self.logger.info(
+            f"Downloaded template {template_image_url}. SIZE: {len(image_content)}"
+        )
         pixels = await asyncio.get_event_loop().run_in_executor(
             self.pool, notpixel_tools.get_pixels, image_content
         )
@@ -404,6 +437,7 @@ class PixelActions:
             logger=self.logger,
         )
         content = template_info.get("content")
+
         template_info_d = json.loads(content)
         color_data = {}
         image_url = template_info_d.get("url")

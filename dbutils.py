@@ -1,5 +1,6 @@
 import logging
 import asyncio
+import datetime
 
 import aiosqlite
 
@@ -20,6 +21,7 @@ init_table_queries = [
 	"disabled"	INTEGER NOT NULL DEFAULT 0,
 	"start_param"	TEXT,
 	"start_param_run_count"	INTEGER DEFAULT 0,
+	"index_page_last_update"	DATETIME,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );""",
 ]
@@ -27,10 +29,14 @@ init_table_queries = [
 
 class TDB:
     def __init__(
-        self, dbpath, logfile_path="common.log", logging_level=logging.DEBUG, name="db"
+        self,
+        dbpath,
+        logfile_path="common.log",
+        logging_level=logging.DEBUG,
+        logger_name="db",
     ):
         self.logger = utils.get_logger(
-            filepath=logfile_path, level=logging_level, name=name
+            filepath=logfile_path, level=logging_level, name=logger_name
         )
         self.db_path = dbpath
 
@@ -131,6 +137,19 @@ class TDB:
         async with aiosqlite.connect(self.db_path) as con:
             async with await con.execute(query, (number,)) as cursor:
                 await con.commit()
+
+    async def set_user_index_update_time(self, number, update_time: datetime.datetime):
+        async with aiosqlite.connect(self.db_path) as con:
+            query = "update user set index_page_last_update = ? where number = ?"
+            async with await con.execute(query, (update_time, number)) as cursor:
+                await con.commit()
+
+    async def get_user_index_update_time(self, number):
+        async with aiosqlite.connect(self.db_path) as con:
+            query = "select index_page_last_update from user where number = ?"
+            async with await con.execute(query, (number,)) as cursor:
+                row = await cursor.fetchone()
+                return row[0]
 
     # Migration
     # ALTER TABLE "user"

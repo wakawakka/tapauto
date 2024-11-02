@@ -102,6 +102,8 @@ class Worker:
                 )
                 pixar = notpixel_actions.PixelActions(
                     webapp_url,
+                    session_ud=self.telegram_session_id,
+                    db=self.db,
                     proxy_host=self.proxy_host,
                     proxy_port=self.proxy_port,
                     proxy_user=self.proxy_user,

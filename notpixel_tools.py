@@ -4,11 +4,23 @@ import logging
 
 import aiohttp
 import requests
-from aiohttp_socks import ChainProxyConnector, ProxyConnector, ProxyType
+from aiohttp_socks import ProxyConnector
 from PIL import Image
 
 from exceptions import BadStatus, HttpTimeout, HttpError
 from utils import get_logger
+
+
+# async def on_request_start(session, trace_config_ctx, params):
+#     print("Starting request")
+
+
+# async def on_chunk_received(session, trace_config_ctx, params):
+#     print("Chunk received")
+
+
+# async def on_chunk_sent(session, trace_config_ctx, params):
+#     print("Chunk sent")
 
 
 async def http_request(
@@ -22,16 +34,24 @@ async def http_request(
     good_statuses=[200],
     logger=None,
     retry_count=3,
-    read_only_part_bytes=None,
 ):
     if not logger:
         logger = get_logger("common.log", logging.DEBUG)
     proxy_connector = None
     if proxy:
         proxy_connector = ProxyConnector.from_url(proxy)
+
+    # trace_config = aiohttp.TraceConfig()
+    # trace_config.on_request_start.append(on_request_start)
+    # trace_config.on_response_chunk_received.append(on_chunk_received)
+    # trace_config.on_request_chunk_sent.append(on_chunk_sent)
+
     try:
         async with asyncio.timeout(http_timeout):
-            async with aiohttp.ClientSession(connector=proxy_connector) as session:
+            async with aiohttp.ClientSession(
+                connector=proxy_connector,
+                # trace_configs=[trace_config],
+            ) as session:
                 match rtype:
                     case "GET":
                         roperator = session.get
@@ -57,12 +77,7 @@ async def http_request(
                                     url=url,
                                     status=r.status,
                                 )
-                            if read_only_part_bytes:
-                                content = await r.content.readexactly(
-                                    read_only_part_bytes
-                                )
-                            else:
-                                content = await r.read()
+                            content = await r.read()
 
                             return {"status": r.status, "content": content}
                     except BaseException as e:
