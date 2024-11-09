@@ -487,7 +487,7 @@ class PixelActions:
 
         template_info_d = json.loads(content)
         template_info_path = os.path.join(settings.templates_dir, f"{template_id}.json")
-        with open(template_info_path, "r") as f:
+        with open(template_info_path, "w") as f:
             f.write(json.dumps(template_info_d, indent=4))
 
         image_url = template_info_d.get("url")
@@ -510,6 +510,9 @@ class PixelActions:
         pixels = await self.get_template_pixels_from_cache(template_id=template_id)
         template_info = await self.get_template_info_from_cache(template_id=template_id)
         if pixels and template_info:
+            self.logger.debug(
+                f"Found cache instance of {template_id}. Using it without download."
+            )
             color_data = await self.pixels_to_color_data(
                 pixels=pixels, template_info=template_info
             )
