@@ -24,6 +24,7 @@ upgrade_charge_count = {2: 5, 3: 100, 4: 200, 5: None}
 sessions_dir = "sessions_dir"
 db_path = "tgdb.db"
 log_dir = "logs"
+templates_dir = "templates"
 
 free_tasks = {
     # "boinkTask": b',boinkTask:"boinkTask,"',
@@ -37,3 +38,4 @@ from settings_local import *
 
 os.makedirs(sessions_dir, exist_ok=True)
 os.makedirs(log_dir, exist_ok=True)
+os.makedirs(templates_dir, exist_ok=True)
