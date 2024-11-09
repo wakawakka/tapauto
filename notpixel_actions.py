@@ -9,6 +9,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from hashlib import md5
 from urllib.parse import unquote
+import os
 
 import pandas as pd
 from PIL import Image
@@ -402,7 +403,7 @@ class PixelActions:
         self.logger.info(f"GOT template list: {templates.keys()}")
         return templates
 
-    async def get_template_pixels_by_url(self, template_image_url: str):
+    async def get_template_pixels_by_url(self, template_id, template_image_url: str):
         self.logger.debug(f"Start GET template image info {template_image_url}")
         headers = {"User-Agent": self.user_agent}
         image_info = await notpixel_tools.http_request(
@@ -415,6 +416,12 @@ class PixelActions:
             logger=self.logger,
         )
         image_content = image_info.get("content")
+        template_content_path = os.path.join(
+            settings.templates_dir, f"{template_id}.png"
+        )
+        with open(template_content_path, "wb") as f:
+            f.write(image_content)
+
         self.logger.info(
             f"Downloaded template {template_image_url}. SIZE: {len(image_content)}"
         )
@@ -422,6 +429,46 @@ class PixelActions:
             self.pool, notpixel_tools.get_pixels, image_content
         )
         return pixels
+
+    async def get_template_pixels_from_cache(self, template_id):
+        try:
+            template_image_path = os.path.join(
+                settings.templates_dir, f"{template_id}.png"
+            )
+            with open(template_image_path, "rb") as f:
+                image_content = f.read()
+
+            pixels = await asyncio.get_event_loop().run_in_executor(
+                self.pool, notpixel_tools.get_pixels, image_content
+            )
+            return pixels
+        except:
+            return None
+
+    async def get_template_info_from_cache(self, template_id):
+        try:
+            template_info_path = os.path.join(
+                settings.templates_dir, f"{template_id}.json"
+            )
+            with open(template_info_path, "r") as f:
+                template_info_content = f.read()
+                template_info = json.loads(template_info_content)
+                return template_info
+        except:
+            return None
+
+    async def pixels_to_color_data(self, pixels, template_info: dict):
+        color_data = {}
+        image_size = template_info.get("imageSize")
+        for x in range(image_size):
+            for y in range(image_size):
+                pixel = pixels[x, y]
+                pixel_id = (
+                    (template_info.get("y") + y) * 1000 + template_info.get("x") + x + 1
+                )
+                color = notpixel_tools.rgb_to_hex(pixel[:3])
+                color_data[pixel_id] = color
+        return color_data
 
     async def get_template_colors(self, template_id: int):
         url = f"https://notpx.app/api/v1/image/template/{template_id}"
@@ -439,22 +486,18 @@ class PixelActions:
         content = template_info.get("content")
 
         template_info_d = json.loads(content)
-        color_data = {}
+        template_info_path = os.path.join(settings.templates_dir, f"{template_id}.json")
+        with open(template_info_path, "r") as f:
+            f.write(json.dumps(template_info_d, indent=4))
+
         image_url = template_info_d.get("url")
+
+        color_data = {}
         if image_url:
-            pixels = await self.get_template_pixels_by_url(image_url)
-            image_size = template_info_d.get("imageSize")
-            for x in range(image_size):
-                for y in range(image_size):
-                    pixel = pixels[x, y]
-                    pixel_id = (
-                        (template_info_d.get("y") + y) * 1000
-                        + template_info_d.get("x")
-                        + x
-                        + 1
-                    )
-                    color = notpixel_tools.rgb_to_hex(pixel[:3])
-                    color_data[pixel_id] = color
+            pixels = await self.get_template_pixels_by_url(template_id, image_url)
+            color_data = await self.pixels_to_color_data(
+                pixels=pixels, template_info=template_info_d
+            )
 
         else:
             self.logger.error(f"Failed to get image pixels info {image_url}")
@@ -462,6 +505,15 @@ class PixelActions:
         self.logger.info(f"Got template info {template_info_d}")
 
         return color_data
+
+    async def get_template_colors_from_cache(self, template_id):
+        pixels = await self.get_template_pixels_from_cache(template_id=template_id)
+        template_info = await self.get_template_info_from_cache(template_id=template_id)
+        if pixels and template_info:
+            color_data = await self.pixels_to_color_data(
+                pixels=pixels, template_info=template_info
+            )
+            return color_data
 
     async def select_template(self, template_id):
         url = f"https://notpx.app/api/v1/image/template/subscribe/{template_id}"
@@ -644,14 +696,17 @@ class PixelActions:
             claim=True, upgrade=True, complete_tasks=True
         )
         charges = acc_state.get("charges", 0)
-        if charges > 12:
-            charges = 12
+        # if charges > 12:
+        #     charges = 12
         # charges = 3
         templates = await self.get_templates()
-
         template_id = random.choice(list(templates))
+
+        good_pixel_colors = await self.get_template_colors_from_cache(template_id)
+        if not good_pixel_colors:
+            good_pixel_colors = await self.get_template_colors(template_id)
+
         await self.select_template(template_id=template_id)
-        good_pixel_colors = await self.get_template_colors(template_id)
         await self.centrifuga.init_client(token=ws_token, user_agent=self.user_agent)
         paint_task = await self.centrifuga.collect_pixels_to_repaint(
             charges, good_pixels=good_pixel_colors
