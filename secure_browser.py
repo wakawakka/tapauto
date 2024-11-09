@@ -11,6 +11,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver import ChromeOptions, Firefox, FirefoxProfile
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 
+from seleniumwire.webdriver import Firefox as Firefoxwire
+
 import secure_browser_js as sbjs
 
 # user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
@@ -79,6 +81,7 @@ class SecFirefoxBrowser(Browser):
         proxy_password: str = "",
         extension_path="proxy_common_ff",
         headless=False,
+        wire=False
     ):
         # obmazka developing now
         options = FirefoxOptions()
@@ -86,7 +89,10 @@ class SecFirefoxBrowser(Browser):
             print('start in headless mode')
             options.add_argument(f"--headless")
             #options.headless = True
-        self.browser = Firefox(options=options)
+        if wire:
+            self.browser = Firefoxwire(options=options)
+        else:
+            self.browser = Firefox(options=options)
 
         if proxy_host:
             plugin_path = self.__init_proxy(

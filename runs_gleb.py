@@ -9,6 +9,5 @@ if __name__ == '__main__':
     keep_dir = r'C:\Users\gburgerfuck\Desktop\TELEGRAMZ'
 
     # run_tgportable(number, tdatas_base_path, tgportable_template_path, keep_dir)
-    run_notpixels_browser(number, tdatas_base_path, browser=True)
-
-
+    registrate_tonkeeper(number, tdatas_base_path)
+    #sb = SecFirefoxBrowser(proxy_host, proxy_port, proxy_user, proxy_password, wire=False)
