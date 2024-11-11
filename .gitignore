@@ -24,3 +24,4 @@ settings_local.py
 *.session-journal
 pictures
 *.csv
+templates/*
