@@ -1,5 +1,5 @@
 import asyncio
-
+import random
 import aiohttp
 
 import notpixel_actions
@@ -20,7 +20,10 @@ proxy_host, proxy_port, proxy_user, proxy_password = notpixel_tools.parse_proxy_
 
 async def main_test_not_pixel():
 
-    url = "https://app.notpx.app/#tgWebAppData=user%3D%257B%2522id%2522%253A6444194100%252C%2522first_name%2522%253A%2522Not%2522%252C%2522last_name%2522%253A%2522Pixel%2520Ads%2522%252C%2522username%2522%253A%2522npxad%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522allows_write_to_pm%2522%253Atrue%257D%26chat_instance%3D4069628147610715339%26chat_type%3Dsender%26auth_date%3D1730132018%26hash%3D8fd26be2400bf409a5df2beddabde27f5deedb1b3e6774b4a3397ab8e3d74d73&tgWebAppVersion=7.10&tgWebAppPlatform=tdesktop&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
+    url = "https://app.notpx.app/#tgWebAppData=user%3D%257B%2522id%2522%253A726551560%252C%2522first_name%2522%253A%2522A%2522%252C%2522last_name%2522%253A%2522S%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522is_premium%2522%253Atrue%252C%2522allows_write_to_pm%2522%253Atrue%257D%26chat_instance%3D-7507039722228485151%26chat_type%3Dsender%26auth_date%3D1730547486%26hash%3D740f442384e6ee7987e66a46a2e992b0705ce2ab6840381e970376e9987129a4&tgWebAppVersion=7.10&tgWebAppPlatform=tdesktop&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
+
+    db_path = settings.db_path
+    db = TDB(dbpath=db_path)
 
     pa = notpixel_actions.PixelActions(
         url,
@@ -29,13 +32,33 @@ async def main_test_not_pixel():
         proxy_user=proxy_user,
         proxy_password=proxy_password,
         gui_browser_worker_type=None,
+        session_id="27642042550",
+        db=db,
     )
     # task = (
     #     (80, 80, (255, 141, 161)),
     #     # (80, 81, (255, 141, 161)),
     # )
     await pa.emulate_app_start()
-    info = await pa.get_account_state(complete_tasks=True)
+    # templates = await pa.get_templates()
+    # template_id = random.choice(list(templates))
+    # template_ids = [
+    #     "799818229",
+    #     "6476501580",
+    #     "1325258259",
+    #     "6432133792",
+    #     "1353629816",
+    #     "153665413",
+    #     "1307361893",
+    #     "1502904019",
+    #     "1675295056",
+    #     "1311866928",
+    #     "482706122",
+    #     "1805262074",
+    # ]
+    # for _id in template_ids:
+    #     good_pixel_colors = await pa.get_template_colors(_id)
+    info = await pa.get_account_state()
     pass
     # await pa.run(task)
     # templates = await pa.get_templates()
@@ -48,7 +71,7 @@ async def main_test_not_pixel():
 
 
 async def main_test_telegram():
-    acc = "27687255760"
+    acc = "27641279262"
     from telethon import functions, types
 
     t = Telega(
@@ -66,11 +89,13 @@ async def main_test_telegram():
         tdata_path=f"tdatas/{acc}/tdata",
         platform="windows",
         hardware_id=acc,
-        password="86nmsyckk9rlsg",
+        password="f27641279262",
     )
 
     await t.client.PrintSessions()
 
+    # result = await t.client(functions.account.GetAuthorizationsRequest())
+    # print(result.stringify())
     # new_tdesk = await t.client.ToTDesktop(password="86nmsyckk9rlsg")
     # new_tdesk.SaveTData(f"tdatas/{acc}_new/tdata")
     # result = await t.client(functions.auth.ResetAuthorizationsRequest())
@@ -113,20 +138,27 @@ async def test_proxy():
 
 
 async def test_db():
+    import datetime
+
     db_path = settings.db_path
     db = TDB(dbpath=db_path)
     await db.drop_tables()
     await db.init_schema()
     await db.get_tables()
     await db.add_user(
-        number="27642042550",
-        tdata_path="tdatas/27642042550/tdata",
-        password="f27642042550",
+        number="959672376648",
+        tdata_path="tdatas/959672376648/tdata",
+        password="Password123",
         proxy="07196708-zone-custom-region-CA-city-ottawa-sessid-Qoeuiuja-sessTime-120:6pGOVG0G@f.proxys5.net:6200",
         startparam="f726551560",
     )
-    users = await db.get_users()
-    print(users)
+    # users = await db.get_users()
+    # await db.set_user_index_update_time(
+    # "27642042550", datetime.datetime.now(datetime.UTC)
+    # )
+    # index_update = await db.get_user_index_update_time("27642042550")
+    # dt = datetime.datetime.fromisoformat(index_update)
+    # print(index_update)
     pass
 
 
@@ -178,50 +210,6 @@ async def change_proxy_for_accs():
         await db.set_user_proxy(proxy)
 
 
-async def add_downloaded_accs():
-    import os
-    import zipfile
-    import shutil
-
-    folder = "accs_to_load"
-    where = r"C:\projects\tg_accs"
-    two_fa_filename = "Twofa.txt"
-    proxy_file = "proxy_toronto.txt"
-
-    db_path = settings.db_path
-    db = TDB(dbpath=db_path)
-
-    acc_arches = os.listdir(folder)
-    for arch in acc_arches:
-        if not ".zip" in arch:
-            continue
-        number = arch.replace(".zip", "")
-        arch_path = os.path.join(folder, arch)
-        folder_path = arch_path.replace(".zip", "")
-        with zipfile.ZipFile(arch_path, "r") as z:
-            z.extractall(folder_path)
-            shutil.copytree(
-                os.path.join(folder_path, "tdata"),
-                os.path.join(where, number, "tdata"),
-                dirs_exist_ok=True,
-            )
-            with open(os.path.join(folder_path, two_fa_filename)) as f:
-                code = f.read().strip()
-        with open(proxy_file) as f:
-            proxy_data = f.read()
-            proxies = proxy_data.strip().split("\n")
-            proxy = proxies.pop(-1)
-        with open(proxy_file, "w") as f:
-            f.write("\n".join(proxies))
-        await db.add_user(
-            number=number,
-            tdata_path=os.path.join(where, number, "tdata"),
-            password=code,
-            proxy=proxy,
-            startparam="f6444194100",
-        )
-
-
 async def fill_server_accs_proxy():
     import json
     import random
@@ -244,13 +232,37 @@ async def fill_server_accs_proxy():
         f.write(json.dumps(acc_data))
 
 
+async def test_http_part_read():
+    from notpixel_tools import http_request
+    import datetime
+
+    dt_now = datetime.datetime.now(datetime.UTC)
+    dt_since = dt_now - datetime.timedelta(minutes=30)
+    time_since = dt_since.strftime("%a, %d %b %Y %H:%M:%S GMT")
+    proxy_string = "http://127.0.0.1:8080"
+    ans = await http_request(
+        "GET",  # GET|POST
+        "https://app.notpx.app/assets/index-DVD8V7Pc.js",
+        {"User-Agent": "chrome", "If-Modified-Since": time_since},
+        proxy=proxy_string,
+        http_timeout=30,
+        good_statuses=[200, 304],
+        logger=None,
+        retry_count=1,
+    )
+    pass
+
+
+# TODO разделить при инициализации фабрики аккаунты на OLD и NEW по наличию или отсутствию успешних ранов раньше
+# init accounts fail- first - change proxy, second - remove session - then - exception
+
 if __name__ == "__main__":
     loop = asyncio.new_event_loop()
     # loop.run_until_complete(test_proxy())
-    loop.run_until_complete(main_test_not_pixel())
+    # loop.run_until_complete(main_test_not_pixel())
     # loop.run_until_complete(main_test_telegram())
     # loop.run_until_complete(main_test_api_telegram())
-    # loop.run_until_complete(test_db())
+    loop.run_until_complete(test_db())
     # loop.run_until_complete(main_test_fucktory())
     # loop.run_until_complete(test_websocket())
     # loop.run_until_complete(fill_server_accs_proxy())
@@ -258,6 +270,8 @@ if __name__ == "__main__":
     # loop.create_task(add_users_to_db())
     # loop.run_until_complete(add_users_to_db())
     # loop.run_until_complete(add_downloaded_accs())
+
+    loop.run_until_complete(test_http_part_read())
     # REFERALL TECHNICS
     loop.close()
     print("Finish")
