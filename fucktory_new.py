@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import random
 
 import dbutils
 import notpixel_actions
@@ -13,8 +14,9 @@ BOT_USERNAME = "notpx_bot"
 TELEGRAM_PLATFORM = "desktop"
 WEBAPP_PLATFORM = "android"
 
-RESTART_TIMEOUT = 10 * 60  # 10 minutes
+RESTART_TIMEOUT = 20 * 60  # 20 minutes
 SINGLE_RUN_TIMEOUT = 5 * 60
+SUCCESS_JOB_DONE_MAX_ADD_SLEEP_TILE = 15 * 60
 
 WORKER_INITIAL_START_TIMEOUT = 15
 
@@ -128,8 +130,11 @@ class Worker:
                 await self.db.set_user_status(
                     number=self.telegram_session_id, status="GOOD"
                 )
+                random_sleep_size = random.randint(
+                    0, SUCCESS_JOB_DONE_MAX_ADD_SLEEP_TILE
+                )
 
-                return full_restore_timeout
+                return full_restore_timeout + random_sleep_size
         except BaseException as e:
             await self.db.log_run_attempt(
                 number=self.telegram_session_id, success=False
