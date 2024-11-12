@@ -193,8 +193,8 @@ async def run_fucktory():
             )
         )
         _i += 1
-        if _i % 50 == 0:
-            await asyncio.sleep(5)
+        if _i % 30 == 0:
+            await asyncio.sleep(10)
 
     unloaded_workers = set()
     for client_init in asyncio.as_completed(init_client_tasks):
