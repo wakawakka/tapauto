@@ -540,7 +540,7 @@ class PixelActions:
     async def complete_tasks(self, tasks):
         for task_name in self.allowed_tasks:
             task_completed = tasks.get(task_name)
-            if task_completed:
+            if task_completed or not self.allowed_tasks[task_name]:
                 continue
             self.logger.info(f"Found uncompleted task: {task_name}")
             url = f"https://notpx.app/api/v1/mining/task/check/{task_name}"
@@ -631,6 +631,30 @@ class PixelActions:
         self.logger.info(
             f"Finish PAINT PIXEL {x}:{y} to {color_s}, status: {status}, content: {content} content len: {content_len}"
         )
+
+    async def enter_secret_word(self, word: str):
+        url = "https://notpx.app/api/v1/mining/quest/check/secretWord"
+        self.logger.debug(f'Start send secret word "{word}"')
+        headers = self.get_headers_api()
+        result = await notpixel_tools.http_request(
+            "POST",
+            url,
+            headers,
+            json_p={"secret_word": word},
+            proxy=self.proxy_string,
+            http_timeout=HTTP_REQUEST_TIMEOUT,
+            good_statuses=[200, 403],
+            logger=self.logger,
+        )
+        await self.sleep_after_request()
+        status = result.get("status")
+        content = result.get("content")
+        if content:
+            content = content.decode()
+        await self.db.add_secret_try(
+            number=self.session_id, word=word, responce=content
+        )
+        self.logger.info(f"Finish send secret word {word}, answer: {content}")
 
     async def paint_pixel(self, pixel_id: int, color: str):
         url = "https://notpx.app/api/v1/repaint/start"
@@ -723,7 +747,15 @@ class PixelActions:
                 await self.paint_pixel(pixel_id, color)
                 charges -= 1
             except BaseException as e:
-                logging.error((f"FAILED PAINT PIXEL {pixel_id} to {color}"))
+                self.logger.error((f"FAILED PAINT PIXEL {pixel_id} to {color}"))
+
+        try:
+            old_secrets = await self.db.get_user_old_secrets(self.session_id)
+            for word in settings.secret_words:
+                if word not in old_secrets:
+                    await self.enter_secret_word(word)
+        except BaseException as e:
+            self.logger.error(f"Failed to send secret word. {e}")
 
         # update acc state (not nessesary)
         try:
@@ -732,7 +764,7 @@ class PixelActions:
             )
             charges = acc_state.get("charges", 0)
         except:
-            logging.error(
+            self.logger.error(
                 "Error updating acc state after actions. Return initial values"
             )
             acc_state["charges"] = charges

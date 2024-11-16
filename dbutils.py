@@ -23,6 +23,11 @@ init_table_queries = [
 	"start_param_run_count"	INTEGER DEFAULT 0,
 	"index_page_last_update"	DATETIME,
 	PRIMARY KEY("id" AUTOINCREMENT)
+);
+CREATE TABLE "secret_tries" (
+	"number"	TEXT,
+	"word"	TEXT,
+	"responce"	TEXT
 );""",
 ]
 
@@ -168,6 +173,20 @@ class TDB:
                 start_param_run_count = row[1]
         if start_param and start_param_run_count < 5:
             return start_param
+
+    async def add_secret_try(self, number: str, word: str, responce: str):
+        async with aiosqlite.connect(self.db_path) as con:
+            query = "insert into secret_tries (number, word, responce) values (?, ?, ?)"
+            async with await con.execute(query, (number, word, responce)) as cursor:
+                await con.commit()
+
+    async def get_user_old_secrets(self, number) -> set:
+        async with aiosqlite.connect(self.db_path) as con:
+            query = "select word from secret_tries where number = ?"
+            async with await con.execute(query, (number,)) as cursor:
+                word_rows = await cursor.fetchall()
+                words = [i[0] for i in word_rows]
+                return set(words)
 
 
 async def init_database():
