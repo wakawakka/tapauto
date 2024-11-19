@@ -69,7 +69,7 @@ class HttpError(BaseException):
         message = (
             f"Failed HTTP request:\n"
             f"\tUrl: {url}\n"
-            f"\tProxy: {proxy}"
+            f"\tProxy: {proxy}\n"
             f"\tPapa Exception -  type: {type(papa_Exception)}, message: {papa_Exception}"
         )
         super().__init__(message)

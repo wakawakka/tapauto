@@ -81,14 +81,14 @@ class SecFirefoxBrowser(Browser):
         proxy_password: str = "",
         extension_path="proxy_common_ff",
         headless=False,
-        wire=False
+        wire=False,
     ):
         # obmazka developing now
         options = FirefoxOptions()
         if headless:
-            print('start in headless mode')
+            # print('start in headless mode')
             options.add_argument(f"--headless")
-            #options.headless = True
+            # options.headless = True
         if wire:
             self.browser = Firefoxwire(options=options)
         else:
@@ -125,7 +125,6 @@ class SecFirefoxBrowser(Browser):
             zp.writestr("background.js", background_js)
 
         return plugin_path
-    
 
 
 class SecChromeBrowser(Browser):
@@ -181,7 +180,7 @@ class SecChromeBrowser(Browser):
 
         self.browser = uc.Chrome(
             options=options,
-            # version_main=126,
+            version_main=130,
             # driver_executable_path="/usr/local/bin/chromedriver-linux64/chromedriver",
         )
 
