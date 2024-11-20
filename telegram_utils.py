@@ -1,6 +1,7 @@
 import logging
 import os
 import time
+import code
 import datetime
 import asyncio
 import random
@@ -315,11 +316,57 @@ class Telega:
         result = await self.client(
             functions.messages.RequestAppWebViewRequest(
                 app=input_bot_app,
-                peer=types.InputPeerUser(user_id=bot.id, access_hash=bot.access_hash),
+                peer=types.InputUser(user_id=bot.id, access_hash=bot.access_hash),
                 platform=platform,
                 # from_bot_menu=False,
                 # compact=False,
                 start_param=param,
+                theme_params=types.TypeDataJSON(json.dumps(theme_styles)),
+            )
+        )
+        self.logger.info(f"Got bot web application URL: {result.url}")
+        self.app_url = result.url
+        self.app_url_dt = datetime.datetime.now()
+        return result.url
+
+    async def get_bot_webapp_noapp(self, bot_username: str, platform: str, param=None):
+        await self.check_auth(try_reauth=True)
+        if not param:
+            await self.start_bot(bot_username)
+        self.logger.info(
+            f"Getting bot web application URL for {bot_username}, {platform}, with params {param}"
+        )
+        bot = await self.client.get_entity(bot_username)
+        bot_full = await self.client(functions.users.GetFullUserRequest(id=bot_username))
+
+        self.logger.info(f"Got bot entity, id: {bot.id}")
+      
+        bot_user = types.InputUser(bot.id , bot.access_hash )
+        bot_user_peer = types.InputPeerUser(bot.id , bot.access_hash )    
+
+        theme_styles = {
+            "accent_text_color": "#168acd",
+            "bg_color": "#ffffff",
+            "bottom_bar_bg_color": "#ffffff",
+            "button_color": "#40a7e3",
+            "button_text_color": "#ffffff",
+            "destructive_text_color": "#d14e4e",
+            "header_bg_color": "#ffffff",
+            "hint_color": "#999999",
+            "link_color": "#168acd",
+            "secondary_bg_color": "#f1f1f1",
+            "section_bg_color": "#ffffff",
+            "section_header_text_color": "#168acd",
+            "section_separator_color": "#e7e7e7",
+            "subtitle_text_color": "#999999",
+            "text_color": "#000000",
+        }
+        result = await self.client(
+            functions.messages.RequestWebViewRequest(
+                bot=bot_user,
+                peer=bot_user_peer,
+                url=bot_full.full_user.bot_info.menu_button.url,
+                platform=platform,
                 theme_params=types.TypeDataJSON(json.dumps(theme_styles)),
             )
         )
