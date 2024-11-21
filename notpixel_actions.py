@@ -377,8 +377,7 @@ class PixelActions:
                     self.logger.error(f"Upgrade {uk} failed")
                 balance -= upgrade_price
 
-    async def get_templates(self):
-        get_from_page = TEMPLATE_PAGE
+    async def get_templates(self, get_from_page):
         for i in range(get_from_page):
             url = f"https://notpx.app/api/v1/image/template/list?limit=12&offset={get_from_page * i}"
             self.logger.debug(f"Start GET template list from page {i}")
@@ -722,24 +721,30 @@ class PixelActions:
         acc_state = await self.get_account_state(
             claim=True, upgrade=True, complete_tasks=True
         )
+        charges = acc_state.get("charges", 0)
+        # if charges > 12:
+        #     charges = 12
+        # charges = 3
+        if simplified:
+            templates = await self.get_templates(TEMPLATE_PAGE)
+        else:
+            templates = await self.get_templates(1)
+
+        template_id = random.choice(list(templates))
+
+        good_pixel_colors = await self.get_template_colors_from_cache(template_id)
+        if not good_pixel_colors:
+            good_pixel_colors = await self.get_template_colors(template_id)
+
         if not simplified:
-            charges = acc_state.get("charges", 0)
-            # if charges > 12:
-            #     charges = 12
-            # charges = 3
-            templates = await self.get_templates()
-            template_id = random.choice(list(templates))
-
-            good_pixel_colors = await self.get_template_colors_from_cache(template_id)
-            if not good_pixel_colors:
-                good_pixel_colors = await self.get_template_colors(template_id)
-
             await self.select_template(template_id=template_id)
-            await self.centrifuga.init_client(token=ws_token, user_agent=self.user_agent)
-            paint_task = await self.centrifuga.collect_pixels_to_repaint(
-                charges, good_pixels=good_pixel_colors
-            )
 
+        await self.centrifuga.init_client(token=ws_token, user_agent=self.user_agent)
+        paint_task = await self.centrifuga.collect_pixels_to_repaint(
+            charges, good_pixels=good_pixel_colors
+        )
+
+        if not simplified:
             # repaint
             for shot_i in range(charges):
                 pixel_id = random.choice(list(paint_task.keys()))
