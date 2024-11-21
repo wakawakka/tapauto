@@ -36,11 +36,10 @@ free_tasks = {
 secret_words = {"happy halloween"}
 
 DOWNLOAD_JS_SCRIPTS = True
+SIMPLIFIED = False
 
 from settings_local import *
 
 os.makedirs(sessions_dir, exist_ok=True)
 os.makedirs(log_dir, exist_ok=True)
 os.makedirs(templates_dir, exist_ok=True)
-
-SIMPLIFIED = False
