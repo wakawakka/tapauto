@@ -124,6 +124,7 @@ class TapswapActions:
         logfile_path="common.log",
         logging_level=logging.DEBUG,
         logging_name="TapswapActions unnamed",
+        telegram_user_id=None,
         selen=None,
     ):
         self.logger = utils.get_logger(
@@ -142,6 +143,7 @@ class TapswapActions:
                 f"socks5://{proxy_user}:{proxy_password}@{proxy_host}:{proxy_port}"
             )
         self.selen = selen
+        self.telegram_user_id = telegram_user_id
         self.init_user_agent()
 
     async def sleep_after_request(self, sleep_min=10, sleep_max=18):
@@ -451,7 +453,7 @@ class TapswapActions:
         content = request.get("content")
         self.logger.info(f"Claim status: {status}")
 
-    async def complete_mission(self, mission_data):
+    async def complete_mission_data(self, mission_data):
 
         self.logger.info(f"Start doing mission: {mission_data}")
         mission_id = mission_data.get("id")
@@ -502,6 +504,72 @@ class TapswapActions:
         else:
             self.logger.error(f"Mission {mission_id} still not verified.")
 
+    async def complete_mission(self):
+        missions = self.conf.get("missions", [])
+        mission_to_complete = self.choose_mission(missions=missions)
+        await self.complete_mission_data(mission_to_complete)
+
+    async def submit_taps(self, taps_session_finish_ts_ms, taps_count):
+        # if have boost -> activate it
+        # after function if have restore charge -> activate it
+
+        url = "https://api.tapswap.club/api/player/submit_taps"
+        headers = self.get_api_headers(bearer=True)
+        headers["Content-Id"] = str(
+            self.selen.browser.execute_script(
+                f"return {taps_session_finish_ts_ms} * {self.telegram_user_id} % {self.telegram_user_id}"
+            )
+        )
+        payload = {"taps": taps_count, "time": taps_session_finish_ts_ms}
+        request = await notpixel_tools.http_request(
+            "POST",
+            url,
+            headers,
+            proxy=self.proxy_string,
+            json_p=payload,
+            http_timeout=HTTP_REQUEST_TIMEOUT,
+            good_statuses=[200, 201, 400],
+            logger=self.logger,
+        )
+        status = request.get("status")
+        content = request.get("content")
+        self.logger.info(
+            f"Submited {taps_count} taps in {taps_session_finish_ts_ms} ts_ms. Status: {status}"
+        )
+        data = json.loads(content)
+        return data.get("player", {}).get("energy", 0)
+
+    async def make_taps(self):
+        # energy_level = self.account_data['player'].get('energy_level')
+
+        tap_level = self.account_data["player"].get("tap_level")
+        energy = self.account_data["player"].get("energy", 0)
+        energy_tap_cost = self.tap_level_config[tap_level - 1].get("energy")
+
+        charge_level = self.account_data["player"].get("charge_level")
+        energy_restore_per_second = self.charge_levels_config[charge_level - 1].get(
+            "rate"
+        )
+        energy_tap_stop = energy_restore_per_second * random.randint(6, 9)
+        while energy > energy_tap_stop:
+            taps_per_second = random.randint(5000, 6000) / 1000
+            taps_current_session = random.randint(90, 105)
+            taps_cost_current_session = int(energy_tap_cost * taps_current_session)
+            if energy - taps_cost_current_session <= 0:
+                taps_current_session = int(energy / energy_tap_cost)
+
+            taps_time_current_session = (
+                int(taps_current_session / taps_per_second * 100) / 100
+            )
+            self.logger.debug(
+                f"GO SLEEP. Time: {taps_time_current_session} sec. ENERGY: {energy}. Tap cost: {energy_tap_cost}. Taps: {taps_current_session}."
+            )
+            await asyncio.sleep(taps_time_current_session)
+            taps_session_finish_ts_ms = int(time.time() * 1000)
+            energy = await self.submit_taps(
+                taps_session_finish_ts_ms, taps_current_session
+            )
+
     async def emulate_app_start(self):
         await self.load_main_page()
         chq = await self.login()
@@ -517,14 +585,10 @@ class TapswapActions:
         self.active_missions = [i.get("id") for i in missions.get("active", [])]
         self.just_claim_missions = self.account_data.get("player", {}).get("claims", [])
 
-        conf = self.account_data.get("conf", {})
-        energy_levels = conf.get("energy_levels", [])
-        charge_levels = conf.get("charge_levels", [])
-        tap_levels = conf.get("tap_levels", [])
-
-        missions = conf.get("missions", [])
-        mission_to_complete = self.choose_mission(missions=missions)
-        await self.complete_mission(mission_to_complete)
+        self.conf = self.account_data.get("conf", {})
+        self.energy_levels_config = self.conf.get("energy_levels", [])
+        self.charge_levels_config = self.conf.get("charge_levels", [])
+        self.tap_level_config = self.conf.get("tap_levels", [])
 
         pass
 
@@ -534,7 +598,7 @@ async def main():
     proxy_host, proxy_port, proxy_user, proxy_password = notpixel_tools.parse_proxy_url(
         "https://" + proxy
     )
-    webpp_url = "https://app.tapswap.club/?bot=app_bot_0#tgWebAppData=query_id%3DAAEITE4rAAAAAAhMTiuYRpGy%26user%3D%257B%2522id%2522%253A726551560%252C%2522first_name%2522%253A%2522A%2522%252C%2522last_name%2522%253A%2522S%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522is_premium%2522%253Atrue%252C%2522allows_write_to_pm%2522%253Atrue%252C%2522photo_url%2522%253A%2522https%253A%255C%252F%255C%252Ft.me%255C%252Fi%255C%252Fuserpic%255C%252F320%255C%252F_aefHTTaqquqHSKCJLEG3ibz76vobUxfaln3jrMDe2A.svg%2522%257D%26auth_date%3D1732026783%26signature%3Dmvs8ZH8tketmhlCbqqFmM-rw4OPlkyPy8sTAtpbaG-FhbkjgcBwITmV4Rp0JCNoZdOGQaWhY_fEuxY1Dzb_6BQ%26hash%3Dbe401d52eada056eac7d429ce190ae6bc3020b4c1bb4a2c1773a96cb8f63021c&tgWebAppVersion=8.0&tgWebAppPlatform=tdesktop&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
+    webpp_url = "https://app.tapswap.club/?bot=app_bot_0#tgWebAppData=query_id%3DAAEITE4rAAAAAAhMTiu7VFKu%26user%3D%257B%2522id%2522%253A726551560%252C%2522first_name%2522%253A%2522A%2522%252C%2522last_name%2522%253A%2522S%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522is_premium%2522%253Atrue%252C%2522allows_write_to_pm%2522%253Atrue%252C%2522photo_url%2522%253A%2522https%253A%255C%252F%255C%252Ft.me%255C%252Fi%255C%252Fuserpic%255C%252F320%255C%252F_aefHTTaqquqHSKCJLEG3ibz76vobUxfaln3jrMDe2A.svg%2522%257D%26auth_date%3D1732190955%26signature%3DsqzjNdl9YQezbWHBjRskKSjS_jM7DVHrPJj9G2BKyNNDwiwgjPw7uKIIsTprQfoEWR2a2D8Qqxq3z90t6I9JAg%26hash%3Dee3255412b879235c1792b131a92f0ea6476c7a61dbf70472e280ac49b4d5875&tgWebAppVersion=8.0&tgWebAppPlatform=tdesktop&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
 
     sb = secure_browser.SecChromeBrowser(headless=False)
 
@@ -544,9 +608,15 @@ async def main():
         proxy_port=proxy_port,
         proxy_user=proxy_user,
         proxy_password=proxy_password,
+        telegram_user_id=726551560,
         selen=sb,
     )
     await ts.emulate_app_start()
+    # await ts.complete_mission()
+    # if its night -> not tap -> not missions
+    # if day -> tap with prob 70% and complete mission with 50%
+
+    await ts.make_taps()
 
 
 if __name__ == "__main__":
