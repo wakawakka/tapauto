@@ -17,6 +17,7 @@ WEBAPP_PLATFORM = "android"
 RESTART_TIMEOUT = 20 * 60  # 20 minutes
 SINGLE_RUN_TIMEOUT = 5 * 60
 SUCCESS_JOB_DONE_MAX_ADD_SLEEP_TILE = 15 * 60
+SIMPLIFIED_SLEEP = 60 * 60 * 8 + 228
 
 WORKER_INITIAL_START_TIMEOUT = 15
 
@@ -89,7 +90,7 @@ class Worker:
         except BaseException as e:
             return {"success": False, "id": self.telegram_session_id, "exception": e}
 
-    async def single_run(self, logger):
+    async def single_run(self, logger, simplified=False):
         try:
             async with asyncio.timeout(SINGLE_RUN_TIMEOUT):
 
@@ -114,13 +115,8 @@ class Worker:
                     logging_level=logging.DEBUG,
                     logging_name=f"px:{self.telegram_session_id}",
                 )
-                account_state = await pixar.repaint_pixels()
-
-                full_restore_timeout = (
-                    account_state.get("max_charges") - account_state.get("charges")
-                ) * account_state.get("charge_restore_speed")
+                account_state = await pixar.repaint_pixels(simplified=simplified)
                 balance = account_state.get("balance")
-
                 await self.db.set_user_balance(
                     number=self.telegram_session_id, balance=int(balance)
                 )
@@ -130,11 +126,21 @@ class Worker:
                 await self.db.set_user_status(
                     number=self.telegram_session_id, status="GOOD"
                 )
-                random_sleep_size = random.randint(
-                    0, SUCCESS_JOB_DONE_MAX_ADD_SLEEP_TILE
-                )
 
-                return full_restore_timeout + random_sleep_size
+                if not simplified:
+                    full_restore_timeout = (
+                        account_state.get("max_charges") - account_state.get("charges")
+                    ) * account_state.get("charge_restore_speed")
+
+                    random_sleep_size = random.randint(
+                        0, SUCCESS_JOB_DONE_MAX_ADD_SLEEP_TILE
+                    )
+                
+                    sleeptime = full_restore_timeout + random_sleep_size
+                else:
+                    sleeptime = SIMPLIFIED_SLEEP
+                return sleeptime
+
         except BaseException as e:
             await self.db.log_run_attempt(
                 number=self.telegram_session_id, success=False
@@ -148,9 +154,9 @@ class Worker:
             )
             return RESTART_TIMEOUT
 
-    async def poyti_na_smenu(self, logger):
+    async def poyti_na_smenu(self, logger, simplified):
         while True:  # ebashit bez vukhodnux
-            timeout = await self.single_run(logger)
+            timeout = await self.single_run(logger, simplified=simplified)
             logger.info(f"Worker {self.telegram_session_id} GO SLEEP FOR {timeout} sec")
             await asyncio.sleep(timeout)
 
@@ -179,7 +185,7 @@ async def get_workers(db: dbutils.TDB):
     return workers
 
 
-async def run_fucktory():
+async def run_fucktory(simplified=False):
     loop = asyncio.get_event_loop()
 
     fucktory_logfile = "fucktory.log"
@@ -229,11 +235,11 @@ async def run_fucktory():
 
     for worker_id in workers:
         logger.info(f"STARTING SMENA OF WORKER: {worker_id}")
-        loop.create_task(workers[worker_id].poyti_na_smenu(logger))
+        loop.create_task(workers[worker_id].poyti_na_smenu(logger, simplified))
         await asyncio.sleep(WORKER_INITIAL_START_TIMEOUT)
 
 
 if __name__ == "__main__":
     loop = asyncio.new_event_loop()
-    loop.create_task(run_fucktory())
+    loop.create_task(run_fucktory(settings.SIMPLIFIED))
     loop.run_forever()

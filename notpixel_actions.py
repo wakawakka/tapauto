@@ -716,63 +716,64 @@ class PixelActions:
 
         return job_status
 
-    async def repaint_pixels(self):
+    async def repaint_pixels(self, simplified=False):
         await self.emulate_app_start()
         ws_token = await self.get_ws_token()
         acc_state = await self.get_account_state(
             claim=True, upgrade=True, complete_tasks=True
         )
-        charges = acc_state.get("charges", 0)
-        # if charges > 12:
-        #     charges = 12
-        # charges = 3
-        templates = await self.get_templates()
-        template_id = random.choice(list(templates))
-
-        good_pixel_colors = await self.get_template_colors_from_cache(template_id)
-        if not good_pixel_colors:
-            good_pixel_colors = await self.get_template_colors(template_id)
-
-        await self.select_template(template_id=template_id)
-        await self.centrifuga.init_client(token=ws_token, user_agent=self.user_agent)
-        paint_task = await self.centrifuga.collect_pixels_to_repaint(
-            charges, good_pixels=good_pixel_colors
-        )
-
-        # repaint
-        for shot_i in range(charges):
-            pixel_id = random.choice(list(paint_task.keys()))
-            color = paint_task.pop(pixel_id)
-            try:
-                await self.paint_pixel(pixel_id, color)
-                charges -= 1
-            except BaseException as e:
-                self.logger.error((f"FAILED PAINT PIXEL {pixel_id} to {color}"))
-
-        try:
-            old_secrets = await self.db.get_user_old_secrets(self.session_id)
-            for word in settings.secret_words:
-                if word not in old_secrets:
-                    await self.enter_secret_word(word)
-        except BaseException as e:
-            self.logger.error(f"Failed to send secret word. {e}")
-
-        # update acc state (not nessesary)
-        try:
-            acc_state = await self.get_account_state(
-                claim=False, upgrade=False, complete_tasks=False
-            )
+        if not simplified:
             charges = acc_state.get("charges", 0)
-        except:
-            self.logger.error(
-                "Error updating acc state after actions. Return initial values"
-            )
-            acc_state["charges"] = charges
+            # if charges > 12:
+            #     charges = 12
+            # charges = 3
+            templates = await self.get_templates()
+            template_id = random.choice(list(templates))
 
-        # {
-        #     "charges": charges,
-        #     "charge_restore_speed": recharge_speed,
-        #     "max_charges": max_charges,
-        #     "balance": balance,
-        # }
+            good_pixel_colors = await self.get_template_colors_from_cache(template_id)
+            if not good_pixel_colors:
+                good_pixel_colors = await self.get_template_colors(template_id)
+
+            await self.select_template(template_id=template_id)
+            await self.centrifuga.init_client(token=ws_token, user_agent=self.user_agent)
+            paint_task = await self.centrifuga.collect_pixels_to_repaint(
+                charges, good_pixels=good_pixel_colors
+            )
+
+            # repaint
+            for shot_i in range(charges):
+                pixel_id = random.choice(list(paint_task.keys()))
+                color = paint_task.pop(pixel_id)
+                try:
+                    await self.paint_pixel(pixel_id, color)
+                    charges -= 1
+                except BaseException as e:
+                    self.logger.error((f"FAILED PAINT PIXEL {pixel_id} to {color}"))
+
+            try:
+                old_secrets = await self.db.get_user_old_secrets(self.session_id)
+                for word in settings.secret_words:
+                    if word not in old_secrets:
+                        await self.enter_secret_word(word)
+            except BaseException as e:
+                self.logger.error(f"Failed to send secret word. {e}")
+
+            # update acc state (not nessesary)
+            try:
+                acc_state = await self.get_account_state(
+                    claim=False, upgrade=False, complete_tasks=False
+                )
+                charges = acc_state.get("charges", 0)
+            except:
+                self.logger.error(
+                    "Error updating acc state after actions. Return initial values"
+                )
+                acc_state["charges"] = charges
+
+            # {
+            #     "charges": charges,
+            #     "charge_restore_speed": recharge_speed,
+            #     "max_charges": max_charges,
+            #     "balance": balance,
+            # }
         return acc_state

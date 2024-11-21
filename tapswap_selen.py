@@ -50,7 +50,7 @@ def run_tonswap_browser(number, tdatas_base_path, browser=True, open_url=True, s
             hardware_id=number,
             password=password,
         )
-        url = await t.get_bot_webapp_noapp("tapswap_bot", "android")
+        url = await t.get_bot_webapp_noapp("cityholderbot", "android")
         #url = await t.get_bot_webapp("notpx_bot", "android")
         return url
     url = asyncio.run(async_sosalnya())
@@ -73,4 +73,4 @@ if __name__ == '__main__':
     #keep_dir = r'C:\Users\gburgerfuck\Desktop\TELEGRAMZ'
 
     # run_tgportable(number, tdatas_base_path, tgportable_template_path, keep_dir)
-    run_tonswap_browser(number, tdatas_base_path, open_url=True)
+    run_tonswap_browser(number, tdatas_base_path, browser=False)

@@ -42,3 +42,5 @@ from settings_local import *
 os.makedirs(sessions_dir, exist_ok=True)
 os.makedirs(log_dir, exist_ok=True)
 os.makedirs(templates_dir, exist_ok=True)
+
+SIMPLIFIED = False

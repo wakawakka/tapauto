@@ -25,3 +25,4 @@ settings_local.py
 pictures
 *.csv
 templates/*
+*.ipynb
