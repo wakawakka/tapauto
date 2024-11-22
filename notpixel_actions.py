@@ -638,7 +638,7 @@ class PixelActions:
         charges = acc_state.get("charges", 0)
         # if charges > 12:
         #     charges = 12
-        charges = 1
+        # charges = 1
         templates = await self.get_templates(TEMPLATE_PAGE)
 
         template_id = random.choice(list(templates))
