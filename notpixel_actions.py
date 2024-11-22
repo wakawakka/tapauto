@@ -587,6 +587,23 @@ class PixelActions:
         )
         self.logger.info(f"Finish send secret word {word}, answer: {content}")
 
+    async def offer_check(self):
+        url = "https://notpx.app/api/v1/offer/check"
+        self.logger.debug(f"Start Offer check")
+        headers = self.get_headers_api()
+        result = await notpixel_tools.http_request(
+            "POST",
+            url,
+            headers,
+            proxy=self.proxy_string,
+            http_timeout=HTTP_REQUEST_TIMEOUT,
+            good_statuses=[200],
+            logger=self.logger,
+        )
+        status = result.get("status")
+        content = result.get("content")
+        self.logger.info(f"Finish Offer check. Status: {status}, Content: {content}.")
+
     async def paint_pixel(self, pixel_id: int, color: str):
         url = "https://notpx.app/api/v1/repaint/start"
         if not color.startswith("#"):
@@ -617,6 +634,7 @@ class PixelActions:
         acc_state = await self.get_account_state(
             claim=True, upgrade=True, complete_tasks=True
         )
+        offer_check = await self.offer_check()
         charges = acc_state.get("charges", 0)
         # if charges > 12:
         #     charges = 12
