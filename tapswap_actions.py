@@ -528,7 +528,7 @@ class TapswapActions:
             proxy=self.proxy_string,
             json_p=payload,
             http_timeout=HTTP_REQUEST_TIMEOUT,
-            good_statuses=[200, 201, 400],
+            good_statuses=[200, 201],
             logger=self.logger,
         )
         status = request.get("status")
@@ -580,6 +580,10 @@ class TapswapActions:
         self.bearer = self.account_data.get("access_token")
         self.logger.info(f"Got Bearer: {self.bearer}")
 
+        self.my_shares = self.account_data.get("player", {}).get("shares", 0)
+        self.my_blocks = self.account_data.get("player", {}).get("blocks", 0)
+        self.my_videos = self.account_data.get("player", {}).get("videos", 0)
+
         missions = self.account_data.get("account", {}).get("missions", {})
         self.completed_missions = missions.get("completed", [])
         self.active_missions = [i.get("id") for i in missions.get("active", [])]
@@ -592,13 +596,111 @@ class TapswapActions:
 
         pass
 
+    async def upgrade_building(self, building_id):
+        url = "https://api.tapswap.club/api/town/upgrade_building"
+        headers = self.get_api_headers(bearer=True)
+
+        payload = {
+            "building_id	": building_id,
+        }
+        request = await notpixel_tools.http_request(
+            "POST",
+            url,
+            headers,
+            proxy=self.proxy_string,
+            json_p=payload,
+            http_timeout=HTTP_REQUEST_TIMEOUT,
+            good_statuses=[200, 201],
+            logger=self.logger,
+        )
+        status = request.get("status")
+        content = request.get("content")
+        data = json.loads(content)
+        next_level = data.get("next_level")
+        self.logger.info(
+            f"Building {building_id} upgrade queued. Status: {status}. Next level: {next_level}"
+        )
+
+    async def build(self):
+        my_town = self.account_data.get("player", {}).get("town", {})
+        worker_count = my_town.get("builders", 0)
+        ts_current_ms = int(time.time() * 1000)
+        my_buildings = my_town.get("buildings", [])
+
+        currently_under_constuction = []
+        current_my_buildings_level = {}
+        for b in my_buildings:
+            building_id = b.get("id")
+            building_level = b.get("level")
+            building_ready_at = b.get("ready_at")
+            if ts_current_ms < building_ready_at:
+                worker_count -= 1
+                currently_under_constuction.append(building_id)
+                left_time_s = int((building_ready_at - ts_current_ms) / 1000)
+                self.logger.info(
+                    f"Building {building_id} is still updating to level {building_level}. Left: {left_time_s} sec."
+                )
+                current_my_buildings_level[building_id] = building_level - 1
+            else:
+                current_my_buildings_level[building_id] = building_level
+
+        buildings_plan = self.conf.get("town", {}).get("buildings", [])
+        while worker_count > 0:
+            for b in buildings_plan:
+                building_id = b.get("id")
+                # если это здание уже строится - пропускаем его
+                if building_id in currently_under_constuction:
+                    continue
+                building_levels = b.get("levels", [])
+                upgrade_info = building_levels[2]
+
+                updgrade_info_known_keys = [
+                    "rate",
+                    "cost",
+                    "time_s",
+                    "reward",
+                    "check_telegram",
+                    "required",
+                ]
+                # TODO НАДО ПРОВЕРИТь, ЧТО В ЭТОМ ЕБАНОМ АПГРЕЙД ИНФО НЕТ НОВЫХ ТРЕБОВАНИЙ
+
+                # check if user is subscribet to channel ETIX EBANUX SOBAK
+                upgrade_check_channel = upgrade_info.get("check_telegram")
+                # проверить через базу, что юзер подписан на канал, если нет - добавить канал в обязательные к подписке
+                # подписываться на этапе фактори
+
+                # check if we have enouth moneyyyyy
+                upgrade_cost = upgrade_info.get("cost")
+                upgrade_cost_shares = upgrade_cost.get("shares", 0)
+                upgrade_cost_blocks = upgrade_cost.get("blocks", 0)
+                upgrade_cost_videos = upgrade_cost.get("videos", 0)
+                if not (
+                    self.my_shares >= upgrade_cost_shares
+                    and self.my_blocks >= upgrade_cost_blocks
+                    and self.my_videos >= upgrade_cost_videos
+                ):
+                    continue
+
+                # check if we have req buildings
+                upgrade_requirements = upgrade_info.get("required", {})
+                if upgrade_requirements:
+                    required_building_id = upgrade_requirements.get("id")
+                    if current_my_buildings_level.get(
+                        required_building_id, 0
+                    ) < upgrade_requirements.get("level"):
+                        continue
+
+                await self.upgrade_building(building_id)
+                worker_count -= 1
+                currently_under_constuction.append(building_id)
+
 
 async def main():
-    proxy = "07196708-zone-custom-region-CA-sessid-C9p85mlF-sessTime-120:6pGOVG0G@f.proxys5.net:6200"
+    proxy = "07196708-zone-custom-region-CA-city-toronto-sessid-RoRsgvQB-sessTime-120:6pGOVG0G@f.proxys5.net:6200"
     proxy_host, proxy_port, proxy_user, proxy_password = notpixel_tools.parse_proxy_url(
         "https://" + proxy
     )
-    webpp_url = "https://app.tapswap.club/?bot=app_bot_0#tgWebAppData=query_id%3DAAEITE4rAAAAAAhMTiu7VFKu%26user%3D%257B%2522id%2522%253A726551560%252C%2522first_name%2522%253A%2522A%2522%252C%2522last_name%2522%253A%2522S%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522is_premium%2522%253Atrue%252C%2522allows_write_to_pm%2522%253Atrue%252C%2522photo_url%2522%253A%2522https%253A%255C%252F%255C%252Ft.me%255C%252Fi%255C%252Fuserpic%255C%252F320%255C%252F_aefHTTaqquqHSKCJLEG3ibz76vobUxfaln3jrMDe2A.svg%2522%257D%26auth_date%3D1732190955%26signature%3DsqzjNdl9YQezbWHBjRskKSjS_jM7DVHrPJj9G2BKyNNDwiwgjPw7uKIIsTprQfoEWR2a2D8Qqxq3z90t6I9JAg%26hash%3Dee3255412b879235c1792b131a92f0ea6476c7a61dbf70472e280ac49b4d5875&tgWebAppVersion=8.0&tgWebAppPlatform=tdesktop&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
+    webpp_url = "https://app.tapswap.club/?bot=app_bot_0#tgWebAppData=query_id%3DAAEITE4rAAAAAAhMTitIuYb2%26user%3D%257B%2522id%2522%253A726551560%252C%2522first_name%2522%253A%2522A%2522%252C%2522last_name%2522%253A%2522S%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522is_premium%2522%253Atrue%252C%2522allows_write_to_pm%2522%253Atrue%252C%2522photo_url%2522%253A%2522https%253A%255C%252F%255C%252Ft.me%255C%252Fi%255C%252Fuserpic%255C%252F320%255C%252F_aefHTTaqquqHSKCJLEG3ibz76vobUxfaln3jrMDe2A.svg%2522%257D%26auth_date%3D1732250706%26signature%3DUsHZgcdazbCN6a74OJQlsppOPczv9_Zk0MefNqpl_ZjEBOC71DAkBIRZ0LrkP0CoLUQmJ6FTz-_u1FcHypOZAw%26hash%3D5ae14671c23912a90a3a99939b012f29a440be6c501a551dd2320dc84aaa2b22&tgWebAppVersion=8.0&tgWebAppPlatform=tdesktop&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
 
     sb = secure_browser.SecChromeBrowser(headless=False)
 
@@ -616,7 +718,8 @@ async def main():
     # if its night -> not tap -> not missions
     # if day -> tap with prob 70% and complete mission with 50%
 
-    await ts.make_taps()
+    # await ts.make_taps()
+    await ts.build()
 
 
 if __name__ == "__main__":
