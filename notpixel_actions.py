@@ -35,7 +35,7 @@ class PixelActions:
         web_app_entry_url: str,
         session_id: str,
         db: dbutils.TDB,
-        dt_start_fucktory: datetime.datetime,
+        worker_start_datetime: datetime.datetime,
         proxy_host="",
         proxy_port=0,
         proxy_user="",
@@ -49,7 +49,7 @@ class PixelActions:
             filepath=logfile_path, level=logging_level, name=logging_name
         )
 
-        self.dt_start_fucktory = dt_start_fucktory
+        self.dt_start_fucktory = worker_start_datetime
 
         self.web_app_entry_url = web_app_entry_url
         self.db = db
@@ -582,7 +582,7 @@ class PixelActions:
         content = result.get("content")
         if content:
             content = content.decode()
-        await self.db.add_secret_try(
+        await self.db.add_notpixel_secret_try(
             number=self.session_id, word=word, responce=content
         )
         self.logger.info(f"Finish send secret word {word}, answer: {content}")
@@ -620,7 +620,7 @@ class PixelActions:
         charges = acc_state.get("charges", 0)
         # if charges > 12:
         #     charges = 12
-        # charges = 3
+        charges = 1
         templates = await self.get_templates(TEMPLATE_PAGE)
 
         template_id = random.choice(list(templates))
@@ -647,7 +647,7 @@ class PixelActions:
                 self.logger.error((f"FAILED PAINT PIXEL {pixel_id} to {color}"))
 
         try:
-            old_secrets = await self.db.get_user_old_secrets(self.session_id)
+            old_secrets = await self.db.get_notpixel_secret_tries(self.session_id)
             for word in settings.secret_words:
                 if word not in old_secrets:
                     await self.enter_secret_word(word)

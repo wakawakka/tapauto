@@ -3,6 +3,7 @@ import logging
 import os
 import random
 import datetime
+import time
 
 import dbutils
 import notpixel_actions
@@ -30,6 +31,7 @@ class Worker:
         tdata_path: str,
         telegram_session_id: int,
         db: dbutils.TDB,
+        start_datetime: datetime.datetime,
         proxy_host: str = None,
         proxy_port: int = None,
         proxy_user: str = None,
@@ -37,7 +39,7 @@ class Worker:
         telegram_password: str = None,
     ):
         self.tdata_path = tdata_path
-
+        self.worker_start_datetime = start_datetime
         self.telegram_session_id = telegram_session_id
 
         self.log_filename = os.path.join(
@@ -74,7 +76,7 @@ class Worker:
                 logging_level=logging.DEBUG,
                 logging_name=f"tg:{self.telegram_session_id}",
             )
-            await self.tg.init_client_tdata(
+            telegram_user_data = await self.tg.init_client_tdata(
                 tdata_path=self.tdata_path,
                 platform=platform,
                 hardware_id=self.telegram_session_id,
@@ -82,22 +84,32 @@ class Worker:
                 raise_current_session_run=False,
             )
 
+            telegram_user_id = telegram_user_data.get("telegram_user_id", None)
+            if telegram_user_id:
+                await self.db.set_telegram_user_id(
+                    self.telegram_session_id, str(telegram_user_id)
+                )
+
             new_password = await self.tg.check_password()
 
             if new_password:
-                await self.db.set_user_password(self.telegram_session_id, new_password)
+                await self.db.set_telegram_user_password(
+                    self.telegram_session_id, new_password
+                )
 
             return {"success": True, "id": self.telegram_session_id, "exception": None}
         except BaseException as e:
             return {"success": False, "id": self.telegram_session_id, "exception": e}
 
-    async def single_run(self, dt_start_fucktory: datetime.datetime):
+    async def single_run_pixel(self, worker_start_datetime: datetime.datetime):
         try:
             async with asyncio.timeout(SINGLE_RUN_TIMEOUT):
 
-                start_param = await self.db.get_start_param(self.telegram_session_id)
+                start_param = await self.db.get_notpixel_start_param(
+                    self.telegram_session_id
+                )
                 if start_param:
-                    await self.db.add_start_param_run(self.telegram_session_id)
+                    await self.db.add_notpixel_start_param_run(self.telegram_session_id)
 
                 # NO MORE 1 CHANNEL PER RUN
                 # channel_to_subscribe = await self.db.get_channel_to_subscribe()
@@ -113,7 +125,7 @@ class Worker:
                     webapp_url,
                     session_id=self.telegram_session_id,
                     db=self.db,
-                    dt_start_fucktory=dt_start_fucktory,
+                    worker_start_datetime=worker_start_datetime,
                     proxy_host=self.proxy_host,
                     proxy_port=self.proxy_port,
                     proxy_user=self.proxy_user,
@@ -124,13 +136,13 @@ class Worker:
                 )
                 account_state = await pixar.repaint_pixels()
                 balance = account_state.get("balance")
-                await self.db.set_user_balance(
+                await self.db.set_notpixel_user_balance(
                     number=self.telegram_session_id, balance=int(balance)
                 )
-                await self.db.log_run_attempt(
+                await self.db.log_notpixel_run_attempt(
                     number=self.telegram_session_id, success=True
                 )
-                await self.db.set_user_status(
+                await self.db.set_telegram_user_status(
                     number=self.telegram_session_id, status="GOOD"
                 )
 
@@ -149,10 +161,10 @@ class Worker:
                 return sleeptime
 
         except BaseException as e:
-            await self.db.log_run_attempt(
+            await self.db.log_notpixel_run_attempt(
                 number=self.telegram_session_id, success=False
             )
-            await self.db.set_user_status(
+            await self.db.set_notpixel_user_status(
                 number=self.telegram_session_id, status=str(e)
             )
             self.logger.error(
@@ -161,18 +173,57 @@ class Worker:
             )
             return RESTART_TIMEOUT
 
-    async def poyti_na_smenu(self, dt_start_fucktory: datetime.datetime):
+    async def get_task_future(self, task_type):
+        match task_type:
+            case "notpixel":
+                return self.single_run_pixel(self.worker_start_datetime)
+            case _:
+                self.logger.error(f"BAD TASK TYPE: {task_type}")
+
+    async def poyti_na_smenu(self):
+
+        raspisanie = {}
+
+        user_pixel_task_enabled = self.db.is_user_pixel_task_enabled(
+            self.telegram_session_id
+        )
+        if user_pixel_task_enabled:
+            self.logger.info(f"Pixel task ENABLED for {self.telegram_session_id}")
+            raspisanie[time.time()] = "notpixel"
+            await asyncio.sleep(0.5)
+        else:
+            self.logger.info(f"Pixel task DISABLED for {self.telegram_session_id}")
+
+        if not raspisanie:
+            self.logger.error(f"WORKER: {self.telegram_session_id} RASPISANIE EMPTY")
+            return
+
         while True:  # ebashit bez vukhodnux
-            timeout = await self.single_run(dt_start_fucktory)
-            self.logger.info(
-                f"Worker {self.telegram_session_id} GO SLEEP FOR {timeout} sec"
-            )
-            await asyncio.sleep(timeout)
+
+            current_ts = time.time()
+            task_key = None
+            for start_ts in raspisanie:
+                if current_ts > start_ts:
+                    task_key = start_ts
+                    break
+            if task_key:
+                task_type = raspisanie.pop(task_key)
+                task_future = await self.get_task_future(task_type)
+                timeout = await task_future
+                next_start_ts = time.time() + timeout
+                next_start_dt_s = datetime.datetime.fromtimestamp(
+                    next_start_ts
+                ).isoformat()
+                self.logger.info(
+                    f"Worker {self.telegram_session_id} plan {task_type} to {next_start_dt_s}. GO SLEEP FOR {timeout} sec"
+                )
+                raspisanie[next_start_ts] = task_type
+            await asyncio.sleep(1)
 
 
 async def get_workers(db: dbutils.TDB):
 
-    enabled_workers_data = await db.get_users()
+    enabled_workers_data = await db.get_telegram_users(tag=settings.TAG)
     workers = {}
     for user in enabled_workers_data:
         number = user.get("number")
@@ -181,10 +232,13 @@ async def get_workers(db: dbutils.TDB):
             "https://" + proxy
         )
 
+        worker_start_time = datetime.datetime.now(datetime.UTC)
+
         workers[number] = Worker(
             tdata_path=user.get("tdata_path"),
             telegram_session_id=number,
             db=db,
+            start_datetime=worker_start_time,
             proxy_host=proxy_host,
             proxy_port=proxy_port,
             proxy_user=proxy_user,
@@ -213,7 +267,7 @@ async def run_fucktory():
             )
         )
         _i += 1
-        if _i % 30 == 0:
+        if _i % 50 == 0:
             await asyncio.sleep(10)
 
     unloaded_workers = set()
@@ -225,12 +279,12 @@ async def run_fucktory():
 
         if success:
             logger.info(f"Success init telegram session {worker_id}")
-            await db.set_user_status(number=worker_id, status="LOADED")
+            await db.set_telegram_user_status(number=worker_id, status="LOADED")
         else:
             unloaded_workers.add(worker_id)
             exception = result.get("exception")
             logger.error(f"Failed init telegram session {worker_id}. {exception}")
-            await db.set_user_status(number=worker_id, status=str(exception))
+            await db.set_telegram_user_status(number=worker_id, status=str(exception))
             workers.pop(worker_id)
 
     logger.info("CLIENT LOADING SUMMARY")
@@ -242,11 +296,9 @@ async def run_fucktory():
         logger.info(f"\t\t{worker_id}")
     input("Press enter to start BIG WORK on GOOD workers")
 
-    dt_start_fucktory = datetime.datetime.now(datetime.UTC)
-
     for worker_id in workers:
         logger.info(f"STARTING SMENA OF WORKER: {worker_id}")
-        loop.create_task(workers[worker_id].poyti_na_smenu(dt_start_fucktory))
+        loop.create_task(workers[worker_id].poyti_na_smenu())
         await asyncio.sleep(WORKER_INITIAL_START_TIMEOUT)
 
 

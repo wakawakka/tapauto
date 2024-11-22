@@ -8,27 +8,35 @@ import utils
 import settings
 
 init_table_queries = [
-    """CREATE TABLE "user" (
+    """CREATE TABLE "notpixel" (
 	"id"	INTEGER NOT NULL UNIQUE,
 	"number"	TEXT UNIQUE,
-	"tdata_path"	TEXT UNIQUE,
-	"password"	TEXT,
-	"proxy"	TEXT,
+	"disabled"	INTEGER NOT NULL DEFAULT 0,
 	"status"	TEXT,
 	"balance"	INGEGER,
 	"good_runs"	INTEGER NOT NULL DEFAULT 0,
 	"bad_runs"	INTEGER NOT NULL DEFAULT 0,
-	"disabled"	INTEGER NOT NULL DEFAULT 0,
 	"start_param"	TEXT,
 	"start_param_run_count"	INTEGER DEFAULT 0,
-	"index_page_last_update"	DATETIME,
 	PRIMARY KEY("id" AUTOINCREMENT)
-);
-CREATE TABLE "secret_tries" (
+);""",
+    """CREATE TABLE "notpixel_secret_tries" (
 	"number"	TEXT,
 	"word"	TEXT,
 	"responce"	TEXT
 );""",
+    """CREATE TABLE "telegram_user" (
+	"id"	INTEGER NOT NULL UNIQUE,
+	"number"	TEXT UNIQUE,
+	"telegram_user_id"	INTEGER,
+	"tag"	TEXT,
+	"status"	TEXT,
+	"tdata_path"	TEXT UNIQUE,
+	"password"	TEXT,
+	"proxy"	TEXT,
+	"disabled"	INTEGER NOT NULL DEFAULT 0,
+	PRIMARY KEY("id" AUTOINCREMENT)
+)""",
 ]
 
 
@@ -70,27 +78,23 @@ class TDB:
                     await con.commit()
         self.logger.debug(f"Create schema success")
 
-    async def add_user(
-        self, number, tdata_path, password=None, proxy=None, startparam=None
-    ):
+    async def add_telegram_user(self, number, tdata_path, password=None, proxy=None):
         async with aiosqlite.connect(self.db_path) as con:
-            query = "insert into user (number, tdata_path, password, proxy, start_param) values (?,?,?,?,?)"
+            query = "insert into telegram_user (number, tdata_path, password, proxy) values (?,?,?,?)"
             try:
                 async with await con.execute(
                     query,
-                    (number, tdata_path, password, proxy, startparam),
+                    (number, tdata_path, password, proxy),
                 ) as cursor:
                     await con.commit()
                 self.logger.debug(f"User INSERT {number} success")
             except BaseException as e:
                 self.logger.error(f"User INSERT {number} fail. reason: {e}")
 
-    async def get_users(self):
+    async def get_telegram_users(self, tag):
         async with aiosqlite.connect(self.db_path) as con:
-            query = "select number, tdata_path, password, proxy from user where disabled = 0"
-            async with await con.execute(
-                query,
-            ) as cursor:
+            query = "select number, tdata_path, password, proxy from telegram_user where disabled = 0 and tag = ?"
+            async with await con.execute(query, (tag,)) as cursor:
                 rows = await cursor.fetchall()
             self.logger.debug(f"Got {len(rows)} users enabled users from database")
             users = [
@@ -104,69 +108,64 @@ class TDB:
             ]
             return users
 
-    async def set_user_status(self, number, status):
+    async def set_telegram_user_password(self, number, password):
         async with aiosqlite.connect(self.db_path) as con:
-            query = "update user set status = ? where number = ?"
-            async with await con.execute(query, (status, number)) as cursor:
-                await con.commit()
-
-    async def set_user_proxy(self, number, proxy):
-        async with aiosqlite.connect(self.db_path) as con:
-            query = "update user set status = ? where number = ?"
-            async with await con.execute(query, (proxy, number)) as cursor:
-                await con.commit()
-
-    async def set_user_balance(self, number, balance):
-        async with aiosqlite.connect(self.db_path) as con:
-            query = "update user set balance = ? where number = ?"
-            async with await con.execute(query, (balance, number)) as cursor:
-                await con.commit()
-
-    async def set_user_password(self, number, password):
-        async with aiosqlite.connect(self.db_path) as con:
-            query = "update user set password = ? where number = ?"
+            query = "update telegram_user set password = ? where number = ?"
             async with await con.execute(query, (password, number)) as cursor:
                 await con.commit()
 
-    async def log_run_attempt(self, number, success):
-        if success:
-            query = "update user set good_runs = good_runs + 1 where number = ?"
-        else:
-            query = "update user set bad_runs = bad_runs + 1 where number = ?"
+    async def set_telegram_user_status(self, number, status):
+        query = "update telegram_user set status = ? where number = ?"
         async with aiosqlite.connect(self.db_path) as con:
-            async with await con.execute(query, (number,)) as cursor:
+            async with await con.execute(query, (status, number)) as cursor:
                 await con.commit()
 
-    async def add_start_param_run(self, number):
-        query = "update user set start_param_run_count = start_param_run_count + 1 where number = ?"
+    async def set_telegram_user_id(self, number, telegram_user_id):
+        query = "update telegram_user set telegram_user_id = ? where number = ?"
         async with aiosqlite.connect(self.db_path) as con:
-            async with await con.execute(query, (number,)) as cursor:
+            async with await con.execute(query, (telegram_user_id, number)) as cursor:
                 await con.commit()
 
-    async def set_user_index_update_time(self, number, update_time: datetime.datetime):
-        async with aiosqlite.connect(self.db_path) as con:
-            query = "update user set index_page_last_update = ? where number = ?"
-            async with await con.execute(query, (update_time, number)) as cursor:
-                await con.commit()
+    # NOTPIXEL METHODS
 
-    async def get_user_index_update_time(self, number):
+    async def is_user_pixel_task_enabled(self, number):
+        query = "select id from notpixel where number = ?"
         async with aiosqlite.connect(self.db_path) as con:
-            query = "select index_page_last_update from user where number = ?"
             async with await con.execute(query, (number,)) as cursor:
                 row = await cursor.fetchone()
-                return row[0]
+                if row:
+                    return True
 
-    # Migration
-    # ALTER TABLE "user"
-    # ADD start_param TEXT;
-
-    # ALTER TABLE "user"
-    # ADD start_param_run_count INTEGER DEFAULT 0;
-    async def get_start_param(self, number):
+    async def set_notpixel_user_status(self, number, status):
+        query = "update notpixel set status = ? where number = ?"
         async with aiosqlite.connect(self.db_path) as con:
-            query = (
-                "select start_param,start_param_run_count from user where number = ?"
-            )
+            async with await con.execute(query, (status, number)) as cursor:
+                await con.commit()
+
+    async def set_notpixel_user_balance(self, number, balance):
+        async with aiosqlite.connect(self.db_path) as con:
+            query = "update notpixel set balance = ? where number = ?"
+            async with await con.execute(query, (balance, number)) as cursor:
+                await con.commit()
+
+    async def log_notpixel_run_attempt(self, number, success):
+        if success:
+            query = "update notpixel set good_runs = good_runs + 1 where number = ?"
+        else:
+            query = "update notpixel set bad_runs = bad_runs + 1 where number = ?"
+        async with aiosqlite.connect(self.db_path) as con:
+            async with await con.execute(query, (number,)) as cursor:
+                await con.commit()
+
+    async def add_notpixel_start_param_run(self, number):
+        query = "update notpixel set start_param_run_count = start_param_run_count + 1 where number = ?"
+        async with aiosqlite.connect(self.db_path) as con:
+            async with await con.execute(query, (number,)) as cursor:
+                await con.commit()
+
+    async def get_notpixel_start_param(self, number):
+        async with aiosqlite.connect(self.db_path) as con:
+            query = "select start_param, start_param_run_count from notpixel where number = ?"
             async with await con.execute(query, (number,)) as cursor:
                 row = await cursor.fetchone()
                 start_param = row[0]
@@ -174,15 +173,15 @@ class TDB:
         if start_param and start_param_run_count < 5:
             return start_param
 
-    async def add_secret_try(self, number: str, word: str, responce: str):
+    async def add_notpixel_secret_try(self, number: str, word: str, responce: str):
         async with aiosqlite.connect(self.db_path) as con:
-            query = "insert into secret_tries (number, word, responce) values (?, ?, ?)"
+            query = "insert into notpixel_secret_tries (number, word, responce) values (?, ?, ?)"
             async with await con.execute(query, (number, word, responce)) as cursor:
                 await con.commit()
 
-    async def get_user_old_secrets(self, number) -> set:
+    async def get_notpixel_secret_tries(self, number) -> set:
         async with aiosqlite.connect(self.db_path) as con:
-            query = "select word from secret_tries where number = ?"
+            query = "select word from notpixel_secret_tries where number = ?"
             async with await con.execute(query, (number,)) as cursor:
                 word_rows = await cursor.fetchall()
                 words = [i[0] for i in word_rows]
@@ -190,7 +189,8 @@ class TDB:
 
 
 async def init_database():
-    db = TDB(settings.db_path)
+    # db = TDB(settings.db_path)
+    db = TDB("test.db")
     drop_old = input("Drop old data? y/n: ")
     if drop_old == "y":
         await db.drop_tables()

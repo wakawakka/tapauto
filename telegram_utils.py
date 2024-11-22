@@ -129,7 +129,7 @@ class Telega:
                     f"Telegram profile connect success - path: {tdata_path}, "
                     f"id: {acc_info.id}, num: {acc_info.phone}, username: {acc_info.username}, phone: {acc_info.phone}"
                 )
-            # except asyncio.exceptions.CancelledError as e:
+                return {"telegram_user_id": acc_info.id}
 
             except BaseException as e:
                 if self.use_session_flag == CreateNewSession:
@@ -337,12 +337,14 @@ class Telega:
             f"Getting bot web application URL for {bot_username}, {platform}, with params {param}"
         )
         bot = await self.client.get_entity(bot_username)
-        bot_full = await self.client(functions.users.GetFullUserRequest(id=bot_username))
+        bot_full = await self.client(
+            functions.users.GetFullUserRequest(id=bot_username)
+        )
 
         self.logger.info(f"Got bot entity, id: {bot.id}")
-      
-        bot_user = types.InputUser(bot.id , bot.access_hash )
-        bot_user_peer = types.InputPeerUser(bot.id , bot.access_hash )    
+
+        bot_user = types.InputUser(bot.id, bot.access_hash)
+        bot_user_peer = types.InputPeerUser(bot.id, bot.access_hash)
 
         theme_styles = {
             "accent_text_color": "#168acd",
