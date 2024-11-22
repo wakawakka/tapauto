@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 import random
+import datetime
 
 import dbutils
 import notpixel_actions
@@ -90,13 +91,18 @@ class Worker:
         except BaseException as e:
             return {"success": False, "id": self.telegram_session_id, "exception": e}
 
-    async def single_run(self, logger, simplified=False):
+    async def single_run(self, dt_start_fucktory: datetime.datetime):
         try:
             async with asyncio.timeout(SINGLE_RUN_TIMEOUT):
 
                 start_param = await self.db.get_start_param(self.telegram_session_id)
                 if start_param:
                     await self.db.add_start_param_run(self.telegram_session_id)
+
+                # NO MORE 1 CHANNEL PER RUN
+                # channel_to_subscribe = await self.db.get_channel_to_subscribe()
+                # await self.subscribe_channel(channel_to_subscribe)
+                # await self.db.add_user_channel_subscribe(channel_to_subscribe)
 
                 webapp_url = await self.tg.get_bot_webapp(
                     bot_username=BOT_USERNAME,
@@ -107,6 +113,7 @@ class Worker:
                     webapp_url,
                     session_id=self.telegram_session_id,
                     db=self.db,
+                    dt_start_fucktory=dt_start_fucktory,
                     proxy_host=self.proxy_host,
                     proxy_port=self.proxy_port,
                     proxy_user=self.proxy_user,
@@ -115,7 +122,7 @@ class Worker:
                     logging_level=logging.DEBUG,
                     logging_name=f"px:{self.telegram_session_id}",
                 )
-                account_state = await pixar.repaint_pixels(simplified=simplified)
+                account_state = await pixar.repaint_pixels()
                 balance = account_state.get("balance")
                 await self.db.set_user_balance(
                     number=self.telegram_session_id, balance=int(balance)
@@ -127,7 +134,7 @@ class Worker:
                     number=self.telegram_session_id, status="GOOD"
                 )
 
-                if not simplified:
+                if not settings.SIMPLIFIED:
                     full_restore_timeout = (
                         account_state.get("max_charges") - account_state.get("charges")
                     ) * account_state.get("charge_restore_speed")
@@ -135,7 +142,7 @@ class Worker:
                     random_sleep_size = random.randint(
                         0, SUCCESS_JOB_DONE_MAX_ADD_SLEEP_TILE
                     )
-                
+
                     sleeptime = full_restore_timeout + random_sleep_size
                 else:
                     sleeptime = SIMPLIFIED_SLEEP
@@ -148,16 +155,18 @@ class Worker:
             await self.db.set_user_status(
                 number=self.telegram_session_id, status=str(e)
             )
-            logger.error(
+            self.logger.error(
                 f"Worker {self.telegram_session_id} breaks with: {e}",
                 stack_info=True,
             )
             return RESTART_TIMEOUT
 
-    async def poyti_na_smenu(self, logger, simplified):
+    async def poyti_na_smenu(self, dt_start_fucktory: datetime.datetime):
         while True:  # ebashit bez vukhodnux
-            timeout = await self.single_run(logger, simplified=simplified)
-            logger.info(f"Worker {self.telegram_session_id} GO SLEEP FOR {timeout} sec")
+            timeout = await self.single_run(dt_start_fucktory)
+            self.logger.info(
+                f"Worker {self.telegram_session_id} GO SLEEP FOR {timeout} sec"
+            )
             await asyncio.sleep(timeout)
 
 
@@ -185,7 +194,7 @@ async def get_workers(db: dbutils.TDB):
     return workers
 
 
-async def run_fucktory(simplified=False):
+async def run_fucktory():
     loop = asyncio.get_event_loop()
 
     fucktory_logfile = "fucktory.log"
@@ -233,13 +242,15 @@ async def run_fucktory(simplified=False):
         logger.info(f"\t\t{worker_id}")
     input("Press enter to start BIG WORK on GOOD workers")
 
+    dt_start_fucktory = datetime.datetime.now(datetime.UTC)
+
     for worker_id in workers:
         logger.info(f"STARTING SMENA OF WORKER: {worker_id}")
-        loop.create_task(workers[worker_id].poyti_na_smenu(logger, simplified))
+        loop.create_task(workers[worker_id].poyti_na_smenu(dt_start_fucktory))
         await asyncio.sleep(WORKER_INITIAL_START_TIMEOUT)
 
 
 if __name__ == "__main__":
     loop = asyncio.new_event_loop()
-    loop.create_task(run_fucktory(settings.SIMPLIFIED))
+    loop.create_task(run_fucktory())
     loop.run_forever()

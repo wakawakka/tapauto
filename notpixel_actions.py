@@ -35,13 +35,12 @@ class PixelActions:
         web_app_entry_url: str,
         session_id: str,
         db: dbutils.TDB,
+        dt_start_fucktory: datetime.datetime,
         proxy_host="",
         proxy_port=0,
         proxy_user="",
         proxy_password="",
         proxy_extention_path="",
-        gui_browser_worker_type=None,  # chrome or firefox, allow NONE to not start the browser
-        headless=False,
         logfile_path="common.log",
         logging_level=logging.DEBUG,
         logging_name="PixelActions unnamed",
@@ -49,6 +48,8 @@ class PixelActions:
         self.logger = utils.get_logger(
             filepath=logfile_path, level=logging_level, name=logging_name
         )
+
+        self.dt_start_fucktory = dt_start_fucktory
 
         self.web_app_entry_url = web_app_entry_url
         self.db = db
@@ -59,7 +60,8 @@ class PixelActions:
         self.proxy_password = proxy_password
         self.proxy_extention_path = proxy_extention_path
 
-        self.allowed_tasks = {i: False for i in settings.free_tasks}
+        # self.allowed_tasks = {i: False for i in settings.free_tasks}
+        self.allowed_tasks = {i: True for i in settings.free_tasks}
 
         self.pool = ThreadPoolExecutor(max_workers=2)
         self.centrifuga = Fucka(
@@ -83,58 +85,6 @@ class PixelActions:
             )
 
         self.sb = None
-        if gui_browser_worker_type:
-            self.gui_init_browser(gui_browser_worker_type, headless)
-
-    def gui_init_browser(self, gui_browser_worker_type="chrome", headless=False):
-        browser_args = {
-            "proxy_host": self.proxy_host,
-            "proxy_port": self.proxy_port,
-            "proxy_user": self.proxy_user,
-            "proxy_password": self.proxy_password,
-            "headless": headless,
-        }
-        if self.proxy_extention_path:
-            browser_args["extention_path"] = self.proxy_extention_path
-        if gui_browser_worker_type == "firefox":
-            self.sb = secure_browser.SecFirefoxBrowser(**browser_args)
-        elif gui_browser_worker_type == "chrome":
-            self.sb = secure_browser.SecChromeBrowser(**browser_args)
-
-    def gui_click_initial_buttons(self):
-        button_texts = ["Okay", "Gooooo"]
-        okay_button = True
-        while okay_button:
-            clicked = False
-            for bp in button_texts:
-                okay_button = self.sb.find_element(
-                    By.XPATH, f'//div/button[contains(text(), "{bp}")]', delay=5
-                )
-                if okay_button:
-                    okay_button_text = None
-                    try:
-                        okay_button_text = okay_button.text
-                        print(f"Found Okay button: {okay_button_text}")
-                        okay_button.click()
-                        clicked = True
-                    except:
-                        print(f"Found unclickable Okay button: {okay_button_text}")
-            if clicked:
-                okay_button = True
-
-    def gui_app_start(self, retries=None, timeout=5):
-        if retries:
-            for i in range(retries):
-                self.sb.browser.get(self.web_app_entry_url)
-                try:
-                    WebDriverWait(self.sb.browser, timeout).until(
-                        EC.element_to_be_clickable((By.XPATH, "//div/button"))
-                    )
-                    break
-                except BaseException as e:
-                    print(f"not found button: {e}")
-        else:
-            self.sb.browser.get(self.web_app_entry_url)
 
     def init_user_agent(self):
         dec_url = unquote(unquote(self.web_app_entry_url))
@@ -174,7 +124,8 @@ class PixelActions:
         self.logger.info(f"Start Emulate JS index loading")
         headers = {"User-Agent": self.user_agent}
 
-        index_last_update = await self.db.get_user_index_update_time(self.session_id)
+        # index_last_update = await self.db.get_user_index_update_time(self.session_id)
+        index_last_update = self.dt_start_fucktory
         dt_rfc_format = None
         if index_last_update:
             dt_last_update = datetime.datetime.fromisoformat(index_last_update)
@@ -198,29 +149,36 @@ class PixelActions:
         )
 
         if status == 200:
-            dt_now = datetime.datetime.now(datetime.UTC)
-            dt_now_rfc = dt_now.strftime("%a, %d %b %Y %H:%M:%S GMT")
-            self.logger.info(
-                f"Index page downloaded. Setting index download time {dt_now_rfc} on user {self.session_id}"
+            self.logger.error(
+                "INDEX PAGE UPDATED FROM START OF THE FUCKTORY. ALL TASKS STOP."
             )
-            await self.db.set_user_index_update_time(self.session_id, dt_now)
+            loop = asyncio.get_event_loop()
+            loop.stop()
 
-            for task in settings.free_tasks:
-                task_check = settings.free_tasks[task]
-                if not task_check in content:
-                    self.logger.info(
-                        f"Check of {task_check} in index failed. Task {task} completion blocked."
-                    )
-                    self.allowed_tasks[task] = False
-                else:
-                    self.logger.info(
-                        f"Check of {task_check} in index Success. Task {task} completion allowed."
-                    )
-                    self.allowed_tasks[task] = True
-        elif status == 304:
-            self.logger.info(
-                f"All task completion blocked until new index.js download. Last load was {dt_rfc_format}"
-            )
+        # if status == 200:
+        #     dt_now = datetime.datetime.now(datetime.UTC)
+        #     dt_now_rfc = dt_now.strftime("%a, %d %b %Y %H:%M:%S GMT")
+        #     self.logger.info(
+        #         f"Index page downloaded. Setting index download time {dt_now_rfc} on user {self.session_id}"
+        #     )
+        #     await self.db.set_user_index_update_time(self.session_id, dt_now)
+
+        #     for task in settings.free_tasks:
+        #         task_check = settings.free_tasks[task]
+        #         if not task_check in content:
+        #             self.logger.info(
+        #                 f"Check of {task_check} in index failed. Task {task} completion blocked."
+        #             )
+        #             self.allowed_tasks[task] = False
+        #         else:
+        #             self.logger.info(
+        #                 f"Check of {task_check} in index Success. Task {task} completion allowed."
+        #             )
+        #             self.allowed_tasks[task] = True
+        # elif status == 304:
+        #     self.logger.info(
+        #         f"All task completion blocked until new index.js download. Last load was {dt_rfc_format}"
+        #     )
 
     async def emulate_js_loading(self, mainpage_content):
         self.logger.info(f"Start Emulate JS loading")
@@ -603,34 +561,6 @@ class PixelActions:
             "balance": balance,
         }
 
-    async def paint_pixel_old(self, x: int, y: int, color: tuple):
-        if self.sb:
-            browser_url = "https://app.notpx.app/"
-            if self.sb.browser.current_url != browser_url:
-                self.sb.browser.get(browser_url)
-        url = "https://notpx.app/api/v1/repaint/start"
-        color_s = "#" + notpixel_tools.rgb_to_hex(color)
-        self.logger.debug(f"Start PAINT PIXEL {x}:{y}")
-        headers = self.get_headers_api()
-        pixel_id = y * 1000 + x + 1
-        result = await notpixel_tools.http_request(
-            "POST",
-            url,
-            headers,
-            json_p={"pixelId": pixel_id, "newColor": color_s},
-            proxy=self.proxy_string,
-            http_timeout=HTTP_REQUEST_TIMEOUT,
-            good_statuses=[200],
-            logger=self.logger,
-        )
-        await self.sleep_after_request()
-        status = result.get("status")
-        content = result.get("content")
-        content_len = len(content)
-        self.logger.info(
-            f"Finish PAINT PIXEL {x}:{y} to {color_s}, status: {status}, content: {content} content len: {content_len}"
-        )
-
     async def enter_secret_word(self, word: str):
         url = "https://notpx.app/api/v1/mining/quest/check/secretWord"
         self.logger.debug(f'Start send secret word "{word}"')
@@ -679,43 +609,7 @@ class PixelActions:
         )
         return status == 200
 
-    async def paint(self, pixels_to_paint):
-        painted = []
-        for x, y, task_pix_color in pixels_to_paint:
-            await self.paint_pixel_old(x, y, task_pix_color)
-            painted.append((x, y))
-            self.energy -= 1
-            if self.energy < 1:
-                return painted
-        return painted
-
-    async def paint_pixels(self, pixels_to_paint):
-        if self.sb:  # NOT ASYNC
-            self.gui_app_start()
-            self.gui_click_initial_buttons()
-        else:
-            await self.emulate_app_start()
-
-        acc_state = await self.get_account_state()
-
-        self.energy = acc_state.get("charges", 0)
-        recharge_speed = acc_state.get("charge_restore_speed", 0)
-        max_charges = acc_state.get("max_charges", 0)
-
-        painted = await self.paint(pixels_to_paint)
-
-        job_status = {
-            "painted": painted,
-            "charges": self.energy,
-            "energy_restore_speed": recharge_speed,
-            "max_energy": max_charges,
-        }
-
-        self.logger.info(f"Job done, result: {job_status}")
-
-        return job_status
-
-    async def repaint_pixels(self, simplified=False):
+    async def repaint_pixels(self):
         await self.emulate_app_start()
         ws_token = await self.get_ws_token()
         acc_state = await self.get_account_state(
@@ -725,10 +619,7 @@ class PixelActions:
         # if charges > 12:
         #     charges = 12
         # charges = 3
-        if simplified:
-            templates = await self.get_templates(TEMPLATE_PAGE)
-        else:
-            templates = await self.get_templates(1)
+        templates = await self.get_templates(TEMPLATE_PAGE)
 
         template_id = random.choice(list(templates))
 
@@ -736,44 +627,42 @@ class PixelActions:
         if not good_pixel_colors:
             good_pixel_colors = await self.get_template_colors(template_id)
 
-        if not simplified:
-            await self.select_template(template_id=template_id)
+        await self.select_template(template_id=template_id)
 
         await self.centrifuga.init_client(token=ws_token, user_agent=self.user_agent)
         paint_task = await self.centrifuga.collect_pixels_to_repaint(
             charges, good_pixels=good_pixel_colors
         )
 
-        if not simplified:
-            # repaint
-            for shot_i in range(charges):
-                pixel_id = random.choice(list(paint_task.keys()))
-                color = paint_task.pop(pixel_id)
-                try:
-                    await self.paint_pixel(pixel_id, color)
-                    charges -= 1
-                except BaseException as e:
-                    self.logger.error((f"FAILED PAINT PIXEL {pixel_id} to {color}"))
-
+        # repaint
+        for shot_i in range(charges):
+            pixel_id = random.choice(list(paint_task.keys()))
+            color = paint_task.pop(pixel_id)
             try:
-                old_secrets = await self.db.get_user_old_secrets(self.session_id)
-                for word in settings.secret_words:
-                    if word not in old_secrets:
-                        await self.enter_secret_word(word)
+                await self.paint_pixel(pixel_id, color)
+                charges -= 1
             except BaseException as e:
-                self.logger.error(f"Failed to send secret word. {e}")
+                self.logger.error((f"FAILED PAINT PIXEL {pixel_id} to {color}"))
 
-            # update acc state (not nessesary)
-            try:
-                acc_state = await self.get_account_state(
-                    claim=False, upgrade=False, complete_tasks=False
-                )
-                charges = acc_state.get("charges", 0)
-            except:
-                self.logger.error(
-                    "Error updating acc state after actions. Return initial values"
-                )
-                acc_state["charges"] = charges
+        try:
+            old_secrets = await self.db.get_user_old_secrets(self.session_id)
+            for word in settings.secret_words:
+                if word not in old_secrets:
+                    await self.enter_secret_word(word)
+        except BaseException as e:
+            self.logger.error(f"Failed to send secret word. {e}")
+
+        # update acc state (not nessesary)
+        try:
+            acc_state = await self.get_account_state(
+                claim=False, upgrade=False, complete_tasks=False
+            )
+            charges = acc_state.get("charges", 0)
+        except:
+            self.logger.error(
+                "Error updating acc state after actions. Return initial values"
+            )
+            acc_state["charges"] = charges
 
             # {
             #     "charges": charges,

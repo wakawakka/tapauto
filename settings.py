@@ -30,7 +30,7 @@ free_tasks = {
     # "boinkTask": b',boinkTask:"boinkTask,"',
     # "jettonTask": b'id:"jetton",reward:512,action:()=>{i("task_click"),X("https://t.me/jetton/bonus?startapp=cdQGhtRYyjY"',
     # "pumpkin": b'a=t.meta.arg.reward;i&&(s===S.pumpkin&&n.dispatch(Ci({product:7,amount:6})),n.dispatch(Lt(a)));let o="Check failed"',
-    "nikolai": b'a=c(o=>o.user.country),i=Ju();return e.jsx(pe,{boost:t,action:()=>{At("https://x.com/NikolAIToncoin"),'
+    # "nikolai": b'a=c(o=>o.user.country),i=Ju();return e.jsx(pe,{boost:t,action:()=>{At("https://x.com/NikolAIToncoin"),'
 }
 
 secret_words = {"happy halloween"}
