@@ -124,13 +124,15 @@ class PixelActions:
         self.logger.info(f"Start Emulate JS index loading")
         headers = {"User-Agent": self.user_agent}
 
-        # index_last_update = await self.db.get_user_index_update_time(self.session_id)
         index_last_update = self.dt_start_fucktory
-        dt_rfc_format = None
-        if index_last_update:
-            dt_last_update = datetime.datetime.fromisoformat(index_last_update)
-            dt_rfc_format = dt_last_update.strftime("%a, %d %b %Y %H:%M:%S GMT")
-            headers["If-Modified-Since"] = dt_rfc_format
+        dt_rfc_format = index_last_update.strftime("%a, %d %b %Y %H:%M:%S GMT")
+        headers["If-Modified-Since"] = dt_rfc_format
+        # index_last_update = await self.db.get_user_index_update_time(self.session_id)
+        # dt_rfc_format = None
+        # if index_last_update:
+        #     dt_last_update = datetime.datetime.fromisoformat(index_last_update)
+        #     dt_rfc_format = dt_last_update.strftime("%a, %d %b %Y %H:%M:%S GMT")
+        #     headers["If-Modified-Since"] = dt_rfc_format
 
         index_request = await notpixel_tools.http_request(
             "GET",
@@ -223,7 +225,7 @@ class PixelActions:
             status = i.get("status")
             content = i.get("content")
             sum_len += len(content)
-            if status == 200:
+            if status in [200, 304]:
                 loaded_js_count += 1
             else:
                 bad_loaded_js_count += 1
