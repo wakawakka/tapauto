@@ -189,8 +189,8 @@ class TDB:
 
 
 async def init_database():
-    # db = TDB(settings.db_path)
-    db = TDB("test.db")
+    db = TDB(settings.db_path)
+    # db = TDB("test.db")
     drop_old = input("Drop old data? y/n: ")
     if drop_old == "y":
         await db.drop_tables()
