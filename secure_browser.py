@@ -11,7 +11,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver import ChromeOptions, Firefox, FirefoxProfile
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 
-from seleniumwire.webdriver import Firefox as Firefoxwire
 
 import secure_browser_js as sbjs
 
@@ -90,7 +89,7 @@ class SecFirefoxBrowser(Browser):
             options.add_argument(f"--headless")
             # options.headless = True
         if wire:
-            self.browser = Firefoxwire(options=options)
+            self.browser = Firefox(options=options)
         else:
             self.browser = Firefox(options=options)
 

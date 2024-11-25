@@ -95,10 +95,12 @@ class TDB:
         async with aiosqlite.connect(self.db_path) as con:
             if tag is None:
                 query = "select number, tdata_path, password, proxy from telegram_user where disabled = 0"
+                async with await con.execute(query) as cursor:
+                    rows = await cursor.fetchall()
             else:
                 query = "select number, tdata_path, password, proxy from telegram_user where disabled = 0 and tag = ?"
-            async with await con.execute(query, (tag,)) as cursor:
-                rows = await cursor.fetchall()
+                async with await con.execute(query, (tag,)) as cursor:
+                    rows = await cursor.fetchall()
             self.logger.debug(f"Got {len(rows)} users enabled users from database")
             users = [
                 {
