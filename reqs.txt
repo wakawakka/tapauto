@@ -17,7 +17,5 @@ aiosqlite
 centrifuge-python
 opentele
 aioretry
-selenium-wire
-blinker==1.7.0
 packaging
 setuptools
