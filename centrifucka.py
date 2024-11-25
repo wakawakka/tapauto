@@ -109,6 +109,11 @@ class Fucka:
         )
         return True
 
+    async def emulate_centrifuga_connect(self):
+        await self.client.connect()
+        await self.client.disconnect()
+        self.logger.info("Success emulation centrifuga connecting.")
+
     async def collect(self):
         await self.client.connect()
         while self.buffer.qsize() < 5:

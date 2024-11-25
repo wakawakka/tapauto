@@ -389,6 +389,42 @@ class PixelActions:
         )
         return pixels
 
+    async def get_my_template(self):
+        url = f"https://notpx.app/api/v1/image/template/my"
+        self.logger.debug(f"Start GET my template info")
+        headers = self.get_headers_api()
+        result = await notpixel_tools.http_request(
+            "GET",
+            url,
+            headers,
+            proxy=self.proxy_string,
+            http_timeout=HTTP_REQUEST_TIMEOUT,
+            good_statuses=[200],
+            logger=self.logger,
+        )
+        await self.sleep_after_request()
+        content = result.get("content")
+        data = json.loads(content)
+        self.logger.info(f"My template info: {data}")
+        return data
+
+    async def get_my_template_good_pixels(self, my_template_info):
+        template_id = my_template_info.get("id")
+        template_url = my_template_info.get("url")
+
+        template_info_path = os.path.join(settings.templates_dir, f"{template_id}.json")
+        with open(template_info_path, "w") as f:
+            f.write(json.dumps(my_template_info, indent=4))
+
+        good_pixel_colors = None
+        good_pixel_colors = await self.get_template_colors_from_cache(template_id)
+        if not good_pixel_colors:
+            pixels = await self.get_template_pixels_by_url(template_id, template_url)
+            good_pixel_colors = await self.pixels_to_color_data(
+                pixels=pixels, template_info=my_template_info
+            )
+        return good_pixel_colors
+
     async def get_template_pixels_from_cache(self, template_id):
         try:
             template_image_path = os.path.join(
@@ -631,6 +667,8 @@ class PixelActions:
     async def repaint_pixels(self):
         await self.emulate_app_start()
         ws_token = await self.get_ws_token()
+        await self.centrifuga.init_client(token=ws_token, user_agent=self.user_agent)
+
         acc_state = await self.get_account_state(
             claim=True, upgrade=True, complete_tasks=True
         )
@@ -639,50 +677,64 @@ class PixelActions:
         # if charges > 12:
         #     charges = 12
         # charges = 1
-        templates = await self.get_templates(TEMPLATE_PAGE)
 
-        template_id = random.choice(list(templates))
+        good_pixel_colors = None
+        my_template = await self.get_my_template()
 
-        good_pixel_colors = await self.get_template_colors_from_cache(template_id)
-        if not good_pixel_colors:
-            good_pixel_colors = await self.get_template_colors(template_id)
+        if not settings.NOPAINT:
+            if my_template:
+                good_pixel_colors = await self.get_my_template_good_pixels(my_template)
+            else:
+                self.logger.error(
+                    "Template not choosen in this account. Bad. No way to choose it now."
+                )
 
-        await self.select_template(template_id=template_id)
+        # templates = await self.get_templates(TEMPLATE_PAGE)
+        # template_id = random.choice(list(templates))
+        # good_pixel_colors = await self.get_template_colors_from_cache(template_id)
+        # if not good_pixel_colors:
+        #     good_pixel_colors = await self.get_template_colors(template_id)
+        # await self.select_template(template_id=template_id)
 
-        await self.centrifuga.init_client(token=ws_token, user_agent=self.user_agent)
-        paint_task = await self.centrifuga.collect_pixels_to_repaint(
-            charges, good_pixels=good_pixel_colors
-        )
+        if good_pixel_colors:
+            paint_task = await self.centrifuga.collect_pixels_to_repaint(
+                charges, good_pixels=good_pixel_colors
+            )
+            # repaint
+            for shot_i in range(charges):
+                pixel_id = random.choice(list(paint_task.keys()))
+                color = paint_task.pop(pixel_id)
+                try:
+                    await self.paint_pixel(pixel_id, color)
+                    charges -= 1
+                except BaseException as e:
+                    self.logger.error((f"FAILED PAINT PIXEL {pixel_id} to {color}"))
 
-        # repaint
-        for shot_i in range(charges):
-            pixel_id = random.choice(list(paint_task.keys()))
-            color = paint_task.pop(pixel_id)
             try:
-                await self.paint_pixel(pixel_id, color)
-                charges -= 1
+                old_secrets = await self.db.get_notpixel_secret_tries(self.session_id)
+                for word in settings.secret_words:
+                    if word not in old_secrets:
+                        await self.enter_secret_word(word)
             except BaseException as e:
-                self.logger.error((f"FAILED PAINT PIXEL {pixel_id} to {color}"))
+                self.logger.error(f"Failed to send secret word. {e}")
 
-        try:
-            old_secrets = await self.db.get_notpixel_secret_tries(self.session_id)
-            for word in settings.secret_words:
-                if word not in old_secrets:
-                    await self.enter_secret_word(word)
-        except BaseException as e:
-            self.logger.error(f"Failed to send secret word. {e}")
-
-        # update acc state (not nessesary)
-        try:
-            acc_state = await self.get_account_state(
-                claim=False, upgrade=False, complete_tasks=False
-            )
-            charges = acc_state.get("charges", 0)
-        except:
+            # update acc state (not nessesary)
+            try:
+                acc_state = await self.get_account_state(
+                    claim=False, upgrade=False, complete_tasks=False
+                )
+                charges = acc_state.get("charges", 0)
+            except:
+                self.logger.error(
+                    "Error updating acc state after actions. Return initial values"
+                )
+                acc_state["charges"] = charges
+        else:
             self.logger.error(
-                "Error updating acc state after actions. Return initial values"
+                f"Not good pixel colors detected. NOPAINT: {settings.NOPAINT}"
             )
-            acc_state["charges"] = charges
+            await self.centrifuga.emulate_centrifuga_connect()
+            return acc_state
 
             # {
             #     "charges": charges,

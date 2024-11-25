@@ -187,6 +187,39 @@ class TDB:
                 words = [i[0] for i in word_rows]
                 return set(words)
 
+    async def get_user_telegram_tasks(self, number):
+        async with aiosqlite.connect(self.db_path) as con:
+            query = "select task_type, task_done, target, data from telegram_tasks where number = ?"
+            async with await con.execute(query, (number,)) as cursor:
+                tasks_rows = await cursor.fetchall()
+                tasks_data = [
+                    {"type": i[0], "done": i[1], "target": i[2], "data": i[3]}
+                    for i in tasks_rows
+                ]
+                return tasks_data
+
+    async def check_or_create_subscribe_task(self, number, channel):
+        task_type = "subscribe"
+        user_tasks = await self.get_user_telegram_tasks(number)
+        current_task = None
+        for task in user_tasks:
+            if task.get("type") == task_type and task.get("target") == channel:
+                current_task = task
+                # log that we found this task
+                break
+        if not current_task:
+            # create task
+            # log task created
+            pass
+        else:
+            task_done = task.get("done")
+            if task_done:
+                # log that task done
+                return True
+            else:
+                # log that task not done
+                pass
+
 
 async def init_database():
     db = TDB(settings.db_path)

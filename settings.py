@@ -37,6 +37,7 @@ secret_words = {"happy halloween"}
 
 DOWNLOAD_JS_SCRIPTS = True
 SIMPLIFIED = False
+NOPAINT = False
 TAG = None
 
 from settings_local import *
