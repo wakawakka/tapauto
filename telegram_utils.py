@@ -62,7 +62,7 @@ class Telega:
                 "password": proxy_password,
                 "rdns": True,
             }
-
+        self.tdesk = None
         self.session_id = session_id
         self.client = None
         self.app_url = None
@@ -104,8 +104,9 @@ class Telega:
 
         async with asyncio.timeout(PROFILE_LOAD_TIMEOUT):
             try:
-                tdesk = TDesktop(tdata_path)
-                assert tdesk.isLoaded()
+                if not self.tdesk:
+                    self.tdesk = TDesktop(tdata_path)
+                    assert self.tdesk.isLoaded()
             except BaseException as e:
                 raise TelegramBadProfile(tdata_path, e, self.logger)
         self.logger.info(f"Telegram profile loaded - path: {tdata_path}")
@@ -113,7 +114,7 @@ class Telega:
         async with asyncio.timeout(CONNECT_TIMEOUT):
             try:
                 self.client = await TC_opentele.FromTDesktop(
-                    tdesk,
+                    self.tdesk,
                     session=self.session_file,
                     flag=self.use_session_flag,
                     api=api,
@@ -265,12 +266,18 @@ class Telega:
         else:
             return True
 
-    async def get_bot_webapp(self, bot_username: str, platform: str, param=None):
+    async def get_bot_webapp(
+        self,
+        bot_username: str,
+        platform: str,
+        bot_start_param="start",
+        web_app_param=None,
+    ):
         await self.check_auth(try_reauth=True)
-        if not param:
-            await self.start_bot(bot_username)
+        await self.start_bot(bot_username, bot_start_param)
+
         self.logger.info(
-            f"Getting bot web application URL for {bot_username}, {platform}, with params {param}"
+            f"Getting bot web application URL for {bot_username}, {platform}, with params {web_app_param}"
         )
         bot = await self.client.get_entity(bot_username)
 
@@ -320,7 +327,7 @@ class Telega:
                 platform=platform,
                 # from_bot_menu=False,
                 # compact=False,
-                start_param=param,
+                start_param=web_app_param,
                 theme_params=types.TypeDataJSON(json.dumps(theme_styles)),
             )
         )
@@ -329,12 +336,17 @@ class Telega:
         self.app_url_dt = datetime.datetime.now()
         return result.url
 
-    async def get_bot_webapp_noapp(self, bot_username: str, platform: str, param=None):
+    async def get_bot_webapp_noapp(
+        self,
+        bot_username: str,
+        platform: str,
+        bot_start_param="start",
+        web_app_param=None,
+    ):
         await self.check_auth(try_reauth=True)
-        if not param:
-            await self.start_bot(bot_username)
+        await self.start_bot(bot_username, bot_start_param)
         self.logger.info(
-            f"Getting bot web application URL for {bot_username}, {platform}, with params {param}"
+            f"Getting bot web application URL for {bot_username}, {platform}, with params {web_app_param}"
         )
         bot = await self.client.get_entity(bot_username)
         bot_full = await self.client(
@@ -383,3 +395,13 @@ class Telega:
         result = await self.client.edit_2fa(self.password, new_password=new_password)
         self.logger.info(f"Change password success: {result}")
         return result  # true / false
+
+    async def subscribe_channel(self, channel: str):
+        await self.check_auth()
+        self.logger.info(f"Subscribing {channel}")
+        if channel.startswith("@"):
+            channel = channel[1:]
+        result = await self.client(functions.channels.JoinChannelRequest(channel))
+        result_dict = result.to_dict()
+        if result_dict.get("chats"):
+            return True
