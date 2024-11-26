@@ -314,8 +314,7 @@ class TapswapActions:
 
         chq_bytes = binascii.unhexlify(encoded_chq)
         original_js = "".join([chr(i ^ key) for i in chq_bytes])
-        with open("original_challenge_js.js", "a") as f:
-            f.write(original_js + "\n\n")
+
         self.logger.info(f"Original decoded chq challenge js len: {len(original_js)}")
         js = (
             "var cache_id = ''; "
@@ -857,18 +856,24 @@ class TapswapActions:
                 currently_under_constuction.append(building_id)
                 break
 
+    async def sleep_after_request(self, sleep_min=14, sleep_max=18):
+        await asyncio.sleep(random.randint(100 * sleep_min, 100 * sleep_max) / 100)
+
     async def make_actions(self):
         await self.emulate_app_start()
 
         # 90% to make taps
         if random.randint(0, 100) > 10:
             await self.make_taps()
+        await self.sleep_after_request()
         # 80% to build smth
         if random.randint(0, 100) > 20:
             await self.build()
+        await self.sleep_after_request()
         # 70% to complete mission
         if random.randint(0, 100) > 30:
             await self.complete_mission()
+        await self.sleep_after_request()
         # 60% to upgrade taps
         if random.randint(0, 100) > 20:
             await self.upgrade_taps()

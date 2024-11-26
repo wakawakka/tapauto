@@ -57,8 +57,7 @@ init_table_queries = [
 	"crystals"	INTEGER,
 	"good_runs"	INTEGER NOT NULL DEFAULT 0,
 	"bad_runs"	INTEGER NOT NULL DEFAULT 0,
-	"start_param"	TEXT,
-	"start_param_run_count"	INTEGER DEFAULT 0,
+	"bot_start_param"	TEXT,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );""",
 ]
