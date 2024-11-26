@@ -112,7 +112,7 @@ class Worker:
                 subscribe_success = await self.tg.subscribe_channel(channel=task_target)
                 if subscribe_success:
                     self.logger.info(
-                        "Subscribe telegram task completed. Target: {task_target}"
+                        f"Subscribe telegram task completed. Target: {task_target}"
                     )
                     await self.db.set_telegram_task_done(task_id)
             case _:
@@ -211,7 +211,7 @@ class Worker:
     async def create_initial_raspisanie(self):
         raspisanie = {}
 
-        user_pixel_task_enabled = self.db.is_user_pixel_task_enabled(
+        user_pixel_task_enabled = await self.db.is_user_pixel_task_enabled(
             self.telegram_session_id
         )
         if user_pixel_task_enabled:

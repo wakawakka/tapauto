@@ -37,6 +37,15 @@ init_table_queries = [
 	"disabled"	INTEGER NOT NULL DEFAULT 0,
 	PRIMARY KEY("id" AUTOINCREMENT)
 )""",
+    """CREATE TABLE "telegram_tasks" (
+	"id"	INTEGER,
+	"number"	TEXT NOT NULL,
+	"task_type"	TEXT NOT NULL,
+	"target"	TEXT NOT NULL,
+	"data"	TEXT,
+	"done"	INTEGER NOT NULL DEFAULT 0,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);""",
 ]
 
 
@@ -187,38 +196,65 @@ class TDB:
                 words = [i[0] for i in word_rows]
                 return set(words)
 
-    async def get_user_telegram_tasks(self, number):
+    async def get_user_telegram_tasks(self, number, done=None):
         async with aiosqlite.connect(self.db_path) as con:
-            query = "select task_type, task_done, target, data from telegram_tasks where number = ?"
-            async with await con.execute(query, (number,)) as cursor:
+            if done is None:
+                query = "select id, task_type, done, target, data from telegram_tasks where number = ?"
+                args = (number,)
+            else:
+                query = "select id, task_type, done, target, data from telegram_tasks where number = ? and done = ?"
+                args = (
+                    number,
+                    done,
+                )
+            async with await con.execute(query, args) as cursor:
                 tasks_rows = await cursor.fetchall()
                 tasks_data = [
-                    {"type": i[0], "done": i[1], "target": i[2], "data": i[3]}
+                    {
+                        "id": i[0],
+                        "type": i[1],
+                        "done": i[2],
+                        "target": i[3],
+                        "data": i[4],
+                    }
                     for i in tasks_rows
                 ]
                 return tasks_data
 
+    async def create_telegram_task(self, number, task_type, target, data=None):
+        async with aiosqlite.connect(self.db_path) as con:
+            query = "insert into telegram_tasks (number, task_type, target, data) values (?, ?, ?, ?)"
+            async with await con.execute(
+                query, (number, task_type, target, data)
+            ) as cursor:
+                await con.commit()
+
     async def check_or_create_subscribe_task(self, number, channel):
         task_type = "subscribe"
         user_tasks = await self.get_user_telegram_tasks(number)
-        current_task = None
+        found_task = None
         for task in user_tasks:
             if task.get("type") == task_type and task.get("target") == channel:
-                current_task = task
-                # log that we found this task
+                found_task = task
+                self.logger.info(f"Found old {task_type} task. Channel: {channel}")
                 break
-        if not current_task:
-            # create task
-            # log task created
+        if not found_task:
+            await self.create_telegram_task(number, task_type, channel)
+            self.logger.info(f"Created new {task_type} task. Channel: {channel}")
             pass
         else:
-            task_done = task.get("done")
+            task_done = found_task.get("done")
             if task_done:
-                # log that task done
+                self.logger.info(f"Old {task_type} task. Channel: {channel} DONE")
                 return True
             else:
-                # log that task not done
-                pass
+                self.logger.info(f"Old {task_type} task. Channel: {channel} NOT DONE")
+
+    async def set_telegram_task_done(self, task_id: int):
+        query = "update telegram_tasks set done = 1 where id = ?"
+        async with aiosqlite.connect(self.db_path) as con:
+            async with await con.execute(query, (task_id,)) as cursor:
+                await con.commit()
 
 
 async def init_database():
