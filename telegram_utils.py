@@ -222,7 +222,7 @@ class Telega:
 
         bot = await self.client.get_entity(bot_username)
         self.logger.info(f"Got bot entity, id: {bot.id}")
-        bot_messages = await self.client.get_messages(bot)
+        bot_messages = await self.client.get_messages(bot, limit=4)
         for message in bot_messages:
             if message.text and message.text.startswith("/start"):
                 self.logger.info(

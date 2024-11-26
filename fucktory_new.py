@@ -6,13 +6,17 @@ import datetime
 import time
 
 import dbutils
+import secure_browser
 import notpixel_actions
+import tapswap_actions
 import settings
 import utils
 from notpixel_tools import parse_proxy_url
 from telegram_utils import Telega
 
-BOT_USERNAME = "notpx_bot"
+NOTPIXEL_BOT_USERNAME = "notpx_bot"
+TAPSWAP_BOT_USERNAME = "tapswap_bot"
+
 TELEGRAM_PLATFORM = "desktop"
 WEBAPP_PLATFORM = "android"
 
@@ -22,6 +26,10 @@ SUCCESS_JOB_DONE_MAX_ADD_SLEEP_TILE = 15 * 60
 SIMPLIFIED_SLEEP = 60 * 60 * 8 + 228
 
 WORKER_INITIAL_START_TIMEOUT = 15
+
+
+class LOCAL_JS_EMULATOR:
+    browser = None
 
 
 class Worker:
@@ -142,7 +150,7 @@ class Worker:
                 # await self.db.add_user_channel_subscribe(channel_to_subscribe)
 
                 webapp_url = await self.tg.get_bot_webapp(
-                    bot_username=BOT_USERNAME,
+                    bot_username=NOTPIXEL_BOT_USERNAME,
                     platform=WEBAPP_PLATFORM,
                     web_app_param=start_param,  # "f726551560",
                 )
@@ -167,7 +175,7 @@ class Worker:
                 await self.db.log_notpixel_run_attempt(
                     number=self.telegram_session_id, success=True
                 )
-                await self.db.set_telegram_user_status(
+                await self.db.set_notpixel_user_status(
                     number=self.telegram_session_id, status="GOOD"
                 )
 
@@ -198,6 +206,85 @@ class Worker:
             )
             return RESTART_TIMEOUT
 
+    async def single_run_tapswap(
+        self, worker_start_datetime: datetime.datetime, selenium_js_emu_browser
+    ):
+        try:
+            async with asyncio.timeout(SINGLE_RUN_TIMEOUT):
+
+                bot_start_param = await self.db.get_tapswap_bot_start_param(
+                    number=self.telegram_session_id
+                )
+                if not bot_start_param:
+                    bot_start_param = "start"
+
+                user_tasks = await self.db.get_user_telegram_tasks(
+                    number=self.telegram_session_id, done=0
+                )
+                if user_tasks:
+                    await self.complete_telegram_task(task=user_tasks[0])
+                # here
+
+                webapp_url = await self.tg.get_bot_webapp_noapp(
+                    bot_username=TAPSWAP_BOT_USERNAME,
+                    platform=WEBAPP_PLATFORM,
+                    bot_start_param=bot_start_param,
+                )
+
+                telegram_user_id = await self.db.get_telegram_user_id(
+                    number=self.telegram_session_id
+                )
+                self.logger.info(f"Telegram user id: {telegram_user_id}")
+                if not telegram_user_id:
+                    raise Exception(
+                        f"Telegram user id for {self.telegram_session_id} not set"
+                    )
+
+                tapswaper = tapswap_actions.TapswapActions(
+                    web_app_entry_url=webapp_url,
+                    db=self.db,
+                    telegram_session_id=self.telegram_session_id,
+                    telegram_user_id=telegram_user_id,
+                    selen=selenium_js_emu_browser,
+                    worker_start_datetime=worker_start_datetime,
+                    proxy_host=self.proxy_host,
+                    proxy_port=self.proxy_port,
+                    proxy_user=self.proxy_user,
+                    proxy_password=self.proxy_password,
+                    logfile_path=self.log_filename.replace(".log", ".tapswap.log"),
+                    logging_level=logging.DEBUG,
+                    logging_name=f"tap:{self.telegram_session_id}",
+                )
+
+                await tapswaper.make_actions()
+
+                await self.db.log_tapswap_run_attempt(
+                    number=self.telegram_session_id, success=True
+                )
+                await self.db.set_tapswap_user_status(
+                    number=self.telegram_session_id, status="GOOD"
+                )
+
+                if not settings.SIMPLIFIED:
+                    dt_now = datetime.datetime.now()  # TODO NIGHT MODE
+                    sleeptime = 60 * 60 * random.randint(1, 2)
+                else:
+                    sleeptime = SIMPLIFIED_SLEEP
+                return sleeptime
+
+        except BaseException as e:
+            await self.db.log_tapswap_run_attempt(
+                number=self.telegram_session_id, success=False
+            )
+            await self.db.set_tapswap_user_status(
+                number=self.telegram_session_id, status=str(e)
+            )
+            self.logger.error(
+                f"Worker {self.telegram_session_id} breaks with: {e}",
+                stack_info=True,
+            )
+            return RESTART_TIMEOUT
+
     async def get_task_future(self, task_type):
         if task_type in settings.EXECUTION_BAN_TASKS:
             self.logger.error(f"TASK {task_type} BANNED FOR EXECUTION.")
@@ -205,12 +292,21 @@ class Worker:
         match task_type:
             case settings.PIXEL_TASK_NAME:
                 return self.single_run_pixel(self.worker_start_datetime)
+            case settings.TAPSWAP_TASK_NAME:
+                if not LOCAL_JS_EMULATOR.browser:
+                    self.logger.error(
+                        "Local JS emulator browser is required to TapSwap bot farm"
+                    )
+                return self.single_run_tapswap(
+                    self.worker_start_datetime, LOCAL_JS_EMULATOR.browser
+                )
             case _:
                 self.logger.error(f"BAD TASK TYPE: {task_type}")
 
     async def create_initial_raspisanie(self):
         raspisanie = {}
 
+        # NOTPIXEL TASK
         user_pixel_task_enabled = await self.db.is_user_pixel_task_enabled(
             self.telegram_session_id
         )
@@ -218,8 +314,15 @@ class Worker:
             self.logger.info(f"Pixel task ENABLED for {self.telegram_session_id}")
             raspisanie[time.time()] = settings.PIXEL_TASK_NAME
             await asyncio.sleep(0.5)
-        else:
-            self.logger.info(f"Pixel task DISABLED for {self.telegram_session_id}")
+
+        # TAPSWAP TASK
+        user_tapswap_task_enabled = await self.db.is_user_tapswap_task_enabled(
+            number=self.telegram_session_id
+        )
+        if user_tapswap_task_enabled:
+            self.logger.info(f"TapSwap task ENABLED for {self.telegram_session_id}")
+            raspisanie[time.time()] = settings.TAPSWAP_TASK_NAME
+            await asyncio.sleep(0.5)
 
         if not raspisanie:
             self.logger.error(f"WORKER: {self.telegram_session_id} RASPISANIE EMPTY")
@@ -330,6 +433,9 @@ async def run_fucktory():
     for worker_id in unloaded_workers:
         logger.info(f"\t\t{worker_id}")
     input("Press enter to start BIG WORK on GOOD workers")
+
+    logger.info("Starting local js browser emulator")
+    LOCAL_JS_EMULATOR.browser = secure_browser.SecChromeBrowser(headless=True)
 
     for worker_id in workers:
         logger.info(f"STARTING SMENA OF WORKER: {worker_id}")
