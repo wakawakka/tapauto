@@ -49,7 +49,7 @@ class PixelActions:
             filepath=logfile_path, level=logging_level, name=logging_name
         )
 
-        self.dt_start_fucktory = worker_start_datetime
+        self.worker_start_datetime = worker_start_datetime
 
         self.web_app_entry_url = web_app_entry_url
         self.db = db
@@ -124,7 +124,7 @@ class PixelActions:
         self.logger.info(f"Start Emulate JS index loading")
         headers = {"User-Agent": self.user_agent}
 
-        index_last_update = self.dt_start_fucktory
+        index_last_update = self.worker_start_datetime
         dt_rfc_format = index_last_update.strftime("%a, %d %b %Y %H:%M:%S GMT")
         headers["If-Modified-Since"] = dt_rfc_format
         # index_last_update = await self.db.get_user_index_update_time(self.session_id)
@@ -151,11 +151,17 @@ class PixelActions:
         )
 
         if status == 200:
-            self.logger.error(
-                "INDEX PAGE UPDATED FROM START OF THE FUCKTORY. ALL TASKS STOP."
+            logger = utils.get_logger(
+                filepath="contoller.log",
+                level=logging.DEBUG,
+                name=f"pixel:{self.session_id}",
             )
-            loop = asyncio.get_event_loop()
-            loop.stop()
+            error_message = (
+                "INDEX PAGE UPDATED FROM START OF THE WORKER. PIXEL TASKS START BANNED."
+            )
+            logger.error(error_message)
+            settings.EXECUTION_BAN_TASKS.add(settings.PIXEL_TASK_NAME)
+            raise Exception(error_message)
 
         # if status == 200:
         #     dt_now = datetime.datetime.now(datetime.UTC)

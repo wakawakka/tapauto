@@ -101,6 +101,25 @@ class Worker:
         except BaseException as e:
             return {"success": False, "id": self.telegram_session_id, "exception": e}
 
+    async def complete_telegram_task(self, task):
+        task_id = task.get("id")
+        task_type = task.get("type")
+        task_target = task.get("target")
+        task_data = task.get("data")
+
+        match task_type:
+            case "subscribe":
+                subscribe_success = await self.tg.subscribe_channel(channel=task_target)
+                if subscribe_success:
+                    self.logger.info(
+                        "Subscribe telegram task completed. Target: {task_target}"
+                    )
+                    await self.db.set_telegram_task_done(task_id)
+            case _:
+                self.logger.error(
+                    f"Found unhandled telegram task. Type: {task_type}, Target: {task_target}, Data: {task_data}"
+                )
+
     async def single_run_pixel(self, worker_start_datetime: datetime.datetime):
         try:
             async with asyncio.timeout(SINGLE_RUN_TIMEOUT):
@@ -111,6 +130,12 @@ class Worker:
                 if start_param:
                     await self.db.add_notpixel_start_param_run(self.telegram_session_id)
 
+                user_tasks = await self.db.get_user_telegram_tasks(
+                    number=self.telegram_session_id, done=0
+                )
+                if user_tasks:
+                    await self.complete_telegram_task(task=user_tasks[0])
+
                 # NO MORE 1 CHANNEL PER RUN
                 # channel_to_subscribe = await self.db.get_channel_to_subscribe()
                 # await self.subscribe_channel(channel_to_subscribe)
@@ -119,7 +144,7 @@ class Worker:
                 webapp_url = await self.tg.get_bot_webapp(
                     bot_username=BOT_USERNAME,
                     platform=WEBAPP_PLATFORM,
-                    param=start_param,  # "f726551560",
+                    web_app_param=start_param,  # "f726551560",
                 )
                 pixar = notpixel_actions.PixelActions(
                     webapp_url,
@@ -130,7 +155,7 @@ class Worker:
                     proxy_port=self.proxy_port,
                     proxy_user=self.proxy_user,
                     proxy_password=self.proxy_password,
-                    logfile_path=self.log_filename,
+                    logfile_path=self.log_filename.replace(".log", ".pixel.log"),
                     logging_level=logging.DEBUG,
                     logging_name=f"px:{self.telegram_session_id}",
                 )
@@ -174,14 +199,16 @@ class Worker:
             return RESTART_TIMEOUT
 
     async def get_task_future(self, task_type):
+        if task_type in settings.EXECUTION_BAN_TASKS:
+            self.logger.error(f"TASK {task_type} BANNED FOR EXECUTION.")
+            return
         match task_type:
-            case "notpixel":
+            case settings.PIXEL_TASK_NAME:
                 return self.single_run_pixel(self.worker_start_datetime)
             case _:
                 self.logger.error(f"BAD TASK TYPE: {task_type}")
 
-    async def poyti_na_smenu(self):
-
+    async def create_initial_raspisanie(self):
         raspisanie = {}
 
         user_pixel_task_enabled = self.db.is_user_pixel_task_enabled(
@@ -189,13 +216,19 @@ class Worker:
         )
         if user_pixel_task_enabled:
             self.logger.info(f"Pixel task ENABLED for {self.telegram_session_id}")
-            raspisanie[time.time()] = "notpixel"
+            raspisanie[time.time()] = settings.PIXEL_TASK_NAME
             await asyncio.sleep(0.5)
         else:
             self.logger.info(f"Pixel task DISABLED for {self.telegram_session_id}")
 
         if not raspisanie:
             self.logger.error(f"WORKER: {self.telegram_session_id} RASPISANIE EMPTY")
+        return raspisanie
+
+    async def poyti_na_smenu(self):
+
+        raspisanie = await self.create_initial_raspisanie()
+        if not raspisanie:
             return
 
         while True:  # ebashit bez vukhodnux
@@ -209,6 +242,8 @@ class Worker:
             if task_key:
                 task_type = raspisanie.pop(task_key)
                 task_future = await self.get_task_future(task_type)
+                if not task_future:
+                    continue
                 timeout = await task_future
                 next_start_ts = time.time() + timeout
                 next_start_dt_s = datetime.datetime.fromtimestamp(

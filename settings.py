@@ -1,5 +1,10 @@
 import os
 
+PIXEL_TASK_NAME = "notpixel"
+TAPSWAP_TASK_NAME = "tapswap"
+
+EXECUTION_BAN_TASKS = set()
+
 # upgrade to this level price
 # UpgradeRepaint
 upgrade_repaint_price = {2: 5, 3: 100, 4: 200, 5: 300, 6: 500, 7: 600, 8: None}
