@@ -15,7 +15,7 @@ from notpixel_tools import parse_proxy_url
 from telegram_utils import Telega
 
 NOTPIXEL_BOT_USERNAME = "notpx_bot"
-TAPSWAP_BOT_USERNAME = "tapswap_bot"
+TAPSWAP_BOT_USERNAME = "tapswap_mirror_1_bot"
 
 TELEGRAM_PLATFORM = "desktop"
 WEBAPP_PLATFORM = "android"
