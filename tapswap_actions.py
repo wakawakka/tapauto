@@ -329,14 +329,17 @@ class TapswapActions:
         )
         html_path = "assets/tapswap.html"
         nix_abspath = os.path.abspath(html_path).replace("\\", "/")
+        self.logger.debug("Start selenium challenge get")
         self.selen.browser.get(f"file:///{nix_abspath}")
+        self.logger.debug("Finish selenium challenge get")
         js_base64_encoded = base64.b64encode(js.encode()).decode()
 
         script = (
             f'jsb64="{js_base64_encoded}"; x = eval(atob(jsb64)); return [x,cache_id];'
         )
-
+        self.logger.debug("Start selenium challenge script execute")
         ret = self.selen.browser.execute_script(script)
+        self.logger.debug("Finish selenium challenge script execute")
         answer, cache_id = ret
         # answer += magic_number
         return {"chq": answer, "cache_id": cache_id}
@@ -598,11 +601,13 @@ class TapswapActions:
 
         url = "https://api.tapswap.club/api/player/submit_taps"
         headers = self.get_api_headers(bearer=True)
+        self.logger.debug("Start selenium compute Content-Id")
         headers["Content-Id"] = str(
             self.selen.browser.execute_script(
                 f"return {taps_session_finish_ts_ms} * {self.telegram_user_id} % {self.telegram_user_id}"
             )
         )
+        self.logger.debug("Finish selenium compute Content-Id")
         payload = {"taps": taps_count, "time": taps_session_finish_ts_ms}
         request = await notpixel_tools.http_request(
             "POST",
@@ -706,7 +711,10 @@ class TapswapActions:
             await self.install_user_upgrade("charge")
             self.my_shares -= charge_update_price
 
-    async def emulate_app_start(self):
+    async def emulate_app_start(
+        self,
+    ):  # TODO SOLVE CHALLENGE IN DIFFERENT BROWSER WINDOWS
+        # LOOP FREEZE ON SOME SYNCRONEOUS FUNCTION
         await self.load_main_page()
 
         chq_encoded_challenge = await self.login()
