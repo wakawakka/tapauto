@@ -800,6 +800,7 @@ class TapswapActions:
 
         buildings_plan = self.conf.get("town", {}).get("buildings", [])
         while worker_count > 0:
+            some_building_builded = None
             for b in buildings_plan:
                 building_id = b.get("id")
                 current_building_level = current_my_buildings_level.get(building_id, 0)
@@ -862,6 +863,9 @@ class TapswapActions:
                 await self.upgrade_building(building_id)
                 worker_count -= 1
                 currently_under_constuction.append(building_id)
+                some_building_builded = True
+                break
+            if not some_building_builded:
                 break
 
     async def sleep_after_request(self, sleep_min=14, sleep_max=18):
