@@ -161,7 +161,8 @@ class PixelActions:
             )
             logger.error(error_message)
             settings.EXECUTION_BAN_TASKS.add(settings.PIXEL_TASK_NAME)
-            raise Exception(error_message)
+            if settings.FAIL_ON_JS_CHANGE:
+                raise Exception(error_message)
 
         # if status == 200:
         #     dt_now = datetime.datetime.now(datetime.UTC)
