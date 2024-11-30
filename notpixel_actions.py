@@ -161,12 +161,12 @@ class PixelActions:
                 level=logging.DEBUG,
                 name=f"pixel:{self.session_id}",
             )
-            error_message = (
-                "INDEX PAGE UPDATED FROM START OF THE WORKER. PIXEL TASKS START BANNED."
-            )
-            logger.error(error_message)
-            settings.EXECUTION_BAN_TASKS.add(settings.PIXEL_TASK_NAME)
             if settings.FAIL_ON_JS_CHANGE:
+                error_message = (
+                    "INDEX PAGE UPDATED FROM START OF THE WORKER. PIXEL TASKS START BANNED."
+                )
+                logger.error(error_message)
+                settings.EXECUTION_BAN_TASKS.add(settings.PIXEL_TASK_NAME)
                 raise Exception(error_message)
 
         # if status == 200:

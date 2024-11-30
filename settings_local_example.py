@@ -9,3 +9,4 @@ SIMPLIFIED = False
 NOPAINT = False
 TAG = "test"
 FAIL_ON_JS_CHANGE = True
+SUCKER = True
