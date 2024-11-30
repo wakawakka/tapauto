@@ -764,11 +764,9 @@ class PixelActions:
             else:
                 await self.select_template(PIRATE_HAT_TEMPLATE_ID)
                 my_tournament_template = await self.get_my_tournament_template()
+                await self.sleep_after_request(5, 10)
                 good_pixel_colors = await self.get_my_template_good_pixels(
                     my_tournament_template
-                )
-                self.logger.error(
-                    "Template not choosen in this account. Bad. No way to choose it now."
                 )
 
             if good_pixel_colors:
