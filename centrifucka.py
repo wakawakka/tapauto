@@ -22,7 +22,7 @@ from centrifuge_mod import (
 )
 from exceptions import *
 
-TIMEOUT = 30
+TIMEOUT = 60
 
 
 class ClientEventLoggerHandler(ClientEventHandler):
@@ -152,7 +152,7 @@ def collect_pixels():
     loop = asyncio.get_event_loop()
     loop.run_until_complete(
         f.init_client(
-            token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjaGFubmVscyI6WyJldmVudDptZXNzYWdlIiwicGl4ZWw6bWVzc2FnZSJdLCJleHAiOjE3Mjk4NTA0ODEsInN1YiI6IjcyNjU1MTU2MCJ9.mtck3wd2scFLEvrJxUv7twe3RZWTttkz29qsxWywXY8",
+            token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjaGFubmVscyI6WyJldmVudDptZXNzYWdlIiwicGl4ZWw6bWVzc2FnZSJdLCJleHAiOjE3MzI5Njk5NDQsInN1YiI6IjY3NDM4MzY0MzMifQ.CgwVh17of_QiPf52aoagOCiGzsA0UjuuSR-5IAxKC58",
             user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:132.0) Gecko/20100101 Firefox/132.0",
         )
     )

@@ -3,6 +3,8 @@ import os
 PIXEL_TASK_NAME = "notpixel"
 TAPSWAP_TASK_NAME = "tapswap"
 
+SUCKER = True
+
 EXECUTION_BAN_TASKS = set()
 
 # upgrade to this level price

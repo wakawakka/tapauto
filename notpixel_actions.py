@@ -28,6 +28,11 @@ import dbutils
 HTTP_REQUEST_TIMEOUT = 30
 TEMPLATE_PAGE = 4
 
+PIRATE_HAT_TEMPLATE_ID = "6444194100"
+TEMPLATE_X = 160
+TEMPLATE_Y = 480
+TEMPLATE_SIZE = 32
+
 
 class PixelActions:
     def __init__(
@@ -415,6 +420,48 @@ class PixelActions:
         self.logger.info(f"My template info: {data}")
         return data
 
+    async def get_my_tournament_template(self):
+        url = f"https://notpx.app/api/v1/tournament/template/subscribe/my"
+        self.logger.debug(f"Start GET my template info")
+        headers = self.get_headers_api()
+        result = await notpixel_tools.http_request(
+            "GET",
+            url,
+            headers,
+            proxy=self.proxy_string,
+            http_timeout=HTTP_REQUEST_TIMEOUT,
+            good_statuses=[200, 404],
+            logger=self.logger,
+        )
+        await self.sleep_after_request()
+        status = result.get("status")
+        if status == 404:
+            return
+        else:
+            content = result.get("content")
+            data = json.loads(content)
+            self.logger.info(f"My template info: {data}")
+            return data
+
+    async def select_tournament_template(self, template_id):
+        url = f"https://notpx.app/api/v1/tournament/template/subscribe/{template_id}"
+        self.logger.debug(f"Start Choose template {template_id}")
+        headers = self.get_headers_api()
+        template_info = await notpixel_tools.http_request(
+            "PUT",
+            url,
+            headers,
+            proxy=self.proxy_string,
+            http_timeout=HTTP_REQUEST_TIMEOUT,
+            good_statuses=[200, 204, 403],
+            logger=self.logger,
+        )
+        status = template_info.get("status")
+        if status == 403:
+            self.logger.info(f"Template {template_id} was selected before. ITS BAD")
+        elif status in [200, 204]:
+            self.logger.info(f"Template {template_id} selected successfully")
+
     async def get_my_template_good_pixels(self, my_template_info):
         template_id = my_template_info.get("id")
         template_url = my_template_info.get("url")
@@ -461,7 +508,7 @@ class PixelActions:
 
     async def pixels_to_color_data(self, pixels, template_info: dict):
         color_data = {}
-        image_size = template_info.get("imageSize")
+        image_size = template_info.get("size")
         for x in range(image_size):
             for y in range(image_size):
                 pixel = pixels[x, y]
@@ -640,12 +687,29 @@ class PixelActions:
             headers,
             proxy=self.proxy_string,
             http_timeout=HTTP_REQUEST_TIMEOUT,
-            good_statuses=[200],
+            good_statuses=[200, 404],
             logger=self.logger,
         )
         status = result.get("status")
         content = result.get("content")
         self.logger.info(f"Finish Offer check. Status: {status}, Content: {content}.")
+
+    async def periods_check(self):
+        url = "https://notpx.app/api/v1/tournament/periods"
+        self.logger.debug(f"Start periods check")
+        headers = self.get_headers_api()
+        result = await notpixel_tools.http_request(
+            "GET",
+            url,
+            headers,
+            proxy=self.proxy_string,
+            http_timeout=HTTP_REQUEST_TIMEOUT,
+            good_statuses=[200],
+            logger=self.logger,
+        )
+        status = result.get("status")
+        content = result.get("content")
+        self.logger.info(f"Finish periods check. Status: {status}, Content: {content}.")
 
     async def paint_pixel(self, pixel_id: int, color: str):
         url = "https://notpx.app/api/v1/repaint/start"
@@ -677,76 +741,84 @@ class PixelActions:
         await self.centrifuga.init_client(token=ws_token, user_agent=self.user_agent)
 
         acc_state = await self.get_account_state(
-            claim=True, upgrade=True, complete_tasks=True
+            claim=True, upgrade=True, complete_tasks=False
         )
-        offer_check = await self.offer_check()
+        # acc_state = await self.get_account_state(
+        #     claim=False, upgrade=False, complete_tasks=False
+        # )
+        # offer_check = await self.offer_check()
+        periods_check = await self.periods_check()
         charges = acc_state.get("charges", 0)
         # if charges > 12:
         #     charges = 12
         # charges = 1
 
         good_pixel_colors = None
-        my_template = await self.get_my_template()
+        my_tournament_template = await self.get_my_tournament_template()
 
-        if not settings.NOPAINT:
-            if my_template:
-                good_pixel_colors = await self.get_my_template_good_pixels(my_template)
+        if not settings.SUCKER:
+            if my_tournament_template:
+                good_pixel_colors = await self.get_my_template_good_pixels(
+                    my_tournament_template
+                )
             else:
+                await self.select_template(PIRATE_HAT_TEMPLATE_ID)
+                my_tournament_template = await self.get_my_tournament_template()
+                good_pixel_colors = await self.get_my_template_good_pixels(
+                    my_tournament_template
+                )
                 self.logger.error(
                     "Template not choosen in this account. Bad. No way to choose it now."
                 )
 
-        # templates = await self.get_templates(TEMPLATE_PAGE)
-        # template_id = random.choice(list(templates))
-        # good_pixel_colors = await self.get_template_colors_from_cache(template_id)
-        # if not good_pixel_colors:
-        #     good_pixel_colors = await self.get_template_colors(template_id)
-        # await self.select_template(template_id=template_id)
-
-        if good_pixel_colors:
-            paint_task = await self.centrifuga.collect_pixels_to_repaint(
-                charges, good_pixels=good_pixel_colors
-            )
-            # repaint
-            for shot_i in range(charges):
-                pixel_id = random.choice(list(paint_task.keys()))
-                color = paint_task.pop(pixel_id)
-                try:
-                    await self.paint_pixel(pixel_id, color)
-                    charges -= 1
-                except BaseException as e:
-                    self.logger.error((f"FAILED PAINT PIXEL {pixel_id} to {color}"))
-
-            try:
-                old_secrets = await self.db.get_notpixel_secret_tries(self.session_id)
-                for word in settings.secret_words:
-                    if word not in old_secrets:
-                        await self.enter_secret_word(word)
-            except BaseException as e:
-                self.logger.error(f"Failed to send secret word. {e}")
-
-            # update acc state (not nessesary)
-            try:
-                acc_state = await self.get_account_state(
-                    claim=False, upgrade=False, complete_tasks=False
+            if good_pixel_colors:
+                paint_task = await self.centrifuga.collect_pixels_to_repaint(
+                    charges, good_pixels=good_pixel_colors
                 )
-                charges = acc_state.get("charges", 0)
-            except:
+                # repaint
+                for shot_i in range(charges):
+                    pixel_id = random.choice(list(paint_task.keys()))
+                    color = paint_task.pop(pixel_id)
+                    try:
+                        await self.paint_pixel(pixel_id, color)
+                        charges -= 1
+                    except BaseException as e:
+                        self.logger.error((f"FAILED PAINT PIXEL {pixel_id} to {color}"))
+
+                # try:
+                #     old_secrets = await self.db.get_notpixel_secret_tries(self.session_id)
+                #     for word in settings.secret_words:
+                #         if word not in old_secrets:
+                #             await self.enter_secret_word(word)
+                # except BaseException as e:
+                #     self.logger.error(f"Failed to send secret word. {e}")
+
+                # update acc state (not nessesary)
+            else:
                 self.logger.error(
-                    "Error updating acc state after actions. Return initial values"
+                    f"Not good pixel colors detected. NOPAINT: {settings.NOPAINT}"
                 )
-                acc_state["charges"] = charges
         else:
-            self.logger.error(
-                f"Not good pixel colors detected. NOPAINT: {settings.NOPAINT}"
-            )
             await self.centrifuga.emulate_centrifuga_connect()
-            return acc_state
+            for i in range(charges):
+                x_pad = random.randint(0, 32)
+                y_pad = random.randint(0, 32)
+                colors = ["#FF3881", "#7EED56", "#6D001A"]
+                pixel_id = (TEMPLATE_Y + y_pad) * 1000 + TEMPLATE_X + x_pad + 1
+                await self.paint_pixel(pixel_id, random.choice(colors))
+                charges -= 1
 
-            # {
-            #     "charges": charges,
-            #     "charge_restore_speed": recharge_speed,
-            #     "max_charges": max_charges,
-            #     "balance": balance,
-            # }
+                pass
+
+        try:
+            acc_state = await self.get_account_state(
+                claim=False, upgrade=False, complete_tasks=False
+            )
+            charges = acc_state.get("charges", 0)
+        except:
+            self.logger.error(
+                "Error updating acc state after actions. Return initial values"
+            )
+            acc_state["charges"] = charges
+
         return acc_state

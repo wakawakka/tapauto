@@ -217,6 +217,7 @@ class Telega:
         self.logger.info(f"Logged in as {me.phone} ({me.id})")
         return auth_success
 
+    # TODO ПОСМОТРЕТЬ КАК ДЕЛАЕТСЯ STARTBOT REQUEST
     async def start_bot(self, bot_username, param="start"):
         await self.check_auth(try_reauth=True)
 

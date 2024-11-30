@@ -702,14 +702,17 @@ class TapswapActions:
         if self.my_shares >= energy_update_price:
             await self.install_user_upgrade("energy")
             self.my_shares -= energy_update_price
+            await self.sleep_after_request(3, 10)
 
         if self.my_shares >= tap_update_price:
             await self.install_user_upgrade("tap")
             self.my_shares -= tap_update_price
+            await self.sleep_after_request(3, 10)
 
         if self.my_shares >= charge_update_price:
             await self.install_user_upgrade("charge")
             self.my_shares -= charge_update_price
+            await self.sleep_after_request(3, 10)
 
     async def emulate_app_start(
         self,
@@ -861,11 +864,13 @@ class TapswapActions:
                         continue
 
                 await self.upgrade_building(building_id)
+                await self.sleep_after_request(3, 10)
                 worker_count -= 1
                 currently_under_constuction.append(building_id)
                 some_building_builded = True
                 break
             if not some_building_builded:
+                self.logger.info("No buildings can be builded. Passed this moment.")
                 break
 
     async def sleep_after_request(self, sleep_min=14, sleep_max=18):
@@ -881,7 +886,6 @@ class TapswapActions:
         # 80% to build smth
         if random.randint(0, 100) > 20:
             await self.build()
-        await self.sleep_after_request()
         # 70% to complete mission
         if random.randint(0, 100) > 30:
             await self.complete_mission()
