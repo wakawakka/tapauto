@@ -757,23 +757,9 @@ class PixelActions:
         my_tournament_template = await self.get_my_tournament_template()
 
         if not settings.SUCKER:
-            if my_tournament_template:
-                good_pixel_colors = await self.get_my_template_good_pixels(
-                    my_tournament_template
-                )
-            else:
-                await self.select_template(PIRATE_HAT_TEMPLATE_ID)
-                my_tournament_template = await self.get_my_tournament_template()
-                await self.sleep_after_request(5, 10)
-                good_pixel_colors = await self.get_my_template_good_pixels(
-                    my_tournament_template
-                )
-
-            if good_pixel_colors:
-                paint_task = await self.centrifuga.collect_pixels_to_repaint(
-                    charges, good_pixels=good_pixel_colors
-                )
-                # repaint
+            if settings.KAKER:
+                self.logger.info('KAKER')
+                paint_task = await notpixel_tools.get_job(Image.open(settings.KAKER_IMG), settings.KAKER_LOCATION)
                 for shot_i in range(charges):
                     pixel_id = random.choice(list(paint_task.keys()))
                     color = paint_task.pop(pixel_id)
@@ -782,20 +768,46 @@ class PixelActions:
                         charges -= 1
                     except BaseException as e:
                         self.logger.error((f"FAILED PAINT PIXEL {pixel_id} to {color}"))
-
-                # try:
-                #     old_secrets = await self.db.get_notpixel_secret_tries(self.session_id)
-                #     for word in settings.secret_words:
-                #         if word not in old_secrets:
-                #             await self.enter_secret_word(word)
-                # except BaseException as e:
-                #     self.logger.error(f"Failed to send secret word. {e}")
-
-                # update acc state (not nessesary)
             else:
-                self.logger.error(
-                    f"Not good pixel colors detected. NOPAINT: {settings.NOPAINT}"
-                )
+                if my_tournament_template:
+                    good_pixel_colors = await self.get_my_template_good_pixels(
+                        my_tournament_template
+                    )
+                else:
+                    await self.select_template(PIRATE_HAT_TEMPLATE_ID)
+                    my_tournament_template = await self.get_my_tournament_template()
+                    await self.sleep_after_request(5, 10)
+                    good_pixel_colors = await self.get_my_template_good_pixels(
+                        my_tournament_template
+                    )
+
+                if good_pixel_colors:
+                    paint_task = await self.centrifuga.collect_pixels_to_repaint(
+                        charges, good_pixels=good_pixel_colors
+                    )
+                    # repaint
+                    for shot_i in range(charges):
+                        pixel_id = random.choice(list(paint_task.keys()))
+                        color = paint_task.pop(pixel_id)
+                        try:
+                            await self.paint_pixel(pixel_id, color)
+                            charges -= 1
+                        except BaseException as e:
+                            self.logger.error((f"FAILED PAINT PIXEL {pixel_id} to {color}"))
+
+                    # try:
+                    #     old_secrets = await self.db.get_notpixel_secret_tries(self.session_id)
+                    #     for word in settings.secret_words:
+                    #         if word not in old_secrets:
+                    #             await self.enter_secret_word(word)
+                    # except BaseException as e:
+                    #     self.logger.error(f"Failed to send secret word. {e}")
+
+                    # update acc state (not nessesary)
+                else:
+                    self.logger.error(
+                        f"Not good pixel colors detected. NOPAINT: {settings.NOPAINT}"
+                    )
         else:
             await self.centrifuga.emulate_centrifuga_connect()
             for i in range(charges):

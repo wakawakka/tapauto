@@ -166,14 +166,15 @@ def get_image_state(proxies=None):
     return img
 
 
-async def get_job(img, location):
+async def get_job(img, location, world=False):
     img_pixels = img.load()
     init_x = location[0]
     init_y = location[1]
 
-    world_picture = get_image_state(proxies=None)
-    world_picture_pixels = world_picture.load()
-    pixels_to_paint = []
+    if world:
+        world_picture = get_image_state(proxies=None)
+        world_picture_pixels = world_picture.load()
+    pixels_to_paint = {}
 
     for x_pad in range(img.size[0]):
         for y_pad in range(img.size[1]):
@@ -181,12 +182,15 @@ async def get_job(img, location):
             x, y = init_x + x_pad, init_y + y_pad
             # code.interact(local=locals())
             # print(x, y, img_pixels[x_pad, y_pad], world_picture_pixels[x, y])
-            if img_pixels[x_pad, y_pad] == world_picture_pixels[x, y]:
-                print(f"Same same {x}:{y}")
+            if world:
+                if img_pixels[x_pad, y_pad] == world_picture_pixels[x, y]:
+                    print(f"Same same {x}:{y}")
+                else:
+                    print(
+                        f"Need paint {x}:{y}. Ours: {img_pixels[x_pad, y_pad]}, Theirs: f{world_picture_pixels[x, y]}"
+                    )
+                    pixels_to_paint[y * 1000 + x] = rgb_to_hex(img_pixels[x_pad, y_pad])
             else:
-                print(
-                    f"Need paint {x}:{y}. Ours: {img_pixels[x_pad, y_pad]}, Theirs: f{world_picture_pixels[x, y]}"
-                )
-                pixels_to_paint.append((x, y, img_pixels[x_pad, y_pad]))
+                pixels_to_paint[y * 1000 + x] = rgb_to_hex(img_pixels[x_pad, y_pad])
 
     return pixels_to_paint

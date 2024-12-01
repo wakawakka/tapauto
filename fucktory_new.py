@@ -4,6 +4,7 @@ import os
 import random
 import datetime
 import time
+import code
 
 import dbutils
 import secure_browser
@@ -128,83 +129,88 @@ class Worker:
                     f"Found unhandled telegram task. Type: {task_type}, Target: {task_target}, Data: {task_data}"
                 )
 
-    async def single_run_pixel(self, worker_start_datetime: datetime.datetime):
-        try:
-            async with asyncio.timeout(SINGLE_RUN_TIMEOUT):
+    async def single_run_pixel_internal(self, worker_start_datetime: datetime.datetime):
+        async with asyncio.timeout(SINGLE_RUN_TIMEOUT):
 
-                start_param = await self.db.get_notpixel_start_param(
-                    self.telegram_session_id
-                )
-                if start_param:
-                    await self.db.add_notpixel_start_param_run(self.telegram_session_id)
+            start_param = await self.db.get_notpixel_start_param(
+                self.telegram_session_id
+            )
+            if start_param:
+                await self.db.add_notpixel_start_param_run(self.telegram_session_id)
 
-                user_tasks = await self.db.get_user_telegram_tasks(
-                    number=self.telegram_session_id, done=0
-                )
-                if user_tasks:
-                    await self.complete_telegram_task(task=user_tasks[0])
+            user_tasks = await self.db.get_user_telegram_tasks(
+                number=self.telegram_session_id, done=0
+            )
+            if user_tasks:
+                await self.complete_telegram_task(task=user_tasks[0])
 
-                # NO MORE 1 CHANNEL PER RUN
-                # channel_to_subscribe = await self.db.get_channel_to_subscribe()
-                # await self.subscribe_channel(channel_to_subscribe)
-                # await self.db.add_user_channel_subscribe(channel_to_subscribe)
+            # NO MORE 1 CHANNEL PER RUN
+            # channel_to_subscribe = await self.db.get_channel_to_subscribe()
+            # await self.subscribe_channel(channel_to_subscribe)
+            # await self.db.add_user_channel_subscribe(channel_to_subscribe)
 
-                webapp_url = await self.tg.get_bot_webapp(
-                    bot_username=NOTPIXEL_BOT_USERNAME,
-                    platform=WEBAPP_PLATFORM,
-                    web_app_param=start_param,  # "f726551560",
-                )
-                pixar = notpixel_actions.PixelActions(
-                    webapp_url,
-                    session_id=self.telegram_session_id,
-                    db=self.db,
-                    worker_start_datetime=worker_start_datetime,
-                    proxy_host=self.proxy_host,
-                    proxy_port=self.proxy_port,
-                    proxy_user=self.proxy_user,
-                    proxy_password=self.proxy_password,
-                    logfile_path=self.log_filename.replace(".log", ".pixel.log"),
-                    logging_level=logging.DEBUG,
-                    logging_name=f"px:{self.telegram_session_id}",
-                )
-                account_state = await pixar.repaint_pixels()
-                balance = account_state.get("balance")
-                await self.db.set_notpixel_user_balance(
-                    number=self.telegram_session_id, balance=int(balance)
-                )
-                await self.db.log_notpixel_run_attempt(
-                    number=self.telegram_session_id, success=True
-                )
-                await self.db.set_notpixel_user_status(
-                    number=self.telegram_session_id, status="GOOD"
-                )
-
-                if not settings.SIMPLIFIED:
-                    full_restore_timeout = (
-                        account_state.get("max_charges") - account_state.get("charges")
-                    ) * account_state.get("charge_restore_speed")
-
-                    random_sleep_size = random.randint(
-                        0, SUCCESS_JOB_DONE_MAX_ADD_SLEEP_TILE
-                    )
-
-                    sleeptime = full_restore_timeout + random_sleep_size
-                else:
-                    sleeptime = SIMPLIFIED_SLEEP
-                return sleeptime
-
-        except BaseException as e:
+            webapp_url = await self.tg.get_bot_webapp(
+                bot_username=NOTPIXEL_BOT_USERNAME,
+                platform=WEBAPP_PLATFORM,
+                web_app_param=start_param,  # "f726551560",
+            )
+            pixar = notpixel_actions.PixelActions(
+                webapp_url,
+                session_id=self.telegram_session_id,
+                db=self.db,
+                worker_start_datetime=worker_start_datetime,
+                proxy_host=self.proxy_host,
+                proxy_port=self.proxy_port,
+                proxy_user=self.proxy_user,
+                proxy_password=self.proxy_password,
+                logfile_path=self.log_filename.replace(".log", ".pixel.log"),
+                logging_level=logging.DEBUG,
+                logging_name=f"px:{self.telegram_session_id}",
+            )
+            account_state = await pixar.repaint_pixels()
+            balance = account_state.get("balance")
+            await self.db.set_notpixel_user_balance(
+                number=self.telegram_session_id, balance=int(balance)
+            )
             await self.db.log_notpixel_run_attempt(
-                number=self.telegram_session_id, success=False
+                number=self.telegram_session_id, success=True
             )
             await self.db.set_notpixel_user_status(
-                number=self.telegram_session_id, status=str(e)
+                number=self.telegram_session_id, status="GOOD"
             )
-            self.logger.error(
-                f"Worker {self.telegram_session_id} breaks with: {e}",
-                stack_info=True,
-            )
-            return RESTART_TIMEOUT
+
+            if not settings.SIMPLIFIED:
+                full_restore_timeout = (
+                    account_state.get("max_charges") - account_state.get("charges")
+                ) * account_state.get("charge_restore_speed")
+
+                random_sleep_size = random.randint(
+                    0, SUCCESS_JOB_DONE_MAX_ADD_SLEEP_TILE
+                )
+
+                sleeptime = full_restore_timeout + random_sleep_size
+            else:
+                sleeptime = SIMPLIFIED_SLEEP
+            return sleeptime
+
+    async def single_run_pixel(self, worker_start_datetime: datetime.datetime, catch=settings.CATCH):
+        if catch:
+            try:
+                return await self.single_run_pixel_internal(worker_start_datetime)
+            except BaseException as e:
+                await self.db.log_notpixel_run_attempt(
+                    number=self.telegram_session_id, success=False
+                )
+                await self.db.set_notpixel_user_status(
+                    number=self.telegram_session_id, status=str(e)
+                )
+                self.logger.error(
+                    f"Worker {self.telegram_session_id} breaks with: {e}",
+                    stack_info=True,
+                )
+                return RESTART_TIMEOUT
+        else:
+            return await self.single_run_pixel_internal(worker_start_datetime)
 
     async def single_run_tapswap(
         self, worker_start_datetime: datetime.datetime, selenium_js_emu_browser

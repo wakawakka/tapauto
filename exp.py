@@ -1,6 +1,7 @@
 import asyncio
 import random
 import aiohttp
+import code
 
 import notpixel_actions
 import notpixel_tools
