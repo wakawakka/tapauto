@@ -8,5 +8,10 @@ EXECUTION_BAN_TASKS = set([])
 SIMPLIFIED = False
 NOPAINT = False
 TAG = "test"
-FAIL_ON_JS_CHANGE = True
-SUCKER = True
+FAIL_ON_JS_CHANGE = False
+SUCKER = False
+
+KAKER = False
+KAKER_IMG = "templates/blue_rojer.png"
+KAKER_LOCATION = (512,704)
+CATCH = False
