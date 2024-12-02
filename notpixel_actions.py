@@ -6,6 +6,7 @@ import logging
 import random
 import re
 import time
+import code
 from concurrent.futures import ThreadPoolExecutor
 from hashlib import md5
 from urllib.parse import unquote
@@ -435,7 +436,9 @@ class PixelActions:
         )
         await self.sleep_after_request()
         status = result.get("status")
+        
         if status == 404:
+            self.logger.info(f"NOT SAKSIDED TO GET TEMPLEIT STAITE")
             return
         else:
             content = result.get("content")
@@ -443,7 +446,7 @@ class PixelActions:
             self.logger.info(f"My template info: {data}")
             return data
 
-    async def select_tournament_template(self, template_id):
+    async def select_template(self, template_id):
         url = f"https://notpx.app/api/v1/tournament/template/subscribe/{template_id}"
         self.logger.debug(f"Start Choose template {template_id}")
         headers = self.get_headers_api()
@@ -461,6 +464,7 @@ class PixelActions:
             self.logger.info(f"Template {template_id} was selected before. ITS BAD")
         elif status in [200, 204]:
             self.logger.info(f"Template {template_id} selected successfully")
+        return template_info
 
     async def get_my_template_good_pixels(self, my_template_info):
         template_id = my_template_info.get("id")
@@ -566,26 +570,7 @@ class PixelActions:
                 pixels=pixels, template_info=template_info
             )
             return color_data
-
-    async def select_template(self, template_id):
-        url = f"https://notpx.app/api/v1/image/template/subscribe/{template_id}"
-        self.logger.debug(f"Start Choose template {template_id}")
-        headers = self.get_headers_api()
-        template_info = await notpixel_tools.http_request(
-            "PUT",
-            url,
-            headers,
-            proxy=self.proxy_string,
-            http_timeout=HTTP_REQUEST_TIMEOUT,
-            good_statuses=[200, 204, 403],
-            logger=self.logger,
-        )
-        status = template_info.get("status")
-        if status == 403:
-            self.logger.info(f"Template {template_id} was selected before. ITS BAD")
-        elif status in [200, 204]:
-            self.logger.info(f"Template {template_id} selected successfully")
-
+            
     async def complete_tasks(self, tasks):
         for task_name in self.allowed_tasks:
             task_completed = tasks.get(task_name)
@@ -754,7 +739,6 @@ class PixelActions:
         # charges = 1
 
         good_pixel_colors = None
-        my_tournament_template = await self.get_my_tournament_template()
 
         if not settings.SUCKER:
             if settings.KAKER:
@@ -769,13 +753,16 @@ class PixelActions:
                     except BaseException as e:
                         self.logger.error((f"FAILED PAINT PIXEL {pixel_id} to {color}"))
             else:
+                my_tournament_template = await self.get_my_tournament_template()
+
                 if my_tournament_template:
                     good_pixel_colors = await self.get_my_template_good_pixels(
                         my_tournament_template
                     )
                 else:
-                    await self.select_template(PIRATE_HAT_TEMPLATE_ID)
-                    my_tournament_template = await self.get_my_tournament_template()
+                    print('SAKKK NO WORKING STARTPAPARAMMO')
+                    #raise BaseException('OTSOSS')
+                    my_tournament_template = await self.select_template(PIRATE_HAT_TEMPLATE_ID)
                     await self.sleep_after_request(5, 10)
                     good_pixel_colors = await self.get_my_template_good_pixels(
                         my_tournament_template

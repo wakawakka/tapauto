@@ -27,3 +27,4 @@ pictures
 *.csv
 templates/*
 *.ipynb
+*.sql
