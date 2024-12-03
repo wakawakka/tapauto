@@ -692,6 +692,23 @@ class PixelActions:
         content = result.get("content")
         self.logger.info(f"Finish periods check. Status: {status}, Content: {content}.")
 
+    async def get_results(self):
+        url = "https://notpx.app/api/v1/tournament/user/results"
+        self.logger.debug(f"Start tournament results check")
+        headers = self.get_headers_api()
+        result = await notpixel_tools.http_request(
+            "GET",
+            url,
+            headers,
+            proxy=self.proxy_string,
+            http_timeout=HTTP_REQUEST_TIMEOUT,
+            good_statuses=[200, 403, 404],
+            logger=self.logger,
+        )
+        status = result.get("status")
+        content = result.get("content")
+        self.logger.info(f"Finish results check. Status: {status}, Content: {content}.")
+
     async def paint_pixel(self, pixel_id: int, color: str):
         url = "https://notpx.app/api/v1/repaint/start"
         if not color.startswith("#"):
@@ -730,6 +747,7 @@ class PixelActions:
         # )
         # offer_check = await self.offer_check()
         periods_check = await self.periods_check()
+        results_check = await self.get_results()
         charges = acc_state.get("charges", 0)
         # if charges > 12:
         #     charges = 12
