@@ -9,8 +9,8 @@ CATCH = True
 
 EXECUTION_BAN_TASKS = set()
 
-TEMPLATE_X = 512
-TEMPLATE_Y = 704
+TEMPLATE_X = 128
+TEMPLATE_Y = 0
 TEMPLATE_SIZE = 64
 
 # upgrade to this level price
@@ -46,7 +46,7 @@ free_tasks = {
     # "nikolai": b'a=c(o=>o.user.country),i=Ju();return e.jsx(pe,{boost:t,action:()=>{At("https://x.com/NikolAIToncoin"),'
 }
 
-secret_words = {"happy halloween"}
+secret_words = {"telegram", "blockchain", "listing", "stamp"}
 
 DOWNLOAD_JS_SCRIPTS = True
 SIMPLIFIED = False

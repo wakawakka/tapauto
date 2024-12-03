@@ -806,13 +806,15 @@ class PixelActions:
                                 (f"FAILED PAINT PIXEL {pixel_id} to {color}")
                             )
 
-                    # try:
-                    #     old_secrets = await self.db.get_notpixel_secret_tries(self.session_id)
-                    #     for word in settings.secret_words:
-                    #         if word not in old_secrets:
-                    #             await self.enter_secret_word(word)
-                    # except BaseException as e:
-                    #     self.logger.error(f"Failed to send secret word. {e}")
+                    try:
+                        old_secrets = await self.db.get_notpixel_secret_tries(
+                            self.session_id
+                        )
+                        for word in settings.secret_words:
+                            if word not in old_secrets:
+                                await self.enter_secret_word(word)
+                    except BaseException as e:
+                        self.logger.error(f"Failed to send secret word. {e}")
 
                     # update acc state (not nessesary)
                 else:
