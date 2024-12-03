@@ -431,7 +431,7 @@ class PixelActions:
         )
         await self.sleep_after_request()
         status = result.get("status")
-        
+
         if status == 404:
             self.logger.info(f"NOT SAKSIDED TO GET TEMPLEIT STAITE")
             return
@@ -565,7 +565,7 @@ class PixelActions:
                 pixels=pixels, template_info=template_info
             )
             return color_data
-            
+
     async def complete_tasks(self, tasks):
         for task_name in self.allowed_tasks:
             task_completed = tasks.get(task_name)
@@ -737,8 +737,10 @@ class PixelActions:
 
         if not settings.SUCKER:
             if settings.KAKER:
-                self.logger.info('KAKER')
-                paint_task = await notpixel_tools.get_job(Image.open(settings.KAKER_IMG), settings.KAKER_LOCATION)
+                self.logger.info("KAKER")
+                paint_task = await notpixel_tools.get_job(
+                    Image.open(settings.KAKER_IMG), settings.KAKER_LOCATION
+                )
                 for shot_i in range(charges):
                     pixel_id = random.choice(list(paint_task.keys()))
                     color = paint_task.pop(pixel_id)
@@ -755,8 +757,6 @@ class PixelActions:
                         my_tournament_template
                     )
                 else:
-                    print('SAKKK NO WORKING STARTPAPARAMMO')
-                    #raise BaseException('OTSOSS')
                     await self.select_template(PIRATE_HAT_TEMPLATE_ID)
                     my_tournament_template = await self.get_my_tournament_template()
                     await self.sleep_after_request(5, 10)
@@ -776,7 +776,9 @@ class PixelActions:
                             await self.paint_pixel(pixel_id, color)
                             charges -= 1
                         except BaseException as e:
-                            self.logger.error((f"FAILED PAINT PIXEL {pixel_id} to {color}"))
+                            self.logger.error(
+                                (f"FAILED PAINT PIXEL {pixel_id} to {color}")
+                            )
 
                     # try:
                     #     old_secrets = await self.db.get_notpixel_secret_tries(self.session_id)
