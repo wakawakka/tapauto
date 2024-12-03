@@ -20,9 +20,11 @@ launch.json
 server_accs_filled.json
 server_accs.json
 proxies
+proxies.txt
 settings_local.py
 *.session-journal
 pictures
 *.csv
 templates/*
 *.ipynb
+*.sql

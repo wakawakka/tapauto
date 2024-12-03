@@ -3,7 +3,9 @@ import os
 PIXEL_TASK_NAME = "notpixel"
 TAPSWAP_TASK_NAME = "tapswap"
 
-SUCKER = True
+SUCKER = False
+KAKER = True
+CATCH = True
 
 EXECUTION_BAN_TASKS = set()
 

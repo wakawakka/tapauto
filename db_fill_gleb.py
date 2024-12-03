@@ -10,7 +10,7 @@ import aiosqlite
 import utils
 import settings
 
-async def init_database(path):
+async def init_fill_database(path):
     db = TDB(settings.db_path)
     drop_old = input("Drop old data? y/n: ")
     if drop_old == "y":
@@ -28,7 +28,7 @@ async def init_database(path):
             cntnt = f.read()
         proxy = cntnt.split('\n')[0]
         #if not 
-        await db.add_user(num, tdata_path, password=password, proxy=proxy, startparam="f212725752")
+        await db.add_telegram_user(num, tdata_path, password=password, proxy=proxy, start_param_npx="f212725752")
 
 def make_proxies(path, proxies_path):
     with open(proxies_path) as f:
@@ -42,9 +42,7 @@ def make_proxies(path, proxies_path):
             i+=step
 
 if __name__ == "__main__":
-    path = r"C:\Users\gburgerfuck\Desktop\NOTPIXEL_RUNS\RUN_2710\data"
-    proxies_path = r"C:\Users\gburgerfuck\Desktop\NOTPIXEL_RUNS\RUN_2710\proxies.txt"
-    make_proxies(path, proxies_path)
+    make_proxies(settings.TDATAS_PATH, settings.PROXIES_PATH)
     db = TDB(settings.db_path)
 
-    asyncio.run(init_database(path))
+    asyncio.run(init_fill_database(settings.TDATAS_PATH))

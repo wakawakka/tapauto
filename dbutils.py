@@ -3,6 +3,7 @@ import asyncio
 import datetime
 
 import aiosqlite
+import sqlite3
 
 import utils
 import settings
@@ -105,13 +106,19 @@ class TDB:
 
     # TELEGRAM USERS
 
-    async def add_telegram_user(self, number, tdata_path, password=None, proxy=None):
+    async def add_telegram_user(self, number, tdata_path, password=None, proxy=None, start_param_npx=None):
         async with aiosqlite.connect(self.db_path) as con:
             query = "insert into telegram_user (number, tdata_path, password, proxy) values (?,?,?,?)"
+            query_npx = "insert into notpixel (number, start_param) values (?,?)"
             try:
                 async with await con.execute(
                     query,
                     (number, tdata_path, password, proxy),
+                ) as cursor:
+                    await con.commit()
+                async with await con.execute(
+                    query_npx,
+                    (number, start_param_npx),
                 ) as cursor:
                     await con.commit()
                 self.logger.debug(f"User INSERT {number} success")
@@ -338,6 +345,7 @@ async def init_database():
     db = TDB(settings.db_path)
     # db = TDB("test.db")
     drop_old = input("Drop old data? y/n: ")
+    
     if drop_old == "y":
         await db.drop_tables()
     await db.init_schema()
