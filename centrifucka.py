@@ -5,6 +5,7 @@ import signal
 import zlib
 
 import utils
+import notpixel_tools
 from centrifuge_mod import (
     CentrifugeError,
     Client,
@@ -20,6 +21,7 @@ from centrifuge_mod import (
     ServerSubscribingContext,
     ServerUnsubscribedContext,
 )
+import settings
 from exceptions import *
 
 TIMEOUT = 60
@@ -28,16 +30,26 @@ TIMEOUT = 60
 class ClientEventLoggerHandler(ClientEventHandler):
     """Check out comments of ClientEventHandler methods to see when they are called."""
 
-    def __init__(self, event_data: asyncio.Queue, logger):
+    def __init__(
+        self, event_data: asyncio.Queue, initial_image_container: asyncio.Queue, logger
+    ):
         super().__init__()
         self.event_data = event_data
+        self.initial_image = initial_image_container
         self.logger = logger
 
     async def on_connecting(self, ctx: ConnectingContext) -> None:
         self.logger.info("connecting: %s", ctx)
 
     async def on_connected(self, ctx: ConnectedContext) -> None:
-        self.logger.info("connected: %s", ctx)
+        if ctx.data:
+            await self.initial_image.put(ctx.data)
+        # self.logger.info("connected: %s", ctx)
+        self.logger.info(
+            "connect to server-side: has data:  %s",
+            ctx.data is not None,
+        )
+        pass
 
     async def on_disconnected(self, ctx: DisconnectedContext) -> None:
         self.logger.info("disconnected: %s", ctx)
@@ -55,7 +67,11 @@ class ClientEventLoggerHandler(ClientEventHandler):
         self.logger.info("unsubscribed from server-side sub: %s", ctx)
 
     async def on_publication(self, ctx: ServerPublicationContext) -> None:
-        self.logger.info("publication from server-side sub: %s", ctx.pub.data[:40])
+        self.logger.info(
+            "publication from server-side: channel: %s, data:  %s",
+            ctx.channel,
+            ctx.pub.data[:40],
+        )
         if ctx.channel == "pixel:message":
             decompressed_data = zlib.decompress(ctx.pub.data, wbits=-15)
             jdata = json.loads(decompressed_data)
@@ -87,6 +103,7 @@ class Fucka:
         self.proxy_password = proxy_password
 
         self.buffer = asyncio.Queue()
+        self.initial_image_buffer = asyncio.Queue()
         self.logger = utils.get_logger(
             filepath=logfile_path, level=logging_level, name=logging_name
         )
@@ -95,13 +112,18 @@ class Fucka:
         self.logger.debug(f"Starting CENTRIFURE with {token}")
         self.client = Client(
             "wss://notpx.app/connection/websocket",
-            events=ClientEventLoggerHandler(event_data=self.buffer, logger=self.logger),
-            token=token,
+            events=ClientEventLoggerHandler(
+                event_data=self.buffer,
+                initial_image_container=self.initial_image_buffer,
+                logger=self.logger,
+            ),
+            # token=token,
             use_protobuf=True,
             name="js",
             headers={
                 "User-Agent": user_agent,
             },
+            data=json.dumps({"token": token}).encode(),
             proxy_host=self.proxy_host,
             proxy_port=self.proxy_port,
             proxy_user=self.proxy_user,
@@ -128,7 +150,26 @@ class Fucka:
                 await self.client.connect()
                 repaint_pixels = {}
                 while len(repaint_pixels) < count:
-                    if not self.buffer.empty():
+                    if not self.initial_image_buffer.empty():
+                        initial_image = await self.initial_image_buffer.get()
+                        current_template_state_pixels = (
+                            await notpixel_tools.load_template_state_from_world(
+                                initial_image
+                            )
+                        )
+                        for pixel_id in current_template_state_pixels:
+                            if pixel_id in good_pixels:
+                                if (
+                                    current_template_state_pixels[pixel_id]
+                                    != good_pixels[pixel_id]
+                                ):
+                                    repaint_pixels[pixel_id] = good_pixels[pixel_id]
+                        self.logger.info(
+                            f"Got {len(repaint_pixels)} WRONG PIXELS FORM INITIAL IMAGE."
+                        )
+                        pass
+
+                    elif not self.buffer.empty():
                         update = await self.buffer.get()
                         for color in update:
                             for pixel_id in update[color][::-1]:
@@ -137,6 +178,10 @@ class Fucka:
                                         repaint_pixels[pixel_id] = good_pixels[pixel_id]
                                     elif pixel_id in repaint_pixels:
                                         repaint_pixels.pop(pixel_id)
+                        self.logger.info(
+                            f"Got {len(repaint_pixels)} WRONG PIXELS FORM UPDATE."
+                        )
+                        pass
                     await asyncio.sleep(0.2)
                 await self.client.disconnect()
                 self.logger.info(f"Got REPAINT pixels {repaint_pixels}")
@@ -147,33 +192,34 @@ class Fucka:
             await self.client.disconnect()
 
 
+def start_fucka_debug():
+    f = Fucka()
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(
+        f.init_client(
+            token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjaGFubmVscyI6WyJldmVudDptZXNzYWdlIiwicGl4ZWw6bWVzc2FnZSJdLCJleHAiOjE3MzMxOTY2OTcsInN1YiI6IjcyNjU1MTU2MCJ9.5yAQzhwp-AmmefJ9CSiO2Qfk4y1ppJY4YskBTJvqYiw",
+            user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:132.0) Gecko/20100101 Firefox/132.0",
+        )
+    )
+    loop.create_task(f.client.connect())
+    loop.run_forever()
+
+
 def collect_pixels():
     f = Fucka()
     loop = asyncio.get_event_loop()
     loop.run_until_complete(
         f.init_client(
-            token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjaGFubmVscyI6WyJldmVudDptZXNzYWdlIiwicGl4ZWw6bWVzc2FnZSJdLCJleHAiOjE3MzI5Njk5NDQsInN1YiI6IjY3NDM4MzY0MzMifQ.CgwVh17of_QiPf52aoagOCiGzsA0UjuuSR-5IAxKC58",
+            token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjaGFubmVscyI6WyJldmVudDptZXNzYWdlIiwicGl4ZWw6bWVzc2FnZSJdLCJleHAiOjE3MzMyMDA1NDAsInN1YiI6IjcyNjU1MTU2MCJ9.5sdl2jktpDfBUYZpjXTjDHq6aDw9mzGpMNryaNT7Qt0",
             user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:132.0) Gecko/20100101 Firefox/132.0",
         )
     )
     # loop.run_until_complete(f.collect())
+    good_pixels = {704 * 1000 + i + 1: "3690EA" for i in range(512, 576)}
     pixels_to_repaint = loop.run_until_complete(
         f.collect_pixels_to_repaint(
             count=3,
-            good_pixels={
-                1: "ffffff",
-                2: "ffffff",
-                11: "ffffff",
-                22: "ffffff",
-                111: "ffffff",
-                222: "ffffff",
-                1111: "ffffff",
-                2222: "ffffff",
-                11111: "ffffff",
-                22222: "ffffff",
-                111111: "ffffff",
-                222222: "ffffff",
-            },
+            good_pixels=good_pixels,
         )
     )
     print(pixels_to_repaint)
@@ -188,4 +234,5 @@ if __name__ == "__main__":
     # Configure centrifuge-python logger.
     cf_logger = logging.getLogger("centrifuge")
     cf_logger.setLevel(logging.INFO)
+    # start_fucka_debug()
     collect_pixels()

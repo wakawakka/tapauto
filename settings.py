@@ -7,6 +7,10 @@ SUCKER = True
 
 EXECUTION_BAN_TASKS = set()
 
+TEMPLATE_X = 512
+TEMPLATE_Y = 704
+TEMPLATE_SIZE = 64
+
 # upgrade to this level price
 # UpgradeRepaint
 upgrade_repaint_price = {2: 5, 3: 100, 4: 200, 5: 300, 6: 500, 7: 600, 8: None}

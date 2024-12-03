@@ -29,9 +29,6 @@ HTTP_REQUEST_TIMEOUT = 30
 TEMPLATE_PAGE = 4
 
 PIRATE_HAT_TEMPLATE_ID = "6444194100"
-TEMPLATE_X = 160
-TEMPLATE_Y = 480
-TEMPLATE_SIZE = 32
 
 
 class PixelActions:
@@ -162,9 +159,7 @@ class PixelActions:
                 name=f"pixel:{self.session_id}",
             )
             if settings.FAIL_ON_JS_CHANGE:
-                error_message = (
-                    "INDEX PAGE UPDATED FROM START OF THE WORKER. PIXEL TASKS START BANNED."
-                )
+                error_message = "INDEX PAGE UPDATED FROM START OF THE WORKER. PIXEL TASKS START BANNED."
                 logger.error(error_message)
                 settings.EXECUTION_BAN_TASKS.add(settings.PIXEL_TASK_NAME)
                 raise Exception(error_message)
@@ -799,10 +794,15 @@ class PixelActions:
         else:
             await self.centrifuga.emulate_centrifuga_connect()
             for i in range(charges):
-                x_pad = random.randint(0, 32)
-                y_pad = random.randint(0, 32)
+                x_pad = random.randint(0, settings.TEMPLATE_SIZE)
+                y_pad = random.randint(0, settings.TEMPLATE_SIZE)
                 colors = ["#FF3881", "#7EED56", "#6D001A"]
-                pixel_id = (TEMPLATE_Y + y_pad) * 1000 + TEMPLATE_X + x_pad + 1
+                pixel_id = (
+                    (settings.TEMPLATE_Y + y_pad) * 1000
+                    + settings.TEMPLATE_X
+                    + x_pad
+                    + 1
+                )
                 await self.paint_pixel(pixel_id, random.choice(colors))
                 charges -= 1
 

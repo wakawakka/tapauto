@@ -9,6 +9,7 @@ from PIL import Image
 
 from exceptions import BadStatus, HttpTimeout, HttpError
 from utils import get_logger
+import settings
 
 
 # async def on_request_start(session, trace_config_ctx, params):
@@ -190,3 +191,21 @@ async def get_job(img, location):
                 pixels_to_paint.append((x, y, img_pixels[x_pad, y_pad]))
 
     return pixels_to_paint
+
+
+async def load_template_state_from_world(world_image_file):
+    template_state = {}
+    img_io = io.BytesIO(world_image_file)
+    img_io.seek(0)
+    img = Image.open(img_io)
+    img_pixels = img.load()
+    for x in range(settings.TEMPLATE_X, settings.TEMPLATE_X + settings.TEMPLATE_SIZE):
+        for y in range(
+            settings.TEMPLATE_Y, settings.TEMPLATE_Y + settings.TEMPLATE_SIZE
+        ):
+            pixel = img_pixels[x, y]
+            pixel_color = rgb_to_hex(pixel)
+            pixel_id = y * 1000 + x + 1
+            template_state[pixel_id] = pixel_color
+
+    return template_state
