@@ -7,7 +7,6 @@ import notpixel_tools
 import settings
 from dbutils import TDB
 from exceptions import *
-from fucktory import Fucktory
 from telegram_utils import Telega
 
 proxy = "07196708-zone-custom-region-CA-sessid-C9p85mlF-sessTime-120:6pGOVG0G@f.proxys5.net:6200"
@@ -20,10 +19,11 @@ proxy_host, proxy_port, proxy_user, proxy_password = notpixel_tools.parse_proxy_
 
 async def main_test_not_pixel():
 
-    url = "https://app.notpx.app/#tgWebAppData=user%3D%257B%2522id%2522%253A726551560%252C%2522first_name%2522%253A%2522A%2522%252C%2522last_name%2522%253A%2522S%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522is_premium%2522%253Atrue%252C%2522allows_write_to_pm%2522%253Atrue%257D%26chat_instance%3D-7507039722228485151%26chat_type%3Dsender%26auth_date%3D1730547486%26hash%3D740f442384e6ee7987e66a46a2e992b0705ce2ab6840381e970376e9987129a4&tgWebAppVersion=7.10&tgWebAppPlatform=tdesktop&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
+    url = "https://app.notpx.app/#tgWebAppData=user%3D%257B%2522id%2522%253A726551560%252C%2522first_name%2522%253A%2522A%2522%252C%2522last_name%2522%253A%2522S%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522is_premium%2522%253Atrue%252C%2522allows_write_to_pm%2522%253Atrue%252C%2522photo_url%2522%253A%2522https%253A%255C%252F%255C%252Ft.me%255C%252Fi%255C%252Fuserpic%255C%252F320%255C%252F_aefHTTaqquqHSKCJLEG3ibz76vobUxfaln3jrMDe2A.svg%2522%257D%26chat_instance%3D-7507039722228485151%26chat_type%3Dsender%26auth_date%3D1732969115%26signature%3D7-0NgYO69K6senBrv7yhSOkO3IqiG2m_21rcqnzOPK6YhLxj4_oZAENFa3fCY4_gtzQ5ElksHT5GjvHe6UTzAg%26hash%3D70cf589ab19fc3ba4a2f963e65add155f28b49e1b1728321a6d110e1cf0740f1&tgWebAppVersion=8.0&tgWebAppPlatform=tdesktop&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
 
     db_path = settings.db_path
     db = TDB(dbpath=db_path)
+    import datetime
 
     pa = notpixel_actions.PixelActions(
         url,
@@ -31,15 +31,15 @@ async def main_test_not_pixel():
         proxy_port=proxy_port,
         proxy_user=proxy_user,
         proxy_password=proxy_password,
-        gui_browser_worker_type=None,
-        session_id="27642042550",
+        session_id="959672376648",
+        worker_start_datetime=datetime.datetime.now(),
         db=db,
     )
     # task = (
     #     (80, 80, (255, 141, 161)),
     #     # (80, 81, (255, 141, 161)),
     # )
-    await pa.emulate_app_start()
+    # await pa.enter_secret_word("happy halloween")
     # templates = await pa.get_templates()
     # template_id = random.choice(list(templates))
     # template_ids = [
@@ -58,14 +58,19 @@ async def main_test_not_pixel():
     # ]
     # for _id in template_ids:
     #     good_pixel_colors = await pa.get_template_colors(_id)
-    info = await pa.get_account_state()
-    pass
+    # info = await pa.get_account_state()
+    # pass
     # await pa.run(task)
     # templates = await pa.get_templates()
     # await pa.get_template_colors(917981974)
     # await pa.select_template(917981974)
 
     # await pa.get_ws_token()
+
+    # {'id': 6444194100, 'url': 'https://static.notpx.app/tournament/6444194100.png', 'x': 160, 'y': 480, 'size': 32}
+    # q = await pa.get_my_tournament_template()
+    await pa.repaint_pixels()
+    pass
 
     # await pa.run(task)
 
@@ -125,10 +130,18 @@ async def main_test_api_telegram():
         api_hash="b3b683347bfb4709793511c90bce1ec9",
         phone="79146662650",
     )
+    # await t.subscribe_channel("@tapswapai")
+    webapp_url = await t.get_bot_webapp_noapp(
+        bot_username="tapswap_bot",
+        platform="android",
+        bot_start_param="start=r_726551560",
+        web_app_param=None,  # "f726551560",
+    )
+    print(webapp_url)
     # dialogs = await t.client.get_dialogs()
     # for d in dialogs:
     #     print(d.id)
-    await t.get_bot_webapp("notpx_bot", "android")
+    # await t.get_bot_webapp("notpx_bot", "android")
     pass
 
 
@@ -145,7 +158,7 @@ async def test_db():
     await db.drop_tables()
     await db.init_schema()
     await db.get_tables()
-    await db.add_user(
+    await db.add_telegram_user(
         number="959672376648",
         tdata_path="tdatas/959672376648/tdata",
         password="Password123",
@@ -175,13 +188,13 @@ async def add_users_to_db():
         data = f.read()
         user_data = json.loads(data)
         for user in user_data:
-            await db.add_user(
+            await db.add_telegram_user(
                 number=user_data[user].get("number"),
                 tdata_path=user_data[user].get("tdata"),
                 password=user_data[user].get("password"),
                 proxy=user_data[user].get("proxy"),
             )
-    users = await db.get_users()
+    users = await db.get_telegram_users()
     pass
 
 
@@ -207,7 +220,7 @@ async def change_proxy_for_accs():
             proxy = proxies.pop(-1)
         with open(proxy_file, "w") as f:
             f.write("\n".join(proxies))
-        await db.set_user_proxy(proxy)
+        await db.set_telegram_user_proxy(proxy)
 
 
 async def fill_server_accs_proxy():
@@ -259,10 +272,10 @@ async def test_http_part_read():
 if __name__ == "__main__":
     loop = asyncio.new_event_loop()
     # loop.run_until_complete(test_proxy())
-    # loop.run_until_complete(main_test_not_pixel())
+    loop.run_until_complete(main_test_not_pixel())
     # loop.run_until_complete(main_test_telegram())
     # loop.run_until_complete(main_test_api_telegram())
-    loop.run_until_complete(test_db())
+    # loop.run_until_complete(test_db())
     # loop.run_until_complete(main_test_fucktory())
     # loop.run_until_complete(test_websocket())
     # loop.run_until_complete(fill_server_accs_proxy())
@@ -271,7 +284,7 @@ if __name__ == "__main__":
     # loop.run_until_complete(add_users_to_db())
     # loop.run_until_complete(add_downloaded_accs())
 
-    loop.run_until_complete(test_http_part_read())
+    # loop.run_until_complete(test_http_part_read())
     # REFERALL TECHNICS
     loop.close()
     print("Finish")
