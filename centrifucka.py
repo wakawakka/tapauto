@@ -215,7 +215,7 @@ def collect_pixels():
         )
     )
     # loop.run_until_complete(f.collect())
-    good_pixels = {704 * 1000 + i + 1: "3690EA" for i in range(512, 576)}
+    good_pixels = {704 * 1024 + i + 1: "3690EA" for i in range(512, 576)}
     pixels_to_repaint = loop.run_until_complete(
         f.collect_pixels_to_repaint(
             count=3,

@@ -30,6 +30,7 @@ HTTP_REQUEST_TIMEOUT = 30
 TEMPLATE_PAGE = 4
 
 PIRATE_HAT_TEMPLATE_ID = "6444194100"
+PIRATE_HAT_TEMPLATE_URL = "https://static.notpx.app/tournament/6444194100-2.png"
 
 
 class PixelActions:
@@ -512,7 +513,7 @@ class PixelActions:
             for y in range(image_size):
                 pixel = pixels[x, y]
                 pixel_id = (
-                    (template_info.get("y") + y) * 1000 + template_info.get("x") + x + 1
+                    (template_info.get("y") + y) * 1024 + template_info.get("x") + x + 1
                 )
                 color = notpixel_tools.rgb_to_hex(pixel[:3])
                 color_data[pixel_id] = color
@@ -707,6 +708,7 @@ class PixelActions:
             good_statuses=[200],
             logger=self.logger,
         )
+        await self.sleep_after_request(1, 3)
         status = result.get("status")
         content = result.get("content")
         content_len = len(content)
@@ -758,7 +760,13 @@ class PixelActions:
                     )
                 else:
                     await self.select_template(PIRATE_HAT_TEMPLATE_ID)
-                    my_tournament_template = await self.get_my_tournament_template()
+                    my_tournament_template = {
+                        "id": PIRATE_HAT_TEMPLATE_ID,
+                        "url": PIRATE_HAT_TEMPLATE_URL,
+                        "x": settings.TEMPLATE_X,
+                        "y": settings.TEMPLATE_Y,
+                        "size": settings.TEMPLATE_SIZE,
+                    }
                     await self.sleep_after_request(5, 10)
                     good_pixel_colors = await self.get_my_template_good_pixels(
                         my_tournament_template
@@ -800,7 +808,7 @@ class PixelActions:
                 y_pad = random.randint(0, settings.TEMPLATE_SIZE)
                 colors = ["#FF3881", "#7EED56", "#6D001A"]
                 pixel_id = (
-                    (settings.TEMPLATE_Y + y_pad) * 1000
+                    (settings.TEMPLATE_Y + y_pad) * 1024
                     + settings.TEMPLATE_X
                     + x_pad
                     + 1

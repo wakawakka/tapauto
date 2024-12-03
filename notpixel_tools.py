@@ -190,9 +190,11 @@ async def get_job(img, location, world=False):
                     print(
                         f"Need paint {x}:{y}. Ours: {img_pixels[x_pad, y_pad]}, Theirs: f{world_picture_pixels[x, y]}"
                     )
-                    pixels_to_paint[y * 1000 + x] = rgb_to_hex(img_pixels[x_pad, y_pad])
+                    pixels_to_paint[y * 1024 + x + 1] = rgb_to_hex(
+                        img_pixels[x_pad, y_pad]
+                    )
             else:
-                pixels_to_paint[y * 1000 + x] = rgb_to_hex(img_pixels[x_pad, y_pad])
+                pixels_to_paint[y * 1024 + x + 1] = rgb_to_hex(img_pixels[x_pad, y_pad])
 
     return pixels_to_paint
 
@@ -209,7 +211,7 @@ async def load_template_state_from_world(world_image_file):
         ):
             pixel = img_pixels[x, y]
             pixel_color = rgb_to_hex(pixel)
-            pixel_id = y * 1000 + x + 1
+            pixel_id = y * 1024 + x + 1
             template_state[pixel_id] = pixel_color
 
     return template_state
