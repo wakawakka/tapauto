@@ -144,7 +144,17 @@ class Fucka:
             await asyncio.sleep(0.5)
         await self.client.disconnect()
 
-    async def collect_pixels_to_repaint(self, count: int, good_pixels: dict):
+    async def paint_pixel(self, pixel_id, color):
+        if not color.startswith("#"):
+            color = f"#{color}"
+        data = {"type": 0, "pixelId": pixel_id, "color": color}
+        data_enc = json.dumps(data).encode()
+        r = await self.client.rpc("repaint", data=data_enc)
+        return r.data
+
+    async def collect_pixels_and_repaint(self, count: int, good_pixels: dict):
+        balance_data = []
+        painted = 0
         try:
             async with asyncio.timeout(TIMEOUT):
                 await self.client.connect()
@@ -164,6 +174,17 @@ class Fucka:
                                     != good_pixels[pixel_id]
                                 ):
                                     repaint_pixels[pixel_id] = good_pixels[pixel_id]
+                                    if painted < count:
+                                        ret = await self.paint_pixel(
+                                            pixel_id, good_pixels[pixel_id]
+                                        )
+                                        self.logger.info(
+                                            f"Paint pixel {pixel_id} to {good_pixels[pixel_id]}, result: {ret}"
+                                        )
+                                        # balance_data.append(ret)
+                                        painted += 1
+                                    else:
+                                        return
                         self.logger.info(
                             f"Got {len(repaint_pixels)} WRONG PIXELS FORM INITIAL IMAGE."
                         )
@@ -176,8 +197,17 @@ class Fucka:
                                 if pixel_id in good_pixels:
                                     if color != good_pixels[pixel_id]:
                                         repaint_pixels[pixel_id] = good_pixels[pixel_id]
-                                    elif pixel_id in repaint_pixels:
-                                        repaint_pixels.pop(pixel_id)
+                                        if painted < count:
+                                            ret = await self.paint_pixel(
+                                                pixel_id, good_pixels[pixel_id]
+                                            )
+                                            self.logger.info(
+                                                f"Paint pixel {pixel_id} to {good_pixels[pixel_id]}, result: {ret}"
+                                            )
+                                            # balance_data.append(ret)
+                                            painted += 1
+                                        else:
+                                            return
                         self.logger.info(
                             f"Got {len(repaint_pixels)} WRONG PIXELS FORM UPDATE."
                         )
@@ -210,14 +240,17 @@ def collect_pixels():
     loop = asyncio.get_event_loop()
     loop.run_until_complete(
         f.init_client(
-            token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjaGFubmVscyI6WyJldmVudDptZXNzYWdlIiwicGl4ZWw6bWVzc2FnZSJdLCJleHAiOjE3MzMyMDA1NDAsInN1YiI6IjcyNjU1MTU2MCJ9.5sdl2jktpDfBUYZpjXTjDHq6aDw9mzGpMNryaNT7Qt0",
+            token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjaGFubmVscyI6WyJldmVudDptZXNzYWdlIiwicGl4ZWw6bWVzc2FnZSJdLCJleHAiOjE3MzMyODE1NzEsInN1YiI6IjcyNjU1MTU2MCJ9.bKnGYbsR0Z98-Cih_syQX2DDO4222T_lhLI3Ubr8lHk",
             user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:132.0) Gecko/20100101 Firefox/132.0",
         )
     )
     # loop.run_until_complete(f.collect())
-    good_pixels = {704 * 1024 + i + 1: "3690EA" for i in range(512, 576)}
+    x = 128
+    y = 0
+    size = 64
+    good_pixels = {1024 * y + i + 1: "3690EA" for i in range(x, x + size)}
     pixels_to_repaint = loop.run_until_complete(
-        f.collect_pixels_to_repaint(
+        f.collect_pixels_and_repaint(
             count=3,
             good_pixels=good_pixels,
         )

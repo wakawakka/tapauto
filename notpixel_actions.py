@@ -710,6 +710,7 @@ class PixelActions:
         self.logger.info(f"Finish results check. Status: {status}, Content: {content}.")
 
     async def paint_pixel(self, pixel_id: int, color: str):
+        raise Exception("PAINT PIXEL INSIDE PIXEL ACTIONS VIA POST DEPRECATED")
         url = "https://notpx.app/api/v1/repaint/start"
         if not color.startswith("#"):
             color = f"#{color}"
@@ -791,20 +792,20 @@ class PixelActions:
                     )
 
                 if good_pixel_colors:
-                    paint_task = await self.centrifuga.collect_pixels_to_repaint(
+                    paint_task = await self.centrifuga.collect_pixels_and_repaint(
                         charges, good_pixels=good_pixel_colors
                     )
-                    # repaint
-                    for shot_i in range(charges):
-                        pixel_id = random.choice(list(paint_task.keys()))
-                        color = paint_task.pop(pixel_id)
-                        try:
-                            await self.paint_pixel(pixel_id, color)
-                            charges -= 1
-                        except BaseException as e:
-                            self.logger.error(
-                                (f"FAILED PAINT PIXEL {pixel_id} to {color}")
-                            )
+                    # # repaint
+                    # for shot_i in range(charges):
+                    #     pixel_id = random.choice(list(paint_task.keys()))
+                    #     color = paint_task.pop(pixel_id)
+                    #     try:
+                    #         await self.paint_pixel(pixel_id, color)
+                    #         charges -= 1
+                    #     except BaseException as e:
+                    #         self.logger.error(
+                    #             (f"FAILED PAINT PIXEL {pixel_id} to {color}")
+                    #         )
 
                     try:
                         old_secrets = await self.db.get_notpixel_secret_tries(
