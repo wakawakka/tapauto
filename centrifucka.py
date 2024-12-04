@@ -240,7 +240,7 @@ def collect_pixels():
     loop = asyncio.get_event_loop()
     loop.run_until_complete(
         f.init_client(
-            token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjaGFubmVscyI6WyJldmVudDptZXNzYWdlIiwicGl4ZWw6bWVzc2FnZSJdLCJleHAiOjE3MzMyODE1NzEsInN1YiI6IjcyNjU1MTU2MCJ9.bKnGYbsR0Z98-Cih_syQX2DDO4222T_lhLI3Ubr8lHk",
+            token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjaGFubmVscyI6WyJldmVudDptZXNzYWdlIiwicGl4ZWw6bWVzc2FnZSJdLCJleHAiOjE3MzMyODQ4NTQsInN1YiI6IjcyNjU1MTU2MCJ9.k7bmP6cRfQlfkgiSYgmzHf3N3PhWAeiGsISkANeiPg4",
             user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:132.0) Gecko/20100101 Firefox/132.0",
         )
     )

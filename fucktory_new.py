@@ -193,7 +193,9 @@ class Worker:
                 sleeptime = SIMPLIFIED_SLEEP
             return sleeptime
 
-    async def single_run_pixel(self, worker_start_datetime: datetime.datetime, catch=settings.CATCH):
+    async def single_run_pixel(
+        self, worker_start_datetime: datetime.datetime, catch=settings.CATCH
+    ):
         if catch:
             try:
                 return await self.single_run_pixel_internal(worker_start_datetime)

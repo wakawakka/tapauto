@@ -110,6 +110,14 @@ mission_codes = {
     "M2392": "3tomm",
     "M2393": "nd1er",
     "M1294": "d%98N",
+    "M2512": "e52e",
+    "M2513": "9tqe",
+    "M2514": "33r7",
+    "M2515": "mitq",
+    "M2516": "4o86",
+    "M2517": "9pa2",
+    "M1335": "3NBgd",
+    "M1336": "Z8#Wq",
 }
 
 
@@ -908,7 +916,7 @@ async def main():
     proxy_host, proxy_port, proxy_user, proxy_password = notpixel_tools.parse_proxy_url(
         "https://" + proxy
     )
-    webpp_url = "https://app.tapswap.club/?bot=app_bot_0#tgWebAppData=query_id%3DAAE8CwBFAwAAADwLAEV2zKhb%26user%3D%257B%2522id%2522%253A7600081724%252C%2522first_name%2522%253A%2522Ughh%2522%252C%2522last_name%2522%253A%2522%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522allows_write_to_pm%2522%253Atrue%252C%2522photo_url%2522%253A%2522https%253A%255C%252F%255C%252Ft.me%255C%252Fi%255C%252Fuserpic%255C%252F320%255C%252FkC3oEAjeptq-jg5qQsu118M16EONy2MES18Bzga2i7ZauM-GP08o8AiD5zCVUy7k.svg%2522%257D%26auth_date%3D1732613537%26signature%3DRspzlNOM72UECcgOBN8cGgOk6X9uLFb3kjteOmx3p2VTq0_qotyYIEq7F8IUFMVBa6guQc9Ck3uURZTCUb6eCg%26hash%3D1808fc11d4e052d6726ae2db5b75a864fe3a693832c6ac1258d15bef278bc096&tgWebAppVersion=7.10&tgWebAppPlatform=android&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
+    webpp_url = "https://app.tapswap.club/?bot=app_bot_0#tgWebAppData=query_id%3DAAEITE4rAAAAAAhMTiuc2Ri_%26user%3D%257B%2522id%2522%253A726551560%252C%2522first_name%2522%253A%2522A%2522%252C%2522last_name%2522%253A%2522S%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522is_premium%2522%253Atrue%252C%2522allows_write_to_pm%2522%253Atrue%252C%2522photo_url%2522%253A%2522https%253A%255C%252F%255C%252Ft.me%255C%252Fi%255C%252Fuserpic%255C%252F320%255C%252F_aefHTTaqquqHSKCJLEG3ibz76vobUxfaln3jrMDe2A.svg%2522%257D%26auth_date%3D1733293817%26signature%3DpOlhBWH5sQGNUKQsvnyGvNmj82K4ebThlS0KjZ0U28Gt9pKIA5gD9uh8oH6vQXce-hed_NC8UGZCgxjBCkESCw%26hash%3Da141b2bc3c2fa2cd652528f69faa5c70e97654422e3aceb44a2f9283c82dd6be&tgWebAppVersion=8.0&tgWebAppPlatform=tdesktop&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
 
     sb = secure_browser.SecChromeBrowser(headless=False)
 
