@@ -19,6 +19,11 @@ import useragents
 import utils
 import dbutils
 
+# TODO
+# check fix upgrade BUG
+# add TAP robot perchase
+#
+
 HTTP_REQUEST_TIMEOUT = 30
 
 X_APP = "tapswap_server"
@@ -112,12 +117,71 @@ mission_codes = {
     "M1294": "d%98N",
     "M2512": "e52e",
     "M2513": "9tqe",
-    "M2514": "33r7",
+    "M2514": "etii ",
     "M2515": "mitq",
-    "M2516": "4o86",
-    "M2517": "9pa2",
-    "M1335": "3NBgd",
-    "M1336": "Z8#Wq",
+    "M2499": "wieb",
+    "M2500": "n48ci",
+    "M2501": "unfi",
+    "M1330": "G)*5B",
+    "M2503": "r9heti",
+    "M2502": "3u8m",
+    "M1331": "3$#Wq",
+    "M2505": "95iv",
+    "M2504": "t83a",
+    "M1332": "2W%fR",
+    "M2506": "urity",
+    "M2507": "btfo",
+    "M2508": "e9mb",
+    "M2509": "kise",
+    "M1333": "5KiOu",
+    "M2510": "3s7ec",
+    "M2511": "n2g7",
+    "M1334": "m*T%7",
+    "M2527": "r9es5",
+    "M2526": "comr",
+    "M2525": "p66i",
+    "M1339": "1%CDe",
+    "M1340": "1NpY6",
+    "M2528": "4rte2i",
+    "M2529": "96al",
+    "M1341": "V&6?9",
+    "M2532": "d2r2",
+    "M2530": "i1ze",
+    "M2531": "a9r2d",
+    "M2533": "kite",
+    "M2534": "6ne9",
+    "M1342": "m8L?H",
+    "M2535": "2o4n6",
+    "M1343": "JP09K",
+    "M2536": "h2it5",
+    "M1344": "%2BRe",
+    "M2539": "sett6",
+    "M2538": "8t1r3",
+    "M2537": "atif",
+    "M2540": "2rp5",
+    "M2541": "anaj",
+    "M2542": "8h1a",
+    "M1345": "9OPyf",
+    "M1346": "8AQ@g",
+    "M2543": "grad",
+    "M2544": "fabe",
+    "M1349": "1CV&1",
+    "M2545": "nd1er",
+    "M2546": "pivo",
+    "M1348": "5KpTR",
+    "M1350": "3T&?W",
+    "M2548": "a4l7",
+    "M2547": "4ate1",
+    "M2483": "k9swd",
+    "M2489": "w4h9a",
+    "M2498": "5hing",
+    "M2495": "5F0Lm",
+    "M2497": "4rgwg1",
+    "M2494": "y7cle",
+    "M2549": "lement",
+    "M2493": "shitc",
+    "M2491": "elisp6t",
+    "M2492": "e8pap",
 }
 
 
@@ -395,7 +459,40 @@ class TapswapActions:
         data = json.loads(content)
         return data
 
-    def choose_mission(self, missions):
+    def get_current_missing_active_missions(self):
+        missions = self.conf.get("missions", [])
+        allowed_req_types = set(["youtube", "website"])
+        missed_missions = {}
+        for mission in missions:
+            mission_id = mission.get("id")
+            if (
+                mission_id in self.completed_missions
+                and mission_id not in self.just_claim_missions
+            ):
+                continue
+            mission_start = mission.get("start_at")
+            mission_end = mission.get("end_at")
+            ts_ms = int(time.time() * 1000)
+            if mission_start and mission_start and mission_start > ts_ms > mission_end:
+                continue
+            reqs = mission.get("items", [])
+            if len(reqs) != 1:
+                continue
+            req = reqs[0]
+            code = None
+            req_type = req.get("type")
+            if req_type not in allowed_req_types:
+                continue
+            req_need_answer = req.get("require_answer")
+            code = None
+            if req_need_answer:
+                code = mission_codes.get(mission_id)
+                if not code:
+                    missed_missions[mission_id] = mission.get("title")
+        return missed_missions
+
+    def choose_mission(self):
+        missions = self.conf.get("missions", [])
         allowed_req_types = set(["youtube", "website"])
 
         for mission in missions:
@@ -599,9 +696,11 @@ class TapswapActions:
             self.logger.error(f"Mission {mission_id} still not verified.")
 
     async def complete_mission(self):
-        missions = self.conf.get("missions", [])
-        mission_to_complete = self.choose_mission(missions=missions)
-        await self.complete_mission_data(mission_to_complete)
+        mission_to_complete = self.choose_mission()
+        if mission_to_complete:
+            await self.complete_mission_data(mission_to_complete)
+        else:
+            self.logger.info("No missions to complete.")
 
     async def submit_taps(self, taps_session_finish_ts_ms, taps_count):
         # if have boost -> activate it
@@ -703,24 +802,36 @@ class TapswapActions:
         charge_level = self.account_data["player"].get("charge_level")
         energy_level = self.account_data["player"].get("energy_level")
 
-        tap_update_price = self.tap_level_config[tap_level - 1].get("price")
-        charge_update_price = self.charge_levels_config[charge_level - 1].get("price")
-        energy_update_price = self.energy_levels_config[energy_level - 1].get("price")
+        if energy_level < len(self.energy_levels_config):
+            energy_update_price = self.energy_levels_config[energy_level - 1].get(
+                "price"
+            )
+            if self.my_shares >= energy_update_price:
+                self.logger.debug(
+                    f"Installing user upgrade ENERGY. Shares: {self.my_shares}. Current level: {energy_level}"
+                )
+                await self.install_user_upgrade("energy")
+                await self.sleep_after_request(3, 10)
 
-        if self.my_shares >= energy_update_price:
-            await self.install_user_upgrade("energy")
-            self.my_shares -= energy_update_price
-            await self.sleep_after_request(3, 10)
+        if tap_level < len(self.tap_level_config):
+            tap_update_price = self.tap_level_config[tap_level - 1].get("price")
+            if self.my_shares >= tap_update_price:
+                self.logger.debug(
+                    f"Installing user upgrade TAP. Shares: {self.my_shares}. Current level: {tap_level}"
+                )
+                await self.install_user_upgrade("tap")
+                await self.sleep_after_request(3, 10)
 
-        if self.my_shares >= tap_update_price:
-            await self.install_user_upgrade("tap")
-            self.my_shares -= tap_update_price
-            await self.sleep_after_request(3, 10)
-
-        if self.my_shares >= charge_update_price:
-            await self.install_user_upgrade("charge")
-            self.my_shares -= charge_update_price
-            await self.sleep_after_request(3, 10)
+        if charge_level < len(self.charge_levels_config):
+            charge_update_price = self.charge_levels_config[charge_level - 1].get(
+                "price"
+            )
+            if self.my_shares >= charge_update_price:
+                self.logger.debug(
+                    f"Installing user upgrade CHARGE. Shares: {self.my_shares}. Current level: {charge_level}"
+                )
+                await self.install_user_upgrade("charge")
+                await self.sleep_after_request(3, 10)
 
     async def emulate_app_start(
         self,
@@ -916,7 +1027,7 @@ async def main():
     proxy_host, proxy_port, proxy_user, proxy_password = notpixel_tools.parse_proxy_url(
         "https://" + proxy
     )
-    webpp_url = "https://app.tapswap.club/?bot=app_bot_0#tgWebAppData=query_id%3DAAEITE4rAAAAAAhMTiuc2Ri_%26user%3D%257B%2522id%2522%253A726551560%252C%2522first_name%2522%253A%2522A%2522%252C%2522last_name%2522%253A%2522S%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522is_premium%2522%253Atrue%252C%2522allows_write_to_pm%2522%253Atrue%252C%2522photo_url%2522%253A%2522https%253A%255C%252F%255C%252Ft.me%255C%252Fi%255C%252Fuserpic%255C%252F320%255C%252F_aefHTTaqquqHSKCJLEG3ibz76vobUxfaln3jrMDe2A.svg%2522%257D%26auth_date%3D1733293817%26signature%3DpOlhBWH5sQGNUKQsvnyGvNmj82K4ebThlS0KjZ0U28Gt9pKIA5gD9uh8oH6vQXce-hed_NC8UGZCgxjBCkESCw%26hash%3Da141b2bc3c2fa2cd652528f69faa5c70e97654422e3aceb44a2f9283c82dd6be&tgWebAppVersion=8.0&tgWebAppPlatform=tdesktop&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
+    webpp_url = "https://app.tapswap.club/?bot=app_bot_0#tgWebAppData=query_id%3DAAEITE4rAAAAAAhMTivPMlRr%26user%3D%257B%2522id%2522%253A726551560%252C%2522first_name%2522%253A%2522A%2522%252C%2522last_name%2522%253A%2522S%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522is_premium%2522%253Atrue%252C%2522allows_write_to_pm%2522%253Atrue%252C%2522photo_url%2522%253A%2522https%253A%255C%252F%255C%252Ft.me%255C%252Fi%255C%252Fuserpic%255C%252F320%255C%252F_aefHTTaqquqHSKCJLEG3ibz76vobUxfaln3jrMDe2A.svg%2522%257D%26auth_date%3D1733656676%26signature%3DyvZkeq4zcIl8YOI2llnHB7J90oQP4cUkMCgcGJSYPYkPtc2TtViffJHG8lOhuxXx0p_up33Ob2EAu8NADcjCAw%26hash%3D13a5e8e6f2d55395e5e349c2685e36b80606676755d6477920291f674c853a4c&tgWebAppVersion=8.0&tgWebAppPlatform=tdesktop&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
 
     sb = secure_browser.SecChromeBrowser(headless=False)
 
@@ -938,6 +1049,11 @@ async def main():
     )
     # await ts.make_actions()
     await ts.emulate_app_start()
+    missing_missions = ts.get_current_missing_active_missions()
+    mm_json = json.dumps(missing_missions, indent=4)
+    print(mm_json)
+
+    pass
     # await ts.complete_mission()
     # if its night -> not tap -> not missions
     # if day -> tap with prob 70% and complete mission with 50%
