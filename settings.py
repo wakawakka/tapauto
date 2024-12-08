@@ -7,6 +7,8 @@ SUCKER = False
 KAKER = True
 CATCH = True
 
+NIGHTMODE = True
+
 EXECUTION_BAN_TASKS = set()
 
 TEMPLATE_X = 128

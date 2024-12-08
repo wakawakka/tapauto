@@ -26,6 +26,8 @@ SINGLE_RUN_TIMEOUT = 5 * 60
 SUCCESS_JOB_DONE_MAX_ADD_SLEEP_TILE = 15 * 60
 SIMPLIFIED_SLEEP = 60 * 60 * 8 + 228
 
+AFTER_NIGHT_START_HOUR = 7  # 7 A.M.
+
 WORKER_INITIAL_START_TIMEOUT = 15
 
 
@@ -273,9 +275,19 @@ class Worker:
                     number=self.telegram_session_id, status="GOOD"
                 )
 
+                dt_now = datetime.datetime.now()
                 if not settings.SIMPLIFIED:
-                    dt_now = datetime.datetime.now()  # TODO NIGHT MODE
-                    sleeptime = 60 * 60 * random.randint(1, 2)
+                    for i_h in range(random.randint(1, 2), 10):
+                        delta = datetime.timedelta(hours=i_h)
+                        dt_next_start = dt_now + delta
+                        if settings.NIGHTMODE:
+                            if dt_next_start.hour < AFTER_NIGHT_START_HOUR:
+                                continue
+                        else:
+                            break
+                    sleeptime_delta = dt_next_start - dt_now
+                    sleeptime = sleeptime_delta.seconds
+
                 else:
                     sleeptime = SIMPLIFIED_SLEEP
                 return sleeptime
@@ -360,6 +372,7 @@ class Worker:
                 next_start_dt_s = datetime.datetime.fromtimestamp(
                     next_start_ts
                 ).isoformat()
+
                 self.logger.info(
                     f"Worker {self.telegram_session_id} plan {task_type} to {next_start_dt_s}. GO SLEEP FOR {timeout} sec"
                 )
