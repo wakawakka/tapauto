@@ -1010,9 +1010,12 @@ class TapswapActions:
             await self.complete_mission()
         await self.sleep_after_request()
         # 60% to upgrade taps
-        if random.randint(0, 100) > 20:
+        if random.randint(0, 100) > 40:
             await self.upgrade_taps()
 
+        self.logger.info(
+            f"Job finish. Shares: {self.my_shares}, blocks: {self.my_blocks}, videos: {self.my_videos}, crystals: {self.my_crystals}"
+        )
         await self.db.set_tapswap_balance(
             number=self.telegram_session_id,
             shares=self.my_shares,
