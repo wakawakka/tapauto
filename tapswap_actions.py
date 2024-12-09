@@ -31,157 +31,102 @@ X_CV = "662"
 X_TOUCH = "1"
 
 mission_codes = {
-    "M2325": "7s3pu",
-    "M2326": "1s5t9",
-    "M2327": "6tseg",
-    "M2328": "4tsf",
-    "M2329": "s7u3",
-    "M2330": "7snq",
-    "M2331": "s6ur",
-    "M2332": "unfi",
-    "M2334": "quis",
-    "M2335": "3y9wa",
-    "M2336": "4a1b7",
-    "M2337": "4t8a",
-    "M2338": "8t1r3",
-    "M2339": "4b5n2",
-    "M2340": "9u2b3",
-    "M2341": "perr",
-    "M2342": "urm1",
-    "M2343": "aabily",
-    "M2344": "iti8",
-    "M2345": "28r1e",
-    "M2346": "2le6c",
-    "M2347": "91ki",
-    "M2348": "3po7e",
-    "M2349": "1tefy",
-    "M2350": "5str",
-    "M2352": "ued6",
-    "M2353": "ait7y",
-    "M2354": "2o4n6",
-    "M2355": "6yta",
-    "M2356": "7oin2",
-    "M2357": "76n2g",
-    "M2358": "wo9p1",
-    "M2359": "8tgz",
-    "M2360": "4ate1",
-    "M2361": "puter",
-    "M1265": "9(&TR",
-    "M1266": "&gRe8",
-    "M1267": "hg8#2",
-    "M1268": "3N4+T",
-    "M1269": "2Vb&E",
-    "M1270": "5F0Lm",
-    "M1271": "3Nm&p",
-    "M1272": "9*JR$",
-    "M1273": "KF7y4",
-    "M1274": "H9#ka",
-    "M1275": "3#DaP",
-    "M1276": "5$%hG",
-    "M1277": "3Tp&e",
-    "M1278": "3Aqw$",
-    "M1279": "@R#7Y",
-    "M1280": "8GpnM",
-    "M1281": "Ey*Nb",
-    "M2363": "s7ug",
-    "M2364": "4can",
-    "M2365": "2c8h",
-    "M2366": "cashtoken",
-    "M2367": "ce7n7",
-    "M2368": "p66i",
-    "M2369": "grad",
-    "M2370": "h3el",
-    "M2371": "morn",
-    "M2372": "6tue",
-    "M2373": "3orow",
-    "M2374": "9ki7r",
-    "M2375": "8n3eo",
-    "M2376": "7wp4",
-    "M2377": "h8a7",
-    "M2378": "r5ou",
-    "M2379": "h2e7",
-    "M2380": "8h1a",
-    "M2381": "amaz",
-    "M2382": "9va5",
-    "M2383": "pitn",
-    "M2384": "t6bh",
-    "M2385": "9s5h",
-    "M2386": "sorship",
-    "M2387": "8e2ce",
-    "M2388": "uate",
-    "M2389": "hpful",
-    "M2390": "i8ng",
-    "M2391": "sday",
-    "M2392": "3tomm",
-    "M2393": "nd1er",
-    "M1294": "d%98N",
-    "M2512": "e52e",
-    "M2513": "9tqe",
-    "M2514": "etii ",
-    "M2515": "mitq",
+    "M2479": "sick",
+    "M2480": "edur",
+    "M2488": "g8wqa",
+    "M2489": "l4le1t",
+    "M2490": "k9swd",
+    "M2491": "wuhi9t",
+    "M2492": "hw7qp",
+    "M2493": "4rte2i",
+    "M2494": "bl2e1",
+    "M2495": "elis6t",
+    "M2496": "h2it5",
+    "M2497": "54z1s",
+    "M2498": "r9es5",
     "M2499": "wieb",
-    "M2500": "n48ci",
-    "M2501": "unfi",
-    "M1330": "G)*5B",
-    "M2503": "r9heti",
+    "M2500": "86ne",
+    "M2501": "n4c3",
     "M2502": "3u8m",
-    "M1331": "3$#Wq",
-    "M2505": "95iv",
+    "M2503": "blya",
     "M2504": "t83a",
-    "M1332": "2W%fR",
-    "M2506": "urity",
+    "M2505": "95iv",
+    "M2506": "2m34",
     "M2507": "btfo",
     "M2508": "e9mb",
     "M2509": "kise",
-    "M1333": "5KiOu",
-    "M2510": "3s7ec",
+    "M2510": "ca1t",
     "M2511": "n2g7",
-    "M1334": "m*T%7",
-    "M2527": "r9es5",
-    "M2526": "comr",
-    "M2525": "p66i",
-    "M1339": "1%CDe",
-    "M1340": "1NpY6",
-    "M2528": "4rte2i",
+    "M2518": "aabily",
+    "M2519": "9iner",
+    "M2520": "ps2ct",
+    "M2521": "accoy",
+    "M2522": "9va5",
+    "M2523": "grad",
+    "M2524": "morn",
+    "M2525": "alte",
+    "M2526": "l8e6",
+    "M2527": "gipn",
+    "M2528": "ebri",
     "M2529": "96al",
-    "M1341": "V&6?9",
-    "M2532": "d2r2",
     "M2530": "i1ze",
-    "M2531": "a9r2d",
+    "M1325": "UPD9&",
+    "M1326": "8opiq",
+    "M1327": "7khUy",
+    "M1328": "Q3#PM",
+    "M1329": "MAS%3",
+    "M1330": "G)*5B",
+    "M1331": "3$#Wq",
+    "M1332": "2W%fR",
+    "M1333": "5KiOu",
+    "M1334": "m*T%7",
+    "M1337": "CB6t$",
+    "M1338": ")7fsq",
+    "M1339": "6tue",
+    "M1340": "1NpY6",
+    "M1341": "V&6?9",
+    "M2531": "vmre",
+    "M2532": "d2r2",
     "M2533": "kite",
     "M2534": "6ne9",
-    "M1342": "m8L?H",
-    "M2535": "2o4n6",
-    "M1343": "JP09K",
-    "M2536": "h2it5",
-    "M1344": "%2BRe",
-    "M2539": "sett6",
-    "M2538": "8t1r3",
+    "M2535": "g2pu",
+    "M2536": "kawa",
     "M2537": "atif",
+    "M2538": "must",
+    "M2539": "krwi",
     "M2540": "2rp5",
     "M2541": "anaj",
-    "M2542": "8h1a",
+    "M2542": "efir",
+    "M2543": "i3me",
+    "M2544": "fabe",
+    "M2545": "4l88",
+    "M2546": "pivo",
+    "M1342": "m8L?H",
+    "M1343": "JP09K",
+    "M1344": "%2BRe",
     "M1345": "9OPyf",
     "M1346": "8AQ@g",
-    "M2543": "grad",
-    "M2544": "fabe",
-    "M1349": "1CV&1",
-    "M2545": "nd1er",
-    "M2546": "pivo",
+    "M1347": "5F0Lm",
     "M1348": "5KpTR",
+    "M1349": "1CV&1",
     "M1350": "3T&?W",
+    "M1351": "3K%pg",
+    "M1352": "3WQ@#",
+    "M1353": "N1%rE",
+    "M2547": "qurt",
     "M2548": "a4l7",
-    "M2547": "4ate1",
-    "M2483": "k9swd",
-    "M2489": "w4h9a",
-    "M2498": "5hing",
-    "M2495": "5F0Lm",
-    "M2497": "4rgwg1",
-    "M2494": "y7cle",
-    "M2549": "lement",
-    "M2493": "shitc",
-    "M2491": "elisp6t",
-    "M2492": "e8pap",
+    "M2549": "pedr",
+    "M2550": "3e9s",
+    "M2551": "r8e5",
+    "M2552": "uprt",
+    "M2553": "wial",
+    "M2554": "purp",
+    "M2555": "4s6h",
+    "M2556": "pves",
+    "M2557": "resh",
+    "M2558": "92en",
+    "M2559": "Oi7*A",
+    "M1354": "P&dE4",
 }
 
 
@@ -492,8 +437,11 @@ class TapswapActions:
         return missed_missions
 
     def choose_mission(self):
-        missions = self.conf.get("missions", [])
+        pre_missions = self.conf.get("missions", [])
         allowed_req_types = set(["youtube", "website"])
+
+        missions = pre_missions[:]
+        random.shuffle(missions)
 
         for mission in missions:
             mission_id = mission.get("id")
@@ -591,10 +539,16 @@ class TapswapActions:
             proxy=self.proxy_string,
             json_p=payload,
             http_timeout=HTTP_REQUEST_TIMEOUT,
-            good_statuses=[200, 201],
+            good_statuses=[200, 201, 400],
             logger=self.logger,
+            retry_count=1,
         )
         status = request.get("status")
+        if status == 400:
+            self.logger.error(
+                f"Looks like wrong code for {mission_id}, code: {user_input}"
+            )
+            return
         content = request.get("content")
         self.logger.info(f"Finish mission item status: {status}")
         data = json.loads(content)
@@ -998,9 +952,9 @@ class TapswapActions:
     async def make_actions(self):
         await self.emulate_app_start()
 
-        # 90% to make taps
-        if random.randint(0, 100) > 10:
-            await self.make_taps()
+        # # 90% to make taps
+        # if random.randint(0, 100) > 10:
+        #     await self.make_taps()
         await self.sleep_after_request()
         # 80% to build smth
         if random.randint(0, 100) > 20:
@@ -1030,9 +984,9 @@ async def main():
     proxy_host, proxy_port, proxy_user, proxy_password = notpixel_tools.parse_proxy_url(
         "https://" + proxy
     )
-    webpp_url = "https://app.tapswap.club/?bot=app_bot_0#tgWebAppData=query_id%3DAAEITE4rAAAAAAhMTivPMlRr%26user%3D%257B%2522id%2522%253A726551560%252C%2522first_name%2522%253A%2522A%2522%252C%2522last_name%2522%253A%2522S%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522is_premium%2522%253Atrue%252C%2522allows_write_to_pm%2522%253Atrue%252C%2522photo_url%2522%253A%2522https%253A%255C%252F%255C%252Ft.me%255C%252Fi%255C%252Fuserpic%255C%252F320%255C%252F_aefHTTaqquqHSKCJLEG3ibz76vobUxfaln3jrMDe2A.svg%2522%257D%26auth_date%3D1733656676%26signature%3DyvZkeq4zcIl8YOI2llnHB7J90oQP4cUkMCgcGJSYPYkPtc2TtViffJHG8lOhuxXx0p_up33Ob2EAu8NADcjCAw%26hash%3D13a5e8e6f2d55395e5e349c2685e36b80606676755d6477920291f674c853a4c&tgWebAppVersion=8.0&tgWebAppPlatform=tdesktop&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
+    webpp_url = "https://app.tapswap.club/?bot=app_bot_2#tgWebAppData=query_id%3DAAGSK95WAwAAAJIr3lbl9Zoi%26user%3D%257B%2522id%2522%253A7899851666%252C%2522first_name%2522%253A%2522Sandraafv%2522%252C%2522last_name%2522%253A%2522Stoll%2522%252C%2522username%2522%253A%2522JVHMWF%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522allows_write_to_pm%2522%253Atrue%252C%2522photo_url%2522%253A%2522https%253A%255C%252F%255C%252Ft.me%255C%252Fi%255C%252Fuserpic%255C%252F320%255C%252FV6SCog24y4KYHscl4z6-StMRhQtCl8Hpn9UQwwhTZR-gTceynxZjRMV7mntY1nCG.svg%2522%257D%26auth_date%3D1733750288%26signature%3Dd17u_gy5pTGdUH_tV46zIYySepMHqB87im1qBRI3_8wqAiYQuDCw9kmXlBIcCTPvCB9tSYbciFKbM7Tk0N-MCg%26hash%3D46d3ddeeed7458fcda7e4601195758a5c94bbf81081d908da39fd39700472c7e&tgWebAppVersion=7.10&tgWebAppPlatform=android&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
 
-    sb = secure_browser.SecChromeBrowser(headless=False)
+    sb = secure_browser.SecChromeBrowser(headless=True)
 
     db = dbutils.TDB(settings.db_path)
 
@@ -1044,17 +998,19 @@ async def main():
         proxy_port=proxy_port,
         proxy_user=proxy_user,
         proxy_password=proxy_password,
-        telegram_user_id=726551560,
-        telegram_session_id="959672376648",
+        telegram_user_id=7899851666,
+        telegram_session_id="27682481559",
         selen=sb,
         db=db,
         worker_start_datetime=start_dt,
     )
-    # await ts.make_actions()
+
     await ts.emulate_app_start()
-    missing_missions = ts.get_current_missing_active_missions()
-    mm_json = json.dumps(missing_missions, indent=4)
-    print(mm_json)
+    await ts.upgrade_taps()
+    # await ts.make_actions()
+    # missing_missions = ts.get_current_missing_active_missions()
+    # mm_json = json.dumps(missing_missions, indent=4)
+    # print(mm_json)
 
     pass
     # await ts.complete_mission()
