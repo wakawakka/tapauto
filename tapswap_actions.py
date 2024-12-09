@@ -952,9 +952,9 @@ class TapswapActions:
     async def make_actions(self):
         await self.emulate_app_start()
 
-        # # 90% to make taps
-        # if random.randint(0, 100) > 10:
-        #     await self.make_taps()
+        # 90% to make taps
+        if random.randint(0, 100) > 10:
+            await self.make_taps()
         await self.sleep_after_request()
         # 80% to build smth
         if random.randint(0, 100) > 20:
