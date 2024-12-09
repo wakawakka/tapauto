@@ -20,9 +20,8 @@ import utils
 import dbutils
 
 # TODO
-# check fix upgrade BUG
-# add TAP robot perchase
-#
+# add TAP robot and recharge purchase
+# Add buing of 10 cinema point for crystals
 
 HTTP_REQUEST_TIMEOUT = 30
 
@@ -471,12 +470,14 @@ class TapswapActions:
                     continue
 
             req_wait = req.get("wait_duration_s")
+            title = mission.get("title")
             return {
                 "id": mission_id,
                 "type": req_type,
                 "needcode": req_need_answer,
                 "code": code,
                 "wait": req_wait,
+                "title": title,
             }
 
     async def join_mission(self, mission_id):
@@ -606,6 +607,7 @@ class TapswapActions:
         mission_needcode = mission_data.get("needcode")
         mission_code = mission_data.get("code")
         mission_wait = mission_data.get("wait")
+        mission_title = mission_data.get("title")
 
         if mission_id in self.just_claim_missions:
             self.logger.info(f"Mission {mission_id} all time waiting for claim!")
@@ -757,9 +759,7 @@ class TapswapActions:
         energy_level = self.account_data["player"].get("energy_level")
 
         if energy_level < len(self.energy_levels_config):
-            energy_update_price = self.energy_levels_config[energy_level - 1].get(
-                "price"
-            )
+            energy_update_price = self.energy_levels_config[energy_level].get("price")
             if self.my_shares >= energy_update_price:
                 self.logger.debug(
                     f"Installing user upgrade ENERGY. Shares: {self.my_shares}. Current level: {energy_level}"
@@ -768,7 +768,7 @@ class TapswapActions:
                 await self.sleep_after_request(3, 10)
 
         if tap_level < len(self.tap_level_config):
-            tap_update_price = self.tap_level_config[tap_level - 1].get("price")
+            tap_update_price = self.tap_level_config[tap_level].get("price")
             if self.my_shares >= tap_update_price:
                 self.logger.debug(
                     f"Installing user upgrade TAP. Shares: {self.my_shares}. Current level: {tap_level}"
@@ -777,9 +777,7 @@ class TapswapActions:
                 await self.sleep_after_request(3, 10)
 
         if charge_level < len(self.charge_levels_config):
-            charge_update_price = self.charge_levels_config[charge_level - 1].get(
-                "price"
-            )
+            charge_update_price = self.charge_levels_config[charge_level].get("price")
             if self.my_shares >= charge_update_price:
                 self.logger.debug(
                     f"Installing user upgrade CHARGE. Shares: {self.my_shares}. Current level: {charge_level}"
@@ -984,7 +982,7 @@ async def main():
     proxy_host, proxy_port, proxy_user, proxy_password = notpixel_tools.parse_proxy_url(
         "https://" + proxy
     )
-    webpp_url = "https://app.tapswap.club/?bot=app_bot_2#tgWebAppData=query_id%3DAAGSK95WAwAAAJIr3lbl9Zoi%26user%3D%257B%2522id%2522%253A7899851666%252C%2522first_name%2522%253A%2522Sandraafv%2522%252C%2522last_name%2522%253A%2522Stoll%2522%252C%2522username%2522%253A%2522JVHMWF%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522allows_write_to_pm%2522%253Atrue%252C%2522photo_url%2522%253A%2522https%253A%255C%252F%255C%252Ft.me%255C%252Fi%255C%252Fuserpic%255C%252F320%255C%252FV6SCog24y4KYHscl4z6-StMRhQtCl8Hpn9UQwwhTZR-gTceynxZjRMV7mntY1nCG.svg%2522%257D%26auth_date%3D1733750288%26signature%3Dd17u_gy5pTGdUH_tV46zIYySepMHqB87im1qBRI3_8wqAiYQuDCw9kmXlBIcCTPvCB9tSYbciFKbM7Tk0N-MCg%26hash%3D46d3ddeeed7458fcda7e4601195758a5c94bbf81081d908da39fd39700472c7e&tgWebAppVersion=7.10&tgWebAppPlatform=android&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
+    webpp_url = "https://app.tapswap.club/?bot=app_bot_2#tgWebAppData=query_id%3DAAEgzvM8AwAAACDO8zx7-DAT%26user%3D%257B%2522id%2522%253A7465061920%252C%2522first_name%2522%253A%2522Bakersou%2522%252C%2522last_name%2522%253A%2522Rarlalen%2522%252C%2522username%2522%253A%2522Evokesassorted%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522allows_write_to_pm%2522%253Atrue%252C%2522photo_url%2522%253A%2522https%253A%255C%252F%255C%252Ft.me%255C%252Fi%255C%252Fuserpic%255C%252F320%255C%252FC6q4eKqlFtYUNODN7m6884307b_rp4bujH5UIVjbl8-x4-5DEGIuX3DmCvGN11Rw.svg%2522%257D%26auth_date%3D1733753328%26signature%3D2C8v8oNI6mwCR0celAcAguJO9gOixEpaRZyZTU168DrlAgjuH706Gq3yUdrsxUBhcbA1JB9I1SO5Ew-mr38HAg%26hash%3D558caf297e218095f0c95f4345416a8c0b49272c36756b260be9483d5fc7045d&tgWebAppVersion=7.10&tgWebAppPlatform=android&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
 
     sb = secure_browser.SecChromeBrowser(headless=True)
 
@@ -998,8 +996,8 @@ async def main():
         proxy_port=proxy_port,
         proxy_user=proxy_user,
         proxy_password=proxy_password,
-        telegram_user_id=7899851666,
-        telegram_session_id="27682481559",
+        telegram_user_id=7465061920,
+        telegram_session_id="27681674838",
         selen=sb,
         db=db,
         worker_start_datetime=start_dt,
