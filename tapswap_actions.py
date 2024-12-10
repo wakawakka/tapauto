@@ -30,19 +30,6 @@ X_CV = "662"
 X_TOUCH = "1"
 
 mission_codes = {
-    "M2479": "sick",
-    "M2480": "edur",
-    "M2488": "g8wqa",
-    "M2489": "l4le1t",
-    "M2490": "k9swd",
-    "M2491": "wuhi9t",
-    "M2492": "hw7qp",
-    "M2493": "4rte2i",
-    "M2494": "bl2e1",
-    "M2495": "elis6t",
-    "M2496": "h2it5",
-    "M2497": "54z1s",
-    "M2498": "r9es5",
     "M2499": "wieb",
     "M2500": "86ne",
     "M2501": "n4c3",
@@ -56,32 +43,37 @@ mission_codes = {
     "M2509": "kise",
     "M2510": "ca1t",
     "M2511": "n2g7",
-    "M2518": "aabily",
-    "M2519": "9iner",
-    "M2520": "ps2ct",
-    "M2521": "accoy",
-    "M2522": "9va5",
-    "M2523": "grad",
-    "M2524": "morn",
+    "M2512": "e52e",
+    "M2513": "9tqe",
+    "M2514": "33r7",
+    "M2515": "mitq",
+    "M2516": "4o86",
+    "M2517": "9pa2",
+    "M2518": "bs68",
+    "M2519": "patr",
+    "M2520": "cell",
+    "M2521": "o7ry",
+    "M2522": "b8st",
+    "M2523": "5eer",
+    "M2524": "qpon",
     "M2525": "alte",
     "M2526": "l8e6",
     "M2527": "gipn",
-    "M2528": "ebri",
+    "M2528": "ebrj",
     "M2529": "96al",
     "M2530": "i1ze",
-    "M1325": "UPD9&",
-    "M1326": "8opiq",
-    "M1327": "7khUy",
-    "M1328": "Q3#PM",
-    "M1329": "MAS%3",
+    "M1328": "3$#Wq",
+    "M1329": "2W%fR",
     "M1330": "G)*5B",
     "M1331": "3$#Wq",
     "M1332": "2W%fR",
     "M1333": "5KiOu",
     "M1334": "m*T%7",
-    "M1337": "CB6t$",
-    "M1338": ")7fsq",
-    "M1339": "6tue",
+    "M1335": "3NBgd",
+    "M1336": "Z8#Wq",
+    "M1337": "?P&43",
+    "M1338": "JiO0%",
+    "M1339": "1%CDe",
     "M1340": "1NpY6",
     "M1341": "V&6?9",
     "M2531": "vmre",
@@ -105,7 +97,7 @@ mission_codes = {
     "M1344": "%2BRe",
     "M1345": "9OPyf",
     "M1346": "8AQ@g",
-    "M1347": "5F0Lm",
+    "M1347": "—wait—",
     "M1348": "5KpTR",
     "M1349": "1CV&1",
     "M1350": "3T&?W",
@@ -123,9 +115,22 @@ mission_codes = {
     "M2555": "4s6h",
     "M2556": "pves",
     "M2557": "resh",
-    "M2558": "92en",
-    "M2559": "Oi7*A",
+    "M2558": "ufos",
+    "M2559": "8o4c",
+    "M2560": "5stt",
+    "M2561": "7p8o",
+    "M2562": "ires",
+    "M2563": "6do5",
+    "M2564": "5d2e",
+    "M2565": "r2i4",
     "M1354": "P&dE4",
+    "M1355": "%g1M0",
+    "M1356": "2Dp7T",
+    "M1357": "U87%R",
+    "M2495": "p2d2",
+    "M2496": "qkis",
+    "M2497": "6rjo",
+    "M2498": "b8s6",
 }
 
 
@@ -982,7 +987,7 @@ async def main():
     proxy_host, proxy_port, proxy_user, proxy_password = notpixel_tools.parse_proxy_url(
         "https://" + proxy
     )
-    webpp_url = "https://app.tapswap.club/?bot=app_bot_2#tgWebAppData=query_id%3DAAEgzvM8AwAAACDO8zx7-DAT%26user%3D%257B%2522id%2522%253A7465061920%252C%2522first_name%2522%253A%2522Bakersou%2522%252C%2522last_name%2522%253A%2522Rarlalen%2522%252C%2522username%2522%253A%2522Evokesassorted%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522allows_write_to_pm%2522%253Atrue%252C%2522photo_url%2522%253A%2522https%253A%255C%252F%255C%252Ft.me%255C%252Fi%255C%252Fuserpic%255C%252F320%255C%252FC6q4eKqlFtYUNODN7m6884307b_rp4bujH5UIVjbl8-x4-5DEGIuX3DmCvGN11Rw.svg%2522%257D%26auth_date%3D1733753328%26signature%3D2C8v8oNI6mwCR0celAcAguJO9gOixEpaRZyZTU168DrlAgjuH706Gq3yUdrsxUBhcbA1JB9I1SO5Ew-mr38HAg%26hash%3D558caf297e218095f0c95f4345416a8c0b49272c36756b260be9483d5fc7045d&tgWebAppVersion=7.10&tgWebAppPlatform=android&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
+    webpp_url = "https://app.tapswap.club/?bot=app_bot_0#tgWebAppData=query_id%3DAAEITE4rAAAAAAhMTitrRXLD%26user%3D%257B%2522id%2522%253A726551560%252C%2522first_name%2522%253A%2522A%2522%252C%2522last_name%2522%253A%2522S%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522is_premium%2522%253Atrue%252C%2522allows_write_to_pm%2522%253Atrue%252C%2522photo_url%2522%253A%2522https%253A%255C%252F%255C%252Ft.me%255C%252Fi%255C%252Fuserpic%255C%252F320%255C%252F_aefHTTaqquqHSKCJLEG3ibz76vobUxfaln3jrMDe2A.svg%2522%257D%26auth_date%3D1733830475%26signature%3D3oq1YP5XwApAIXRZbrdcsQqG4blJW7gWlWsby8BkE24FrlAYj9L1yfb3BmNiwI__ufbqKw7lg1_ZLbL28cMDDQ%26hash%3Dd34bfa95412fddd921a732e8d5749f364fab0990f80a37d2ccd1d1e9fd421619&tgWebAppVersion=8.0&tgWebAppPlatform=tdesktop&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
 
     sb = secure_browser.SecChromeBrowser(headless=True)
 
@@ -996,19 +1001,19 @@ async def main():
         proxy_port=proxy_port,
         proxy_user=proxy_user,
         proxy_password=proxy_password,
-        telegram_user_id=7465061920,
-        telegram_session_id="27681674838",
+        telegram_user_id=726551560,
+        telegram_session_id="9020782499",
         selen=sb,
         db=db,
         worker_start_datetime=start_dt,
     )
 
     await ts.emulate_app_start()
-    await ts.upgrade_taps()
+    # await ts.upgrade_taps()
     # await ts.make_actions()
-    # missing_missions = ts.get_current_missing_active_missions()
-    # mm_json = json.dumps(missing_missions, indent=4)
-    # print(mm_json)
+    missing_missions = ts.get_current_missing_active_missions()
+    mm_json = json.dumps(missing_missions, indent=4)
+    print(mm_json)
 
     pass
     # await ts.complete_mission()
