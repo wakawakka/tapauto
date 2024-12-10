@@ -29,6 +29,8 @@ X_APP = "tapswap_server"
 X_CV = "662"
 X_TOUCH = "1"
 
+TURBO_BOOST_NAME = "turbo"
+
 mission_codes = {
     "M2499": "wieb",
     "M2500": "86ne",
@@ -283,6 +285,7 @@ class TapswapActions:
             http_timeout=HTTP_REQUEST_TIMEOUT,
             good_statuses=[200, 304],
             logger=self.logger,
+            retry_count=1,
         )
         status = request.get("status")
         content = request.get("content").decode()
@@ -663,9 +666,53 @@ class TapswapActions:
         else:
             self.logger.info("No missions to complete.")
 
+    def user_have_boost(self, boost_type: str):
+        for boost_data in self.my_boosts:
+            if (
+                boost_data.get("type") == boost_type
+                and boost_data.get("cnt", 0) > 0
+                and boost_data.get("end", 0) < int(time.time() * 1000)
+            ):
+                return True
+
+    def get_boost_end(self, boost_type: str):
+        for boost_data in self.my_boosts:
+            if boost_data.get("type") == boost_type:
+                boost_end_at = boost_data.get("end")
+                if boost_end_at and boost_end_at > int(time.time() * 1000):
+                    return boost_end_at
+
+    async def apply_boost(self, boost_type: str):
+
+        url = "https://api.tapswap.club/api/player/apply_boost"
+        headers = self.get_api_headers(bearer=True)
+
+        payload = {"type": boost_type}
+        request = await notpixel_tools.http_request(
+            "POST",
+            url,
+            headers,
+            proxy=self.proxy_string,
+            json_p=payload,
+            http_timeout=HTTP_REQUEST_TIMEOUT,
+            good_statuses=[200, 201],
+            logger=self.logger,
+        )
+        status = request.get("status")
+        content = request.get("content")
+
+        data = json.loads(content)
+
+        self.my_shares = data.get("player", {}).get("shares")
+        self.my_boosts = data.get("player", {}).get("boost")
+
+        self.logger.info(
+            f"Applied boost {boost_type}. Status: {status}. Boosts: {self.my_boosts}"
+        )
+
+        return self.get_boost_end(boost_type)
+
     async def submit_taps(self, taps_session_finish_ts_ms, taps_count):
-        # if have boost -> activate it
-        # after function if have restore charge -> activate it
 
         url = "https://api.tapswap.club/api/player/submit_taps"
         headers = self.get_api_headers(bearer=True)
@@ -686,6 +733,7 @@ class TapswapActions:
             http_timeout=HTTP_REQUEST_TIMEOUT,
             good_statuses=[200, 201],
             logger=self.logger,
+            retry_count=1,
         )
         status = request.get("status")
         content = request.get("content")
@@ -695,6 +743,7 @@ class TapswapActions:
         data = json.loads(content)
 
         self.my_shares = data.get("player", {}).get("shares")
+        self.my_boosts = data.get("player", {}).get("boost")
 
         return data.get("player", {}).get("energy", 0)
 
@@ -710,23 +759,50 @@ class TapswapActions:
             "rate"
         )
         energy_tap_stop = energy_restore_per_second * random.randint(10, 15)
+        boost_finish_at_ts_ms = None
+
         while energy > energy_tap_stop:
+            if self.user_have_boost(TURBO_BOOST_NAME):
+                self.logger.debug(
+                    f"Appling {TURBO_BOOST_NAME} boost. Boost status: {self.my_boosts}."
+                )
+                boost_finish_at_ts_ms = await self.apply_boost(TURBO_BOOST_NAME)
 
             taps_current_session = random.randint(90, 105)
             taps_cost_current_session = int(energy_tap_cost * taps_current_session)
+            taps_per_second = random.randint(5000, 6000) / 1000
 
             if energy - taps_cost_current_session <= 0:
                 taps_current_session = int(energy / energy_tap_cost)
-                taps_per_second = random.randint(5000, 6000) / 1000
-                taps_time_current_session = (
+                taps_time_current_session_s = (
                     int(taps_current_session / taps_per_second * 100) / 100
                 )
             else:
-                taps_time_current_session = random.randint(15000, 16000) / 1000
+                taps_time_current_session_s = random.randint(15000, 16000) / 1000
+
+            current_ts_ms = int(time.time() * 1000)
+            if (
+                boost_finish_at_ts_ms
+                and current_ts_ms + taps_time_current_session_s * 1000
+                > boost_finish_at_ts_ms
+            ):
+                taps_time_current_session_s = (
+                    boost_finish_at_ts_ms - current_ts_ms
+                ) / 1000
+                taps_current_session = int(
+                    taps_time_current_session_s * taps_per_second
+                ) + random.randint(1, 10)
+                boost_finish_at_ts_ms = None
+
+            # safe module
+            if taps_time_current_session_s < 1 or taps_current_session < 1:
+                return
+
             self.logger.debug(
-                f"GO SLEEP. Time: {taps_time_current_session} sec. ENERGY: {energy}. Tap cost: {energy_tap_cost}. Taps: {taps_current_session}."
+                f"GO SLEEP. Time: {taps_time_current_session_s} sec. ENERGY: {energy}. Tap cost: {energy_tap_cost}. Taps: {taps_current_session}."
             )
-            await asyncio.sleep(taps_time_current_session)
+            await asyncio.sleep(taps_time_current_session_s)
+
             taps_session_finish_ts_ms = int(time.time() * 1000)
             energy = await self.submit_taps(
                 taps_session_finish_ts_ms, taps_current_session
@@ -762,6 +838,7 @@ class TapswapActions:
         tap_level = self.account_data["player"].get("tap_level")
         charge_level = self.account_data["player"].get("charge_level")
         energy_level = self.account_data["player"].get("energy_level")
+        user_have_bot = self.player_data.get("tap_bot")
 
         if energy_level < len(self.energy_levels_config):
             energy_update_price = self.energy_levels_config[energy_level].get("price")
@@ -790,6 +867,14 @@ class TapswapActions:
                 await self.install_user_upgrade("charge")
                 await self.sleep_after_request(3, 10)
 
+        if not user_have_bot:
+            bot_price = self.conf.get("tap_bot", {}).get("price")
+            if bot_price:
+                self.logger.debug(
+                    f"Installing user upgrade TAP BOT. Shares: {self.my_shares}."
+                )
+                await self.install_user_upgrade("tap_bot")
+
     async def emulate_app_start(
         self,
     ):  # TODO SOLVE CHALLENGE IN DIFFERENT BROWSER WINDOWS
@@ -806,15 +891,19 @@ class TapswapActions:
         if not self.bearer:
             raise Exception("Got bad bearer token. Exitting...")
 
-        self.my_shares = self.account_data.get("player", {}).get("shares", 0)
-        self.my_blocks = self.account_data.get("player", {}).get("blocks", 0)
-        self.my_videos = self.account_data.get("player", {}).get("videos", 0)
-        self.my_crystals = self.account_data.get("player", {}).get("crystals", 0)
+        self.player_data = self.account_data.get("player", {})
+
+        self.my_shares = self.player_data.get("shares", 0)
+        self.my_blocks = self.player_data.get("blocks", 0)
+        self.my_videos = self.player_data.get("videos", 0)
+        self.my_crystals = self.player_data.get("crystals", 0)
+
+        self.my_boosts = self.player_data.get("boost", {})
 
         missions = self.account_data.get("account", {}).get("missions", {})
         self.completed_missions = missions.get("completed", [])
         self.active_missions = [i.get("id") for i in missions.get("active", [])]
-        self.just_claim_missions = self.account_data.get("player", {}).get("claims", [])
+        self.just_claim_missions = self.player_data.get("claims", [])
 
         self.conf = self.account_data.get("conf", {})
         self.energy_levels_config = self.conf.get("energy_levels", [])
@@ -855,7 +944,7 @@ class TapswapActions:
         )
 
     async def build(self):
-        my_town = self.account_data.get("player", {}).get("town", {})
+        my_town = self.player_data.get("town", {})
         worker_count = my_town.get("builders", 0)
         ts_current_ms = int(time.time() * 1000)
         my_buildings = my_town.get("buildings", [])
@@ -949,9 +1038,6 @@ class TapswapActions:
                 self.logger.info("No buildings can be builded. Passed this moment.")
                 break
 
-    async def sleep_after_request(self, sleep_min=14, sleep_max=18):
-        await asyncio.sleep(random.randint(100 * sleep_min, 100 * sleep_max) / 100)
-
     async def make_actions(self):
         await self.emulate_app_start()
 
@@ -987,7 +1073,8 @@ async def main():
     proxy_host, proxy_port, proxy_user, proxy_password = notpixel_tools.parse_proxy_url(
         "https://" + proxy
     )
-    webpp_url = "https://app.tapswap.club/?bot=app_bot_0#tgWebAppData=query_id%3DAAEITE4rAAAAAAhMTitrRXLD%26user%3D%257B%2522id%2522%253A726551560%252C%2522first_name%2522%253A%2522A%2522%252C%2522last_name%2522%253A%2522S%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522is_premium%2522%253Atrue%252C%2522allows_write_to_pm%2522%253Atrue%252C%2522photo_url%2522%253A%2522https%253A%255C%252F%255C%252Ft.me%255C%252Fi%255C%252Fuserpic%255C%252F320%255C%252F_aefHTTaqquqHSKCJLEG3ibz76vobUxfaln3jrMDe2A.svg%2522%257D%26auth_date%3D1733830475%26signature%3D3oq1YP5XwApAIXRZbrdcsQqG4blJW7gWlWsby8BkE24FrlAYj9L1yfb3BmNiwI__ufbqKw7lg1_ZLbL28cMDDQ%26hash%3Dd34bfa95412fddd921a732e8d5749f364fab0990f80a37d2ccd1d1e9fd421619&tgWebAppVersion=8.0&tgWebAppPlatform=tdesktop&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
+    proxy_host = None
+    webpp_url = "https://app.tapswap.club/?bot=app_bot_2#tgWebAppData=query_id%3DAAGCCGo6AwAAAIIIajoOWRJE%26user%3D%257B%2522id%2522%253A7422478466%252C%2522first_name%2522%253A%2522Renoskydowux%2522%252C%2522last_name%2522%253A%2522Shar%2522%252C%2522username%2522%253A%2522Shortcake_anthracnose%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522allows_write_to_pm%2522%253Atrue%252C%2522photo_url%2522%253A%2522https%253A%255C%252F%255C%252Ft.me%255C%252Fi%255C%252Fuserpic%255C%252F320%255C%252FdxmXxoUAeblDTqWxG8Mb0wtIh7ObU5LICW4MJWj1qA_dCy3o5pAxfk94gesGyENT.svg%2522%257D%26auth_date%3D1733841638%26signature%3DuAZVG5v3OG3Zhr6GjUiLFJ6LMF8TuqR7OXUGWFRf6c0mb0Lk1smSYNv7TEXjp7X_dsaHoQeGxywHkA9z8UftAQ%26hash%3D7bc014e6431be87eb068e16edb6b926a3f8fefb768f0ceaa0e09883653425822&tgWebAppVersion=7.10&tgWebAppPlatform=android&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
 
     sb = secure_browser.SecChromeBrowser(headless=True)
 
@@ -1001,8 +1088,8 @@ async def main():
         proxy_port=proxy_port,
         proxy_user=proxy_user,
         proxy_password=proxy_password,
-        telegram_user_id=726551560,
-        telegram_session_id="9020782499",
+        telegram_user_id=7422478466,
+        telegram_session_id="test",
         selen=sb,
         db=db,
         worker_start_datetime=start_dt,
@@ -1011,9 +1098,10 @@ async def main():
     await ts.emulate_app_start()
     # await ts.upgrade_taps()
     # await ts.make_actions()
-    missing_missions = ts.get_current_missing_active_missions()
-    mm_json = json.dumps(missing_missions, indent=4)
-    print(mm_json)
+    await ts.make_taps()
+    # missing_missions = ts.get_current_missing_active_missions()
+    # mm_json = json.dumps(missing_missions, indent=4)
+    # print(mm_json)
 
     pass
     # await ts.complete_mission()
