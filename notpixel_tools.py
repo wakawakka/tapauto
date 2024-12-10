@@ -1,6 +1,7 @@
 import asyncio
 import io
 import logging
+import ssl
 
 import aiohttp
 import requests
@@ -38,9 +39,16 @@ async def http_request(
 ):
     if not logger:
         logger = get_logger("common.log", logging.DEBUG)
+
+    ssl_context = ssl.create_default_context()
+    ssl_context.options |= (
+        ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1
+    )  # Отключаем TLS 1.0 и 1.1
+    ssl_context.set_ciphers("ECDHE+AESGCM")  # Используем безопасные шифры
     proxy_connector = None
     if proxy:
-        proxy_connector = ProxyConnector.from_url(proxy)
+        proxy_connector = ProxyConnector.from_url(proxy, ssl=ssl_context)
+        pass
 
     # trace_config = aiohttp.TraceConfig()
     # trace_config.on_request_start.append(on_request_start)
@@ -50,7 +58,7 @@ async def http_request(
     try:
         async with asyncio.timeout(http_timeout):
             async with aiohttp.ClientSession(
-                connector=proxy_connector,
+                connector=proxy_connector
                 # trace_configs=[trace_config],
             ) as session:
                 match rtype:

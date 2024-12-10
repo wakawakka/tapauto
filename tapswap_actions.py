@@ -826,6 +826,7 @@ class TapswapActions:
             http_timeout=HTTP_REQUEST_TIMEOUT,
             good_statuses=[200, 201],
             logger=self.logger,
+            retry_count=1,
         )
         status = request.get("status")
         content = request.get("content")
@@ -1146,7 +1147,7 @@ async def main():
     proxy_host, proxy_port, proxy_user, proxy_password = notpixel_tools.parse_proxy_url(
         "https://" + proxy
     )
-    proxy_host = None
+    # proxy_host = None
     webpp_url = "https://app.tapswap.club/?bot=app_bot_2#tgWebAppData=query_id%3DAAGCCGo6AwAAAIIIajoOWRJE%26user%3D%257B%2522id%2522%253A7422478466%252C%2522first_name%2522%253A%2522Renoskydowux%2522%252C%2522last_name%2522%253A%2522Shar%2522%252C%2522username%2522%253A%2522Shortcake_anthracnose%2522%252C%2522language_code%2522%253A%2522en%2522%252C%2522allows_write_to_pm%2522%253Atrue%252C%2522photo_url%2522%253A%2522https%253A%255C%252F%255C%252Ft.me%255C%252Fi%255C%252Fuserpic%255C%252F320%255C%252FdxmXxoUAeblDTqWxG8Mb0wtIh7ObU5LICW4MJWj1qA_dCy3o5pAxfk94gesGyENT.svg%2522%257D%26auth_date%3D1733841638%26signature%3DuAZVG5v3OG3Zhr6GjUiLFJ6LMF8TuqR7OXUGWFRf6c0mb0Lk1smSYNv7TEXjp7X_dsaHoQeGxywHkA9z8UftAQ%26hash%3D7bc014e6431be87eb068e16edb6b926a3f8fefb768f0ceaa0e09883653425822&tgWebAppVersion=7.10&tgWebAppPlatform=android&tgWebAppThemeParams=%7B%22accent_text_color%22%3A%22%23168acd%22%2C%22bg_color%22%3A%22%23ffffff%22%2C%22bottom_bar_bg_color%22%3A%22%23ffffff%22%2C%22button_color%22%3A%22%2340a7e3%22%2C%22button_text_color%22%3A%22%23ffffff%22%2C%22destructive_text_color%22%3A%22%23d14e4e%22%2C%22header_bg_color%22%3A%22%23ffffff%22%2C%22hint_color%22%3A%22%23999999%22%2C%22link_color%22%3A%22%23168acd%22%2C%22secondary_bg_color%22%3A%22%23f1f1f1%22%2C%22section_bg_color%22%3A%22%23ffffff%22%2C%22section_header_text_color%22%3A%22%23168acd%22%2C%22section_separator_color%22%3A%22%23e7e7e7%22%2C%22subtitle_text_color%22%3A%22%23999999%22%2C%22text_color%22%3A%22%23000000%22%7D"
 
     sb = secure_browser.SecChromeBrowser(headless=True)
