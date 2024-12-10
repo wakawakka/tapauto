@@ -20,7 +20,6 @@ import utils
 import dbutils
 
 # TODO
-# add TAP robot and recharge purchase
 # Add buing of 10 cinema point for crystals
 
 HTTP_REQUEST_TIMEOUT = 30
@@ -30,6 +29,8 @@ X_CV = "662"
 X_TOUCH = "1"
 
 TURBO_BOOST_NAME = "turbo"
+
+VIDEO_POINTS_PACK_SIZE = 10
 
 mission_codes = {
     "M2499": "wieb",
@@ -236,16 +237,6 @@ class TapswapActions:
         # for check in settings.tasks_check_rules:
         self.logger.info(f"Start Emulate JS index loading")
         headers = {"User-Agent": self.user_agent}
-
-        # index_last_update = self.worker_start_datetime
-        # dt_rfc_format = index_last_update.strftime("%a, %d %b %Y %H:%M:%S GMT")
-        # headers["If-Modified-Since"] = dt_rfc_format
-        # index_last_update = await self.db.get_user_index_update_time(self.session_id)
-        # dt_rfc_format = None
-        # if index_last_update:
-        #     dt_last_update = datetime.datetime.fromisoformat(index_last_update)
-        #     dt_rfc_format = dt_last_update.strftime("%a, %d %b %Y %H:%M:%S GMT")
-        #     headers["If-Modified-Since"] = dt_rfc_format
         index_request = await notpixel_tools.http_request(
             "GET",
             "https://app.tapswap.club" + index_href,
@@ -262,18 +253,32 @@ class TapswapActions:
             f"JS {index_href} loading status: {status}. Size: {len(content)}"
         )
 
+        TASK_BAN = False
+
+        if (
+            f"r=e.gameConf.town.buy_cinema_point_price,a={VIDEO_POINTS_PACK_SIZE}".encode()
+            not in content
+        ):
+            TASK_BAN = True
+            error_message = (
+                "VIDEO FOR CRYSTALS CONST CHANGED. TAPSWAP TASKS START BANNED."
+            )
         if f'this.api.headers.set("x-cv","{X_CV}")'.encode() not in content:
+            TASK_BAN = True
+            error_message = "BUILD NUMBER CHANGED. TAPSWAP TASKS START BANNED."
+
+        if TASK_BAN:
             logger = utils.get_logger(
                 filepath="contoller.log",
                 level=logging.DEBUG,
                 name=f"tapswap:{self.telegram_session_id}",
             )
-            error_message = "BUILD NUMBER CHANGED. TAPSWAP TASKS START BANNED."
+
             logger.error(error_message)
             settings.EXECUTION_BAN_TASKS.add(settings.TAPSWAP_TASK_NAME)
             raise Exception(error_message)
         else:
-            self.logger.info("Build number check passed")
+            self.logger.info("All index checks passed")
 
     async def load_main_page(self):
         headers = self.get_base_headers()
@@ -967,6 +972,8 @@ class TapswapActions:
                 current_my_buildings_level[building_id] = building_level
 
         buildings_plan = self.conf.get("town", {}).get("buildings", [])
+        cinema_videos_price = 0
+
         while worker_count > 0:
             some_building_builded = None
             for b in buildings_plan:
@@ -1012,6 +1019,9 @@ class TapswapActions:
                 upgrade_cost_shares = upgrade_cost.get("shares", 0)
                 upgrade_cost_blocks = upgrade_cost.get("blocks", 0)
                 upgrade_cost_videos = upgrade_cost.get("videos", 0)
+                if building_id == "b_01":  # cinema
+                    cinema_videos_price = upgrade_cost_videos
+
                 if not (
                     self.my_shares >= upgrade_cost_shares
                     and self.my_blocks >= upgrade_cost_blocks
@@ -1035,8 +1045,71 @@ class TapswapActions:
                 some_building_builded = True
                 break
             if not some_building_builded:
-                self.logger.info("No buildings can be builded. Passed this moment.")
+                self.logger.info("No buildings can be builded.")
+                if (
+                    not currently_under_constuction
+                    and self.my_videos < cinema_videos_price
+                ):
+                    self.logger.info(
+                        f"Also not building under cunstuction and no money for cinema upgrade. Buying {VIDEO_POINTS_PACK_SIZE} videos for crystals"
+                    )
+                    await self.buy_video_points()
                 break
+
+    async def buy_video_points(self):
+        url = "https://api.tapswap.club/api/town/buy_cinema_points"
+        headers = self.get_api_headers(bearer=True)
+
+        crystals_price_per_one_video = self.conf.get("town", {}).get(
+            "buy_cinema_point_price"
+        )
+        if crystals_price_per_one_video:
+            video_pack_price = crystals_price_per_one_video * VIDEO_POINTS_PACK_SIZE
+            if video_pack_price < self.my_crystals:
+                self.logger.info(
+                    f"Buy video points allowed. My crystals: {self.my_crystals}. Pack price: {video_pack_price}"
+                )
+            else:
+                self.logger.error(
+                    "Not enought crystals for buy videos pack. "
+                    f"My crystals: {self.my_crystals}. Pack price: {video_pack_price}"
+                )
+                return
+        else:
+            self.logger.error(
+                "CANT GET crystals_price_per_one_video. NOT FATAL BUT CHECK CODE"
+            )
+            return
+
+        payload = {
+            "amount": VIDEO_POINTS_PACK_SIZE,
+        }
+        request = await notpixel_tools.http_request(
+            "POST",
+            url,
+            headers,
+            proxy=self.proxy_string,
+            json_p=payload,
+            http_timeout=HTTP_REQUEST_TIMEOUT,
+            good_statuses=[200, 201],
+            logger=self.logger,
+        )
+        status = request.get("status")
+        content = request.get("content")
+        data = json.loads(content)
+
+        player = data.get("player", {})
+
+        old_value_crystals = self.my_crystals
+        old_value_videos = self.my_videos
+
+        self.my_videos = player.get("videos")
+        self.my_crystals = player.get("crystals")
+
+        self.logger.info(
+            f"Video buy status: {status}. Videos: {old_value_videos} -> {self.my_videos}. "
+            f"Crystals: {old_value_crystals} -> {self.my_crystals}"
+        )
 
     async def make_actions(self):
         await self.emulate_app_start()
@@ -1096,9 +1169,10 @@ async def main():
     )
 
     await ts.emulate_app_start()
+    await ts.buy_video_points()
     # await ts.upgrade_taps()
     # await ts.make_actions()
-    await ts.make_taps()
+    # await ts.make_taps()
     # missing_missions = ts.get_current_missing_active_missions()
     # mm_json = json.dumps(missing_missions, indent=4)
     # print(mm_json)
