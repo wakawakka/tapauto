@@ -283,8 +283,7 @@ class Worker:
                         if settings.NIGHTMODE:
                             if dt_next_start.hour < AFTER_NIGHT_START_HOUR:
                                 continue
-                        else:
-                            break
+                        break
                     sleeptime_delta = dt_next_start - dt_now
                     sleeptime = sleeptime_delta.seconds
 
