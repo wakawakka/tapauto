@@ -874,7 +874,7 @@ class TapswapActions:
 
         if not user_have_bot:
             bot_price = self.conf.get("tap_bot", {}).get("price")
-            if bot_price:
+            if bot_price and bot_price < self.my_shares:
                 self.logger.debug(
                     f"Installing user upgrade TAP BOT. Shares: {self.my_shares}."
                 )
