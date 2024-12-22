@@ -3,6 +3,7 @@ import json
 import logging
 import signal
 import zlib
+import random
 
 import utils
 import notpixel_tools
@@ -24,7 +25,7 @@ from centrifuge_mod import (
 import settings
 from exceptions import *
 
-TIMEOUT = 20
+TIMEOUT = 30
 
 
 class ClientEventLoggerHandler(ClientEventHandler):
@@ -167,7 +168,10 @@ class Fucka:
                                 initial_image
                             )
                         )
-                        for pixel_id in current_template_state_pixels:
+                        random_pixel_order = list(current_template_state_pixels.keys())
+                        random.shuffle(random_pixel_order)
+
+                        for pixel_id in random_pixel_order:
                             if pixel_id in good_pixels:
                                 if (
                                     current_template_state_pixels[pixel_id]
