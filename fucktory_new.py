@@ -190,7 +190,8 @@ class Worker:
                     0, SUCCESS_JOB_DONE_MAX_ADD_SLEEP_TILE
                 )
 
-                sleeptime = full_restore_timeout + random_sleep_size
+                # sleeptime = full_restore_timeout + random_sleep_size
+                sleeptime = 60 * 60  # 1 hour
             else:
                 sleeptime = SIMPLIFIED_SLEEP
             return sleeptime
