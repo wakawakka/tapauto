@@ -29,8 +29,8 @@ import dbutils
 HTTP_REQUEST_TIMEOUT = 30
 TEMPLATE_PAGE = 4
 
-PIRATE_HAT_TEMPLATE_ID = "6444194100"
-PIRATE_HAT_TEMPLATE_URL = "https://static.notpx.app/tournament/6444194100-2.png"
+PIRATE_HAT_TEMPLATE_ID = "1"
+PIRATE_HAT_TEMPLATE_URL = "NOURL"
 
 
 class PixelActions:
@@ -472,11 +472,11 @@ class PixelActions:
 
         good_pixel_colors = None
         good_pixel_colors = await self.get_template_colors_from_cache(template_id)
-        if not good_pixel_colors:
-            pixels = await self.get_template_pixels_by_url(template_id, template_url)
-            good_pixel_colors = await self.pixels_to_color_data(
-                pixels=pixels, template_info=my_template_info
-            )
+        # if not good_pixel_colors:
+        #     pixels = await self.get_template_pixels_by_url(template_id, template_url)
+        #     good_pixel_colors = await self.pixels_to_color_data(
+        #         pixels=pixels, template_info=my_template_info
+        #     )
         return good_pixel_colors
 
     async def get_template_pixels_from_cache(self, template_id):
@@ -741,14 +741,14 @@ class PixelActions:
         await self.centrifuga.init_client(token=ws_token, user_agent=self.user_agent)
 
         acc_state = await self.get_account_state(
-            claim=True, upgrade=True, complete_tasks=False
+            claim=False, upgrade=False, complete_tasks=False
         )
         # acc_state = await self.get_account_state(
         #     claim=False, upgrade=False, complete_tasks=False
         # )
         # offer_check = await self.offer_check()
-        periods_check = await self.periods_check()
-        results_check = await self.get_results()
+        # periods_check = await self.periods_check()
+        # results_check = await self.get_results()
         charges = acc_state.get("charges", 0)
         # if charges > 12:
         #     charges = 12
@@ -771,25 +771,25 @@ class PixelActions:
                     except BaseException as e:
                         self.logger.error((f"FAILED PAINT PIXEL {pixel_id} to {color}"))
             else:
-                my_tournament_template = await self.get_my_tournament_template()
+                # my_tournament_template = await self.get_my_tournament_template()
 
-                if my_tournament_template:
-                    good_pixel_colors = await self.get_my_template_good_pixels(
-                        my_tournament_template
-                    )
-                else:
-                    await self.select_template(PIRATE_HAT_TEMPLATE_ID)
-                    my_tournament_template = {
-                        "id": PIRATE_HAT_TEMPLATE_ID,
-                        "url": PIRATE_HAT_TEMPLATE_URL,
-                        "x": settings.TEMPLATE_X,
-                        "y": settings.TEMPLATE_Y,
-                        "size": settings.TEMPLATE_SIZE,
-                    }
-                    await self.sleep_after_request(5, 10)
-                    good_pixel_colors = await self.get_my_template_good_pixels(
-                        my_tournament_template
-                    )
+                # if my_tournament_template:
+                #     good_pixel_colors = await self.get_my_template_good_pixels(
+                #         my_tournament_template
+                #     )
+                # else:
+                #     await self.select_template(PIRATE_HAT_TEMPLATE_ID)
+                my_tournament_template = {
+                    "id": PIRATE_HAT_TEMPLATE_ID,
+                    "url": PIRATE_HAT_TEMPLATE_URL,
+                    "x": settings.TEMPLATE_X,
+                    "y": settings.TEMPLATE_Y,
+                    "size": settings.TEMPLATE_SIZE,
+                }
+                await self.sleep_after_request(5, 10)
+                good_pixel_colors = await self.get_my_template_good_pixels(
+                    my_tournament_template
+                )
 
                 if good_pixel_colors:
                     paint_task = await self.centrifuga.collect_pixels_and_repaint(
@@ -807,15 +807,15 @@ class PixelActions:
                     #             (f"FAILED PAINT PIXEL {pixel_id} to {color}")
                     #         )
 
-                    try:
-                        old_secrets = await self.db.get_notpixel_secret_tries(
-                            self.session_id
-                        )
-                        for word in settings.secret_words:
-                            if word not in old_secrets:
-                                await self.enter_secret_word(word)
-                    except BaseException as e:
-                        self.logger.error(f"Failed to send secret word. {e}")
+                    # try:
+                    #     old_secrets = await self.db.get_notpixel_secret_tries(
+                    #         self.session_id
+                    #     )
+                    #     for word in settings.secret_words:
+                    #         if word not in old_secrets:
+                    #             await self.enter_secret_word(word)
+                    # except BaseException as e:
+                    #     self.logger.error(f"Failed to send secret word. {e}")
 
                     # update acc state (not nessesary)
                 else:

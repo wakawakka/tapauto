@@ -24,7 +24,7 @@ from centrifuge_mod import (
 import settings
 from exceptions import *
 
-TIMEOUT = 60
+TIMEOUT = 20
 
 
 class ClientEventLoggerHandler(ClientEventHandler):
@@ -67,11 +67,11 @@ class ClientEventLoggerHandler(ClientEventHandler):
         self.logger.info("unsubscribed from server-side sub: %s", ctx)
 
     async def on_publication(self, ctx: ServerPublicationContext) -> None:
-        self.logger.info(
-            "publication from server-side: channel: %s, data:  %s",
-            ctx.channel,
-            ctx.pub.data[:40],
-        )
+        # self.logger.info(
+        #     "publication from server-side: channel: %s, data:  %s",
+        #     ctx.channel,
+        #     ctx.pub.data[:40],
+        # )
         if ctx.channel == "pixel:message":
             decompressed_data = zlib.decompress(ctx.pub.data, wbits=-15)
             jdata = json.loads(decompressed_data)
@@ -149,7 +149,7 @@ class Fucka:
             color = f"#{color}"
         data = {"type": 0, "pixelId": pixel_id, "color": color}
         data_enc = json.dumps(data).encode()
-        r = await self.client.rpc("repaint", data=data_enc)
+        r = await self.client.rpc("rеpаintTournаment", data=data_enc)
         return r.data
 
     async def collect_pixels_and_repaint(self, count: int, good_pixels: dict):
@@ -227,7 +227,7 @@ def start_fucka_debug():
     loop = asyncio.get_event_loop()
     loop.run_until_complete(
         f.init_client(
-            token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjaGFubmVscyI6WyJldmVudDptZXNzYWdlIiwicGl4ZWw6bWVzc2FnZSJdLCJleHAiOjE3MzMxOTY2OTcsInN1YiI6IjcyNjU1MTU2MCJ9.5yAQzhwp-AmmefJ9CSiO2Qfk4y1ppJY4YskBTJvqYiw",
+            token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjaGFubmVscyI6WyJldmVudDptZXNzYWdlIiwicGl4ZWw6bWVzc2FnZSJdLCJleHAiOjE3MzQ4Mzg1NjEsInN1YiI6IjcyNjU1MTU2MCJ9.-g_JLB0Jb1iQPqeK0sAGZW_h2L6uq8LNq1fyR9jDFmQ",
             user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:132.0) Gecko/20100101 Firefox/132.0",
         )
     )
@@ -240,7 +240,7 @@ def collect_pixels():
     loop = asyncio.get_event_loop()
     loop.run_until_complete(
         f.init_client(
-            token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjaGFubmVscyI6WyJldmVudDptZXNzYWdlIiwicGl4ZWw6bWVzc2FnZSJdLCJleHAiOjE3MzMyODQ4NTQsInN1YiI6IjcyNjU1MTU2MCJ9.k7bmP6cRfQlfkgiSYgmzHf3N3PhWAeiGsISkANeiPg4",
+            token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjaGFubmVscyI6WyJldmVudDptZXNzYWdlIiwicGl4ZWw6bWVzc2FnZSJdLCJleHAiOjE3MzQ4Mzg3NDcsInN1YiI6IjcyNjU1MTU2MCJ9.5Jcm8G2k28xlyWEXVI1toHl07AmZ4mzRik62SvI9sbE",
             user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:132.0) Gecko/20100101 Firefox/132.0",
         )
     )

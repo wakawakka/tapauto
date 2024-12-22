@@ -156,6 +156,7 @@ def get_pixels(image_file_content):
     img_io = io.BytesIO(image_file_content)
     img_io.seek(0)
     img = Image.open(img_io)
+    img = img.convert("RGBA")
     pixels = img.load()
     return pixels
 
