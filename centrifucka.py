@@ -125,10 +125,10 @@ class Fucka:
                 "User-Agent": user_agent,
             },
             data=json.dumps({"token": token}).encode(),
-            proxy_host=self.proxy_host,
-            proxy_port=self.proxy_port,
-            proxy_user=self.proxy_user,
-            proxy_password=self.proxy_password,
+            # proxy_host=self.proxy_host,
+            # proxy_port=self.proxy_port,
+            # proxy_user=self.proxy_user,
+            # proxy_password=self.proxy_password,
         )
         return True
 
