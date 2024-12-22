@@ -13,7 +13,7 @@ EXECUTION_BAN_TASKS = set()
 
 TEMPLATE_X = 512 - 54
 TEMPLATE_Y = 150
-TEMPLATE_SIZE = 105
+TEMPLATE_SIZE = 85
 
 # upgrade to this level price
 # UpgradeRepaint
