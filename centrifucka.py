@@ -25,7 +25,7 @@ from centrifuge_mod import (
 import settings
 from exceptions import *
 
-TIMEOUT = 30
+TIMEOUT = 90
 
 
 class ClientEventLoggerHandler(ClientEventHandler):
