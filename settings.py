@@ -11,9 +11,9 @@ NIGHTMODE = True
 
 EXECUTION_BAN_TASKS = set()
 
-TEMPLATE_X = 512 - 54
+TEMPLATE_X = 483
 TEMPLATE_Y = 150
-TEMPLATE_SIZE = 85
+TEMPLATE_SIZE = 58
 
 # upgrade to this level price
 # UpgradeRepaint
